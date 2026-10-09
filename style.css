@@ -1,0 +1,289 @@
+:root {
+  --bg: #0e0e0e;
+  --text: #f0ece4;
+  --muted: #9a958c;
+  --rule: #2c2a27;
+  --accent: #c9a96e;
+  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 720px;
+  padding: 0 24px 64px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+/* ---------- Links ---------- */
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--text);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- Typography ---------- */
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h2 {
+  font-size: 2.25rem;
+  margin-bottom: 1.5rem;
+}
+
+h3 {
+  font-size: 1.35rem;
+  margin: 2.25rem 0 1rem;
+}
+
+p {
+  margin: 0 0 1.25rem;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 4rem 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  padding: 18vh 0 0;
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 11vw, 5.5rem);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.descriptor {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.35rem;
+  color: var(--muted);
+  margin: 1rem 0 2.5rem;
+}
+
+nav {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* ---------- About ---------- */
+
+.portrait {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 0 2rem;
+  background: #1a1a1a;
+}
+
+/* The source photo is a 3:4 full-length portrait; enlarge and offset it so
+   the circle frames the head and shoulders. */
+.portrait img {
+  position: absolute;
+  width: 420px;
+  height: 560px;
+  max-width: none;
+  left: -93px;
+  top: -92px;
+}
+
+.icon-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  margin-top: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.icon-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ---------- Research ---------- */
+
+.refs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.refs li {
+  padding-left: 2em;
+  text-indent: -2em;
+  margin-bottom: 1.1rem;
+}
+
+/* ---------- Blog ---------- */
+
+.post {
+  margin-bottom: 2rem;
+}
+
+.post-title {
+  font-size: 1.6rem;
+  margin: 0 0 0.35rem;
+}
+
+.post-meta {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.post-body {
+  margin-top: 2rem;
+}
+
+.lang-toggle {
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.lang-toggle button {
+  background: none;
+  border: 0;
+  padding: 0.25rem 0.35rem;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.lang-toggle button:first-child {
+  padding-left: 0;
+}
+
+.lang-toggle button:hover {
+  color: var(--accent);
+}
+
+.lang-toggle button[aria-pressed="true"] {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3 {
+  font-size: 1.4rem;
+  margin: 2.5rem 0 1rem;
+}
+
+.post-content hr {
+  width: 3rem;
+  margin: 2.75rem 0;
+}
+
+.post-content blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--accent);
+  color: var(--muted);
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.post-status {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.post-comments {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule);
+}
+
+.post-comments:empty {
+  display: none;
+}
+
+/* ---------- Footer ---------- */
+
+footer hr {
+  margin-bottom: 1.5rem;
+}
+
+footer p {
+  font-size: 0.85rem;
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 480px) {
+  body {
+    font-size: 16px;
+    padding: 0 16px 48px;
+  }
+
+  .hero {
+    padding-top: 12vh;
+  }
+
+  h2 {
+    font-size: 1.9rem;
+  }
+
+  hr {
+    margin: 3rem 0;
+  }
+
+  .refs li {
+    padding-left: 1.25em;
+    text-indent: -1.25em;
+  }
+}

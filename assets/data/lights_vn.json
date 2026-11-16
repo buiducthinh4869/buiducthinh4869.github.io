@@ -1,0 +1,24 @@
+{
+ "bounds": [
+  100.0,
+  6.0,
+  118.0,
+  25.0
+ ],
+ "width": 360,
+ "height": 380,
+ "cell_deg": 0.05,
+ "product": "NPP-VIIRS-like",
+ "year": 2025,
+ "source": "NPP-VIIRS-like nighttime light data, Version 2 (Chen et al. 2021, Earth System Science Data 13, 889-906)",
+ "units": "nW/cm2/sr, mean of 0.0045-degree (about 16-arcsec) pixels per 0.05-degree land cell",
+ "scale": {
+  "transform": "log1p",
+  "min": 0.0,
+  "max": 3.5512,
+  "max_radiance": 33.86,
+  "pct_upper": 99.5,
+  "ink_from": 0.6392,
+  "ink_from_radiance": 8.68
+ }
+}

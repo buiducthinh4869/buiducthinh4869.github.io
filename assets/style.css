@@ -396,3 +396,165 @@ p { margin: 0 0 1.1rem; }
 .entry p.small { margin: 0; }
 .entry p.small + p.small { margin-top: 0.15rem; }
 .timeline .what p.small { margin: 0.15rem 0 0; }
+
+/* ---------- Storm explorer (research page) ---------- */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.storm-explorer {
+  --land: #e6e2d8;
+  --coast: #c9c4b8;
+  --k: 1;
+  width: min(56rem, calc(100vw - 2.5rem));
+  margin: 0 0 3.5rem 50%;
+  transform: translateX(-50%);
+}
+html:not(.js) .storm-explorer .se-live,
+.storm-explorer.se-failed .se-live { display: none; }
+.se-fallback { display: block; width: 100%; height: auto; margin: 0 0 1rem; }
+.se-text { max-width: 37.5rem; margin: 0 auto; }
+
+.se-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+.se-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; }
+.se-label { color: var(--muted); }
+.se-controls output { font-variant-numeric: tabular-nums; min-width: 5.6em; }
+
+.se-btn,
+.se-seg button {
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0 0.65rem;
+  cursor: pointer;
+}
+.se-btn { border: 1px solid var(--rule); min-width: 6.5rem; }
+.se-btn:hover { border-color: var(--muted); }
+.se-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 2px;
+}
+.se-seg button { color: var(--muted); padding: 0 0.55rem; }
+.se-seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.se-seg abbr { text-decoration: none; }
+
+.se-dual { position: relative; display: inline-block; width: 9rem; height: 32px; }
+.se-dual-track,
+.se-dual-fill { position: absolute; top: 15px; height: 2px; pointer-events: none; }
+.se-dual-track { left: 0; right: 0; background: var(--rule); }
+.se-dual-fill { left: 0; right: 0; background: var(--ink); }
+.se-dual input {
+  position: absolute; inset: 0; width: 100%; height: 32px; margin: 0;
+  background: none; pointer-events: none;
+  -webkit-appearance: none; appearance: none;
+}
+.se-dual input::-webkit-slider-runnable-track { height: 32px; background: none; }
+.se-dual input::-moz-range-track { height: 32px; background: none; }
+.se-dual input::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: pointer;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 9px solid transparent; background: var(--ink); background-clip: content-box;
+}
+.se-dual input::-moz-range-thumb {
+  pointer-events: auto; cursor: pointer;
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 9px solid transparent; background: var(--ink); background-clip: content-box;
+}
+.se-dual input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+.se-controls input[type="search"] {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  min-height: 32px;
+  width: 9.5rem;
+  padding: 0 0.5rem;
+}
+.se-controls input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.se-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.6rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  min-height: 32px;
+}
+.se-link {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  min-height: 32px;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  text-underline-offset: 0.18em;
+}
+.se-info { font-size: 1rem; line-height: 1.55; min-height: 4.7em; margin: 0.4rem 0 0.9rem; }
+.se-info strong { font-weight: 500; }
+
+.se-map { position: relative; width: 100%; aspect-ratio: 0.91292; }
+.se-scatter { width: 100%; aspect-ratio: 2.2823; min-height: 180px; margin-top: 1.25rem; }
+.se-map svg,
+.se-scatter svg { display: block; width: 100%; height: 100%; overflow: hidden; }
+.se-map-svg { cursor: default; }
+.se-map-svg.is-zoomed { cursor: grab; }
+.se-map-svg:focus { outline: none; }
+.se-map-svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.se-land { fill: var(--land); stroke: var(--coast); stroke-width: calc(0.6px / var(--k)); stroke-linejoin: round; }
+.se-bg path { fill: none; stroke: var(--muted); stroke-opacity: 0.13; stroke-width: calc(0.8px / var(--k)); }
+.se-lights { pointer-events: none; image-rendering: pixelated; }
+.se-trk path { fill: none; stroke: var(--muted); stroke-opacity: 0.22; stroke-width: calc(1px / var(--k)); pointer-events: none; }
+.se-hit path { fill: none; stroke: #000; stroke-opacity: 0; stroke-width: calc(10px / var(--k)); pointer-events: stroke; cursor: pointer; }
+.se-sel path {
+  fill: none; stroke: var(--accent); stroke-width: calc(2.5px / var(--k));
+  stroke-linecap: round; stroke-linejoin: round; pointer-events: none;
+}
+.se-eye circle { fill: var(--paper); stroke: var(--accent); stroke-width: 1.5px; pointer-events: none; }
+.se-eye .se-eye-c { fill: var(--accent); stroke: none; }
+.se-year { font-family: var(--serif); fill: var(--muted); fill-opacity: 0.55; pointer-events: none; }
+.se-ramp text,
+.se-sc-svg text { font-family: var(--sans); font-size: 11px; fill: var(--muted); }
+.se-ramp { pointer-events: none; }
+
+.se-axis path,
+.se-axis line { stroke: var(--muted); stroke-width: 1px; }
+.se-guides line { stroke: var(--rule); stroke-width: 1px; }
+.se-dot { fill: var(--muted); fill-opacity: 0.5; cursor: pointer; }
+.se-dot.is-sel { fill: var(--accent); fill-opacity: 1; stroke: var(--paper); stroke-width: 2px; r: 5.5px; }
+.se-dot:focus { outline: none; }
+.se-dot:focus-visible { stroke: var(--ink); stroke-width: 2px; }
+
+.storm-explorer figcaption { margin-top: 1.25rem; }
+.se-cap { font-size: 1rem; line-height: 1.55; margin-bottom: 0.6rem; }
+.storm-explorer figcaption .small { margin: 0 0 0.35rem; }
+
+@media (max-width: 600px) {
+  .se-controls { gap: 0.5rem 1rem; }
+  .se-dual { width: 8rem; }
+}

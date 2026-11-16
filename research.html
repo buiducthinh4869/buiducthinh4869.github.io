@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Research | Bui Duc Thinh</title>
 <meta name="description" content="Bui Duc Thinh, economist in Hanoi working on climate economics, macroeconomic theory, international trade and applied econometrics.">
-<script>(function(){var l="en";try{l=localStorage.getItem("lang")||l}catch(e){}if(l!=="vi")l="en";var r=document.documentElement;r.setAttribute("data-lang",l);r.lang=l;})();</script>
+<script>(function(){var l="en";try{l=localStorage.getItem("lang")||l}catch(e){}if(l!=="vi")l="en";var r=document.documentElement;r.setAttribute("data-lang",l);r.lang=l;r.classList.add("js");})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
@@ -29,24 +29,57 @@
   <h1 class="page-title"><span data-l="en">Research</span><span data-l="vi" lang="vi">Nghiên cứu</span></h1>
   <p class="page-lede"><span data-l="en">Climate economics, macroeconomic theory, international trade and applied econometrics.</span><span data-l="vi" lang="vi">Kinh tế học khí hậu, lý thuyết kinh tế vĩ mô, thương mại quốc tế và kinh tế lượng ứng dụng.</span></p>
 
+  <figure class="storm-explorer" aria-labelledby="se-cap">
+    <div class="se-text se-live">
+      <div class="se-controls">
+        <div class="se-ctl" role="group" aria-labelledby="se-range-l">
+          <span class="se-label" id="se-range-l"><span data-l="en">Seasons</span><span data-l="vi" lang="vi">Mùa bão</span></span>
+          <span class="se-dual"><span class="se-dual-track"></span><span class="se-dual-fill"></span>
+            <label class="sr-only" for="se-from"><span data-l="en">First season</span><span data-l="vi" lang="vi">Mùa đầu</span></label><input type="range" id="se-from" min="1981" max="2024" step="1" value="1981">
+            <label class="sr-only" for="se-to"><span data-l="en">Last season</span><span data-l="vi" lang="vi">Mùa cuối</span></label><input type="range" id="se-to" min="1981" max="2024" step="1" value="2024">
+          </span>
+          <output id="se-range-out" for="se-from se-to">1981–2024</output>
+          <button type="button" class="se-btn" id="se-play"><span data-l="en">Play</span><span data-l="vi" lang="vi">Phát</span></button>
+        </div>
+        <div class="se-ctl" role="group" aria-labelledby="se-cls-l">
+          <span class="se-label" id="se-cls-l"><span data-l="en">Strength near Vietnam</span><span data-l="vi" lang="vi">Cường độ gần Việt Nam</span></span>
+          <span class="se-seg"><button type="button" class="se-tog" data-cls="TS" aria-pressed="true"><span data-l="en"><abbr title="Tropical storm">TS</abbr></span><span data-l="vi" lang="vi"><abbr title="Bão nhiệt đới">BNĐ</abbr></span></button><button type="button" class="se-tog" data-cls="C1" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>1</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>1</span></button><button type="button" class="se-tog" data-cls="C2" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>2</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>2</span></button><button type="button" class="se-tog" data-cls="C3" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>3</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>3</span></button><button type="button" class="se-tog" data-cls="C4" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>4</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>4</span></button><button type="button" class="se-tog" data-cls="C5" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>5</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>5</span></button><button type="button" class="se-tog" data-cls="W" aria-pressed="true"><span data-l="en">Weaker / no data</span><span data-l="vi" lang="vi">Yếu hơn / không có số liệu</span></button></span>
+        </div>
+        <div class="se-ctl">
+          <label class="se-label" for="se-q"><span data-l="en">Find a storm</span><span data-l="vi" lang="vi">Tìm cơn bão</span></label>
+          <input type="search" id="se-q" list="se-list" autocomplete="off" spellcheck="false"><datalist id="se-list"></datalist>
+        </div>
+      </div>
+      <div class="se-meta"><span id="se-count" aria-live="polite"></span><button type="button" class="se-link" id="se-reset"><span data-l="en">Reset view</span><span data-l="vi" lang="vi">Đặt lại</span></button></div>
+      <p class="se-info" id="se-info" aria-live="polite"></p>
+    </div>
+    <div class="se-map se-live"></div>
+    <div class="se-scatter se-live"></div>
+    <noscript><img class="se-fallback" src="assets/storm_map_static.png" width="1600" height="1753" alt="Map of tropical storm tracks near Vietnam, 1981 to 2024, over night-time light in 2025, with Damrey 2017 highlighted."></noscript>
+    <figcaption class="se-text" id="se-cap">
+      <p class="se-cap"><span data-l="en">Tropical storms that passed within 200 km of Vietnam, 1981 to 2024 (IBTrACS), over night-time light in 2025 (NPP-VIIRS-like, Chen et al. 2021). Night-time light is a common proxy for local economic activity. Storms of similar strength pass near very different amounts of it.</span><span data-l="vi" lang="vi">Các cơn bão nhiệt đới đi qua trong phạm vi 200 km quanh Việt Nam, 1981 đến 2024 (IBTrACS), trên nền ánh sáng ban đêm năm 2025 (NPP-VIIRS-like, Chen và cộng sự 2021). Ánh sáng ban đêm thường được dùng làm thước đo gần đúng cho hoạt động kinh tế địa phương. Những cơn bão có cường độ tương tự có thể đi gần những vùng có mức hoạt động kinh tế rất khác nhau.</span></p>
+      <p class="small"><span data-l="en">Light share counts only the parts of a track where the storm was at tropical-storm strength (34 kt) or above, and uses 2025 lights for every storm, so it shows where activity is today, not when the storm hit. Wind: USA agency, 1-minute sustained; for the 3 storms without it, the Japan Meteorological Agency via WMO, 10-minute sustained.</span><span data-l="vi" lang="vi">Tỷ lệ ánh sáng chỉ tính những đoạn đường đi khi bão còn ở cường độ bão nhiệt đới (34 kt) trở lên, và dùng dữ liệu năm 2025 cho mọi cơn bão, nên phản ánh phân bố hoạt động kinh tế hiện nay, không phải lúc bão đi qua. Sức gió: theo cơ quan Hoa Kỳ, gió duy trì 1 phút; 3 cơn bão không có số liệu này dùng số liệu của Cơ quan Khí tượng Nhật Bản qua WMO, gió duy trì 10 phút.</span></p>
+      <p class="small"><span data-l="en">Data:</span><span data-l="vi" lang="vi">Dữ liệu:</span> <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a> (NOAA NCEI); <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like</a> <span data-l="en">night-time light</span><span data-l="vi" lang="vi">ánh sáng ban đêm</span> (Chen <span data-l="en">et al.</span><span data-l="vi" lang="vi">và cộng sự</span> 2021); <a href="https://www.naturalearthdata.com/">Natural Earth</a> <span data-l="en">land</span><span data-l="vi" lang="vi">đất liền</span>.</p>
+    </figcaption>
+  </figure>
+
   <h2><span data-l="en">Under review</span><span data-l="vi" lang="vi">Đang bình duyệt</span></h2>
   <ul class="entries"><li class="entry"><h3 class="entry-title">Trade Diversification and Consolidation of Vietnam in Global Supply Chains under Successive Shocks</h3><p class="small"><span data-l="en">with Doan Quang Hung (Foreign Trade University)</span><span data-l="vi" lang="vi">cùng Đoàn Quang Hưng (Đại học Ngoại thương)</span></p><p class="small"><span data-l="en">Under review, <em>Economic Analysis and Policy</em></span><span data-l="vi" lang="vi">Đang được bình duyệt tại <em>Economic Analysis and Policy</em></span></p></li></ul>
 
   <h2><span data-l="en">Working papers</span><span data-l="vi" lang="vi">Working papers</span></h2>
   <ul class="entries"><li class="entry"><h3 class="entry-title">Challenges and Strategies for Viet Nam in Escaping the Middle-Income Trap</h3><p class="small"><span data-l="en">with Quang-Thanh Tran, Minh-Chau Pham and Anh Ngoc Nguyen</span><span data-l="vi" lang="vi">cùng Trần Quang Thanh, Phạm Minh Châu và Nguyễn Ngọc Anh</span></p><p class="small"><span data-l="en">DEPOCEN Working Paper No. 202, 2026. <a href="https://ideas.repec.org/p/dpc/wpaper/0202.html">RePEc</a></span><span data-l="vi" lang="vi">DEPOCEN Working Paper số 202, 2026. <a href="https://ideas.repec.org/p/dpc/wpaper/0202.html">RePEc</a></span></p></li></ul>
 
-  <h2><span data-l="en">Conference papers</span><span data-l="vi" lang="vi">Bài trình bày tại hội thảo</span></h2>
-  <ul class="entries"><li class="entry"><h3 class="entry-title">Heterogeneous Cyclone Damages: Theory and Evidence</h3><p class="small"><span data-l="en">with Laura Bakkensen (University of Oregon) and Toan Phan (Federal Reserve Board)</span><span data-l="vi" lang="vi">cùng Laura Bakkensen (Đại học Oregon) và Toan Phan (Cục Dự trữ Liên bang Hoa Kỳ)</span></p><p class="small"><span data-l="en">Vietnam Economist Annual Meeting (VEAM), 2026</span><span data-l="vi" lang="vi">Hội thảo Kinh tế học Thường niên Việt Nam (VEAM), 2026</span></p></li></ul>
-
   <h2><span data-l="en">Policy reports</span><span data-l="vi" lang="vi">Báo cáo chính sách</span></h2>
   <ul class="entries"><li class="entry"><h3 class="entry-title">Vietnam's Annual Review of Macroeconomics 2025: Outlook for 2026</h3><p class="small"><span data-l="en">DEPOCEN Research Team, 2025. Contributor.</span><span data-l="vi" lang="vi">Nhóm nghiên cứu DEPOCEN, 2025. Tham gia đóng góp.</span></p><p class="small"><a href="https://www.dropbox.com/scl/fi/r2ft04ohqkk3otsq8y55i/VARM_2025.pdf?rlkey=35awrv706lgz5stquoob3mvk1">PDF</a></p></li></ul>
 
   <h2><span data-l="en">Work in progress</span><span data-l="vi" lang="vi">Nghiên cứu đang thực hiện</span></h2>
-  <ul class="entries"><li class="entry"><h3 class="entry-title"><span data-l="en">El Niño, climate shocks and economic activity</span><span data-l="vi" lang="vi">El Niño, cú sốc khí hậu và hoạt động kinh tế</span></h3><p class="small"><span data-l="en">with Laura Bakkensen (University of Oregon), Christian Matthes (University of Notre Dame) and Toan Phan (Federal Reserve Board)</span><span data-l="vi" lang="vi">cùng Laura Bakkensen (Đại học Oregon), Christian Matthes (Đại học Notre Dame) và Toan Phan (Cục Dự trữ Liên bang Hoa Kỳ)</span></p></li><li class="entry"><h3 class="entry-title"><span data-l="en">Flood risk and housing prices in Ho Chi Minh City</span><span data-l="vi" lang="vi">Rủi ro ngập lụt và giá nhà ở Thành phố Hồ Chí Minh</span></h3><p class="small"><span data-l="en">with Ha Nguyen (IMF), Nam Bui (NZIER), Phuc Nguyen, Khang Pham and Toan Phan (Federal Reserve Board)</span><span data-l="vi" lang="vi">cùng Nguyễn Hà (IMF), Bùi Nam (NZIER), Nguyễn Phúc, Phạm Khang và Toan Phan (Cục Dự trữ Liên bang Hoa Kỳ)</span></p></li></ul>
+  <ul class="entries"><li class="entry"><h3 class="entry-title">ENSO shocks, tropical cyclones, and the cross-country distribution of economic damage</h3><p class="small"><span data-l="en">with Laura Bakkensen (University of Oregon), Christian Matthes (University of Notre Dame) and Toan Phan (Federal Reserve Bank of Richmond)</span><span data-l="vi" lang="vi">cùng Laura Bakkensen (Đại học Oregon), Christian Matthes (Đại học Notre Dame) và Toan Phan (Ngân hàng Dự trữ Liên bang Richmond)</span></p><p class="small"><span data-l="en">An earlier version was presented at the Vietnam Economist Annual Meeting (VEAM) 2026 as <em>Heterogeneous Cyclone Damages: Theory and Evidence</em>.</span><span data-l="vi" lang="vi">Phiên bản trước được trình bày tại Hội thảo Kinh tế học Thường niên Việt Nam (VEAM) 2026 với tên <em>Heterogeneous Cyclone Damages: Theory and Evidence</em>.</span></p></li><li class="entry"><h3 class="entry-title">Flood risk and housing prices in Ho Chi Minh City</h3><p class="small"><span data-l="en">with Nam Bui (NZIER), Ha Nguyen (IMF), Phuc Nguyen, Khang Pham and Toan Phan (Federal Reserve Bank of Richmond)</span><span data-l="vi" lang="vi">cùng Nam Bui (NZIER), Ha Nguyen (IMF), Phuc Nguyen, Khang Pham và Toan Phan (Ngân hàng Dự trữ Liên bang Richmond)</span></p></li></ul>
 </div></main>
 <footer class="site-footer">
   <div class="wrap"><p class="small">© 2026 <span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></p></div>
 </footer>
 <script src="assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="assets/storm_map.js"></script>
 </body>
 </html>

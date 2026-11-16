@@ -41,7 +41,7 @@ Every visible text exists twice: `<span data-l="en">…</span><span data-l="vi" 
 
 ## Comments
 
-Giscus on post pages. `REPO_ID_PLACEHOLDER` and `CATEGORY_ID_PLACEHOLDER` in each post page must be replaced with values from https://giscus.app after GitHub Discussions is enabled. Until then the page shows a "comments soon" note.
+Giscus on post pages, backed by GitHub Discussions of this repo (category General). Each post page carries the IDs in its `giscus-config` block: `data-repo-id="R_kgDOVC3GwA"`, `data-category-id="DIC_kwDOVC3GwM4DLP_6"` (both are public identifiers, read with `gh api graphql`). Copying the template post page keeps them.
 
 ## Storm explorer (Research page)
 

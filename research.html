@@ -30,36 +30,56 @@
   <p class="page-lede"><span data-l="en">Climate economics, macroeconomic theory, international trade and applied econometrics.</span><span data-l="vi" lang="vi">Kinh tế học khí hậu, lý thuyết kinh tế vĩ mô, thương mại quốc tế và kinh tế lượng ứng dụng.</span></p>
 
   <figure class="storm-explorer" aria-labelledby="se-cap">
-    <div class="se-text se-live">
-      <div class="se-controls">
-        <div class="se-ctl" role="group" aria-labelledby="se-range-l">
-          <span class="se-label" id="se-range-l"><span data-l="en">Seasons</span><span data-l="vi" lang="vi">Mùa bão</span></span>
-          <span class="se-dual"><span class="se-dual-track"></span><span class="se-dual-fill"></span>
-            <label class="sr-only" for="se-from"><span data-l="en">First season</span><span data-l="vi" lang="vi">Mùa đầu</span></label><input type="range" id="se-from" min="1981" max="2024" step="1" value="1981">
-            <label class="sr-only" for="se-to"><span data-l="en">Last season</span><span data-l="vi" lang="vi">Mùa cuối</span></label><input type="range" id="se-to" min="1981" max="2024" step="1" value="2024">
-          </span>
-          <output id="se-range-out" for="se-from se-to">1981–2024</output>
-          <button type="button" class="se-btn" id="se-play"><span data-l="en">Play</span><span data-l="vi" lang="vi">Phát</span></button>
-        </div>
-        <div class="se-ctl" role="group" aria-labelledby="se-cls-l">
-          <span class="se-label" id="se-cls-l"><span data-l="en">Strength near Vietnam</span><span data-l="vi" lang="vi">Cường độ gần Việt Nam</span></span>
-          <span class="se-seg"><button type="button" class="se-tog" data-cls="TS" aria-pressed="true"><span data-l="en"><abbr title="Tropical storm">TS</abbr></span><span data-l="vi" lang="vi"><abbr title="Bão nhiệt đới">BNĐ</abbr></span></button><button type="button" class="se-tog" data-cls="C1" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>1</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>1</span></button><button type="button" class="se-tog" data-cls="C2" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>2</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>2</span></button><button type="button" class="se-tog" data-cls="C3" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>3</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>3</span></button><button type="button" class="se-tog" data-cls="C4" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>4</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>4</span></button><button type="button" class="se-tog" data-cls="C5" aria-pressed="true"><span data-l="en"><span class="sr-only">Category </span>5</span><span data-l="vi" lang="vi"><span class="sr-only">Cấp </span>5</span></button><button type="button" class="se-tog" data-cls="W" aria-pressed="true"><span data-l="en">Weaker / no data</span><span data-l="vi" lang="vi">Yếu hơn / không có số liệu</span></button></span>
-        </div>
-        <div class="se-ctl">
+    <div class="se-live">
+      <div class="se-top se-text">
+        <div class="se-find">
           <label class="se-label" for="se-q"><span data-l="en">Find a storm</span><span data-l="vi" lang="vi">Tìm cơn bão</span></label>
-          <input type="search" id="se-q" list="se-list" autocomplete="off" spellcheck="false"><datalist id="se-list"></datalist>
+          <input type="text" id="se-q" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="se-sugg" autocomplete="off" spellcheck="false">
+          <ul class="se-sugg" id="se-sugg" role="listbox" hidden></ul>
+        </div>
+        <div class="se-picks" id="se-picks" role="group" aria-labelledby="se-picks-l"><span class="se-label" id="se-picks-l"><span data-l="en">Suggested</span><span data-l="vi" lang="vi">Gợi ý</span></span></div>
+      </div>
+      <div class="se-main">
+        <div class="se-map"></div>
+        <div class="se-bar se-text">
+          <button type="button" class="se-btn" id="se-play"><span data-l="en">Play</span><span data-l="vi" lang="vi">Phát</span></button>
+          <span class="se-clock" id="se-clock"></span>
+          <button type="button" class="se-link" id="se-reset"><span data-l="en">Reset view</span><span data-l="vi" lang="vi">Đặt lại</span></button>
         </div>
       </div>
-      <div class="se-meta"><span id="se-count" aria-live="polite"></span><button type="button" class="se-link" id="se-reset"><span data-l="en">Reset view</span><span data-l="vi" lang="vi">Đặt lại</span></button></div>
       <p class="se-info" id="se-info" aria-live="polite"></p>
+      <div class="se-flt se-text">
+        <div class="se-filter" role="group" aria-labelledby="se-cls-l">
+          <span class="se-label" id="se-cls-l"><span data-l="en">Category when near Vietnam</span><span data-l="vi" lang="vi">Cấp bão khi gần Việt Nam</span></span>
+          <span class="se-seg"><button type="button" data-cls="TS" aria-pressed="true"><span data-l="en">TS</span><span data-l="vi" lang="vi">BNĐ</span></button><button type="button" data-cls="C1" aria-pressed="true"><span data-l="en">1</span><span data-l="vi" lang="vi">C1</span></button><button type="button" data-cls="C2" aria-pressed="true"><span data-l="en">2</span><span data-l="vi" lang="vi">C2</span></button><button type="button" data-cls="C3" aria-pressed="true"><span data-l="en">3</span><span data-l="vi" lang="vi">C3</span></button><button type="button" data-cls="C4" aria-pressed="true"><span data-l="en">4</span><span data-l="vi" lang="vi">C4</span></button><button type="button" data-cls="C5" aria-pressed="true"><span data-l="en">5</span><span data-l="vi" lang="vi">C5</span></button><button type="button" data-cls="W" aria-pressed="true"><span data-l="en">Weaker / no data</span><span data-l="vi" lang="vi">Yếu hơn / không có số liệu</span></button></span>
+        </div>
+        <p class="se-hint"><span data-l="en">Turn categories on or off to filter the timeline.</span><span data-l="vi" lang="vi">Bật hoặc tắt từng cấp để lọc trục thời gian.</span></p>
+        <details class="se-key">
+          <summary><span data-l="en">What do the categories mean?</span><span data-l="vi" lang="vi">Các cấp bão nghĩa là gì?</span></summary>
+          <div class="se-key-scroll" tabindex="0" role="group" aria-labelledby="se-key-cap">
+          <table>
+            <caption class="sr-only" id="se-key-cap"><span data-l="en">Storm categories</span><span data-l="vi" lang="vi">Các cấp bão</span></caption>
+            <thead><tr><th scope="col"><span data-l="en">Category</span><span data-l="vi" lang="vi">Cấp bão</span></th><th scope="col">m/s</th><th scope="col">km/h</th><th scope="col"><span data-l="en">Beaufort</span><span data-l="vi" lang="vi">Cấp gió (Beaufort)</span></th><th scope="col"><span data-l="en">Typical damage</span><span data-l="vi" lang="vi">Thiệt hại thường gặp</span></th></tr></thead>
+            <tbody>
+            <tr><th scope="row"><span data-l="en">Tropical storm</span><span data-l="vi" lang="vi">Bão nhiệt đới</span></th><td>17–32</td><td>61–115</td><td>8–11</td><td><span data-l="en">Broken branches, damage to weak structures</span><span data-l="vi" lang="vi">Gãy cành cây, hư hại công trình yếu</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Cat 1</span><span data-l="vi" lang="vi">Cấp 1</span></th><td>33–42</td><td>119–151</td><td>12–13</td><td><span data-l="en">Some roof and tree damage, power cuts</span><span data-l="vi" lang="vi">Tốc mái một phần, đổ cây, mất điện</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Cat 2</span><span data-l="vi" lang="vi">Cấp 2</span></th><td>43–49</td><td>155–176</td><td>14–15</td><td><span data-l="en">Extensive roof damage, many trees uprooted</span><span data-l="vi" lang="vi">Tốc mái diện rộng, nhiều cây bật gốc</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Cat 3</span><span data-l="vi" lang="vi">Cấp 3</span></th><td>50–57</td><td>180–205</td><td>16–17</td><td><span data-l="en">Devastating: well-built houses damaged</span><span data-l="vi" lang="vi">Tàn phá: nhà kiên cố cũng bị hư hại</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Cat 4</span><span data-l="vi" lang="vi">Cấp 4</span></th><td>58–69</td><td>209–248</td><td><span data-l="en">above 17</span><span data-l="vi" lang="vi">trên 17</span></td><td><span data-l="en">Catastrophic: most roofs and walls lost</span><span data-l="vi" lang="vi">Thảm khốc: phần lớn mái và tường bị phá hủy</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Cat 5</span><span data-l="vi" lang="vi">Cấp 5</span></th><td>70+</td><td>252+</td><td><span data-l="en">above 17</span><span data-l="vi" lang="vi">trên 17</span></td><td><span data-l="en">Catastrophic: most buildings destroyed</span><span data-l="vi" lang="vi">Thảm khốc: phần lớn công trình bị phá hủy</span></td></tr>
+            <tr><th scope="row"><span data-l="en">Weaker / no data</span><span data-l="vi" lang="vi">Yếu hơn / không có số liệu</span></th><td><span data-l="en">below 17</span><span data-l="vi" lang="vi">dưới 17</span></td><td><span data-l="en">below 61</span><span data-l="vi" lang="vi">dưới 61</span></td><td><span data-l="en">below 8</span><span data-l="vi" lang="vi">dưới 8</span></td><td><span data-l="en">Below storm force near Vietnam, or no wind record</span><span data-l="vi" lang="vi">Dưới sức gió bão khi gần Việt Nam, hoặc không có số liệu gió</span></td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p><span data-l="en">Categories follow the Saffir-Simpson scale (1-minute sustained wind). Vietnam's weather service reports storms on the Beaufort scale (cấp gió), so a Cat 1 storm is roughly a cấp 12–13 storm.</span><span data-l="vi" lang="vi">Các cấp theo thang Saffir-Simpson (gió duy trì 1 phút). Trung tâm Dự báo Khí tượng Thủy văn Việt Nam dùng thang Beaufort (cấp gió), nên bão cấp 1 tương đương khoảng bão cấp 12–13.</span></p>
+        </details>
+      </div>
+      <div class="se-tl"></div>
     </div>
-    <div class="se-map se-live"></div>
-    <div class="se-scatter se-live"></div>
-    <noscript><img class="se-fallback" src="assets/storm_map_static.png" width="1600" height="1753" alt="Map of tropical storm tracks near Vietnam, 1981 to 2024, over night-time light in 2025, with Damrey 2017 highlighted."></noscript>
-    <figcaption class="se-text" id="se-cap">
-      <p class="se-cap"><span data-l="en">Tropical storms that passed within 200 km of Vietnam, 1981 to 2024 (IBTrACS), over night-time light in 2025 (NPP-VIIRS-like, Chen et al. 2021). Night-time light is a common proxy for local economic activity. Storms of similar strength pass near very different amounts of it.</span><span data-l="vi" lang="vi">Các cơn bão nhiệt đới đi qua trong phạm vi 200 km quanh Việt Nam, 1981 đến 2024 (IBTrACS), trên nền ánh sáng ban đêm năm 2025 (NPP-VIIRS-like, Chen và cộng sự 2021). Ánh sáng ban đêm thường được dùng làm thước đo gần đúng cho hoạt động kinh tế địa phương. Những cơn bão có cường độ tương tự có thể đi gần những vùng có mức hoạt động kinh tế rất khác nhau.</span></p>
-      <p class="small"><span data-l="en">Light share counts only the parts of a track where the storm was at tropical-storm strength (34 kt) or above, and uses 2025 lights for every storm, so it shows where activity is today, not when the storm hit. Wind: USA agency, 1-minute sustained; for the 3 storms without it, the Japan Meteorological Agency via WMO, 10-minute sustained.</span><span data-l="vi" lang="vi">Tỷ lệ ánh sáng chỉ tính những đoạn đường đi khi bão còn ở cường độ bão nhiệt đới (34 kt) trở lên, và dùng dữ liệu năm 2025 cho mọi cơn bão, nên phản ánh phân bố hoạt động kinh tế hiện nay, không phải lúc bão đi qua. Sức gió: theo cơ quan Hoa Kỳ, gió duy trì 1 phút; 3 cơn bão không có số liệu này dùng số liệu của Cơ quan Khí tượng Nhật Bản qua WMO, gió duy trì 10 phút.</span></p>
-      <p class="small"><span data-l="en">Data:</span><span data-l="vi" lang="vi">Dữ liệu:</span> <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a> (NOAA NCEI); <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like</a> <span data-l="en">night-time light</span><span data-l="vi" lang="vi">ánh sáng ban đêm</span> (Chen <span data-l="en">et al.</span><span data-l="vi" lang="vi">và cộng sự</span> 2021); <a href="https://www.naturalearthdata.com/">Natural Earth</a> <span data-l="en">land</span><span data-l="vi" lang="vi">đất liền</span>.</p>
+    <noscript><img class="se-fallback" src="assets/storm_map_static.png" width="1600" height="1753" alt="Map of the wind field and track of Damrey 2017 over night-time light in 2025."></noscript>
+    <figcaption id="se-cap">
+      <p class="se-cap"><span data-l="en">Tropical storms that passed within 200 km of Vietnam, 1981 to 2024. Lines show the highest wind each place felt during the storm, over night-time light in 2025, a common proxy for local economic activity. Search for a storm, or pick one from the suggestions or the timeline.</span><span data-l="vi" lang="vi">Các cơn bão nhiệt đới đi qua trong phạm vi 200 km quanh Việt Nam, 1981 đến 2024. Các đường thể hiện sức gió lớn nhất mà mỗi nơi phải chịu trong suốt cơn bão, trên nền ánh sáng ban đêm năm 2025, một thước đo gần đúng thường dùng cho hoạt động kinh tế địa phương. Tìm một cơn bão, hoặc chọn từ danh sách gợi ý hay trục thời gian.</span></p>
+      <p class="small"><span data-l="en">Tracks: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a>. Wind field: Holland (1980) model at hourly resolution, from ongoing work with Laura Bakkensen, Christian Matthes and Toan Phan (preliminary). Night lights: <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like, Chen et al. (2021)</a>.</span><span data-l="vi" lang="vi">Đường đi: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a>. Trường gió: mô hình Holland (1980) theo từng giờ, từ nghiên cứu đang thực hiện cùng Laura Bakkensen, Christian Matthes và Toan Phan (sơ bộ). Ánh sáng ban đêm: <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like, Chen và cộng sự (2021)</a>.</span></p>
     </figcaption>
   </figure>
 

@@ -86,7 +86,8 @@
     O.mbox = A.el("div", "ao-months");
     O.mbox.hidden = true;
     O.mbox.setAttribute("aria-hidden", "true");
-    box.appendChild(O.mbox);
+    // narrow screens: the month bars sit under the map, not on it
+    if (O.w < 600) box.parentNode.insertBefore(O.mbox, box.nextSibling); else box.appendChild(O.mbox);
     O.proj = d3.geoEqualEarth().rotate([-165, 0]).fitExtent([[2, 2], [w - 2, h - 2]], { type: "Sphere" });
     // projected tracks, split where they cross the map edge
     O.tracks = O.lite.map(function (co, i) {
@@ -136,7 +137,7 @@
       if (!O.st[b] || O.st[b].n < 10) return;
       var p = O.proj(LABEL_AT[b]), e = A.el("span", "ao-lab", A.tx().basin[b]);
       e.style.color = d3.color(A.BAS[b]).darker(0.5).formatHex();
-      if (by) { // big: storms formed this month in this basin; small: this year
+      if (by && O.w >= 600) { // big: storms formed this month in this basin; small: this year (narrow screens: in the legend)
         var m = (bm || {})[b] || 0, c = A.el("span", "ao-lab-n");
         var big = A.el("strong", null, String(m));
         big.style.color = e.style.color;
@@ -287,7 +288,9 @@
       });
       O.mon = O.monTot.map(function (v, k) { return k <= mi ? v : 0; });
       paintBase(true);
+      O.bm = bm;
       labels(O.byB, bm);
+      legText();
     }
     if (snap) { c.clearRect(0, 0, O.w, O.h); O.active.forEach(function (a) { a.lp = null; }); }
     c.lineWidth = O.w < 600 ? 1.3 : 1.8; c.lineCap = "round"; c.globalAlpha = 0.95;
@@ -416,12 +419,18 @@
     table();
   }
   // basin counts: for one season during Play, for the whole period otherwise
+  // narrow screens during Play: the legend carries the counts the map labels carry on wide screens
+  function playLine(b) {
+    var m = (O.bm || {})[b] || 0, y = (O.byB || {})[b] || 0, vi = A.lang() === "vi";
+    var mn = vi ? (O.lastMi + 1) + "/" + O.curY : A.TXT.en.mon[O.lastMi] + " " + O.curY;
+    return A.tx().basin[b] + " · " + m + (vi ? " cơn trong tháng " : " in ") + mn + " · " + y + (vi ? " trong năm " : " in ") + O.curY;
+  }
   function legText(by) {
     Array.prototype.forEach.call(leg.children, function (bt) {
       var b = bt.getAttribute("data-b");
       var n = by ? by[b] || 0 : O.st[b].n;
       // during Play the counts sit on the map, so the legend keeps only the names
-      bt.lastChild.textContent = O.mode === "play" ? A.tx().basin[b] : A.tx().basin[b] + " · " + n.toLocaleString(A.lang()) + " " + (n === 1 && A.lang() === "en" ? "storm" : tt().tot);
+      bt.lastChild.textContent = O.mode === "play" ? (O.w < 600 && O.byB ? playLine(b) : A.tx().basin[b]) : A.tx().basin[b] + " · " + n.toLocaleString(A.lang()) + " " + (n === 1 && A.lang() === "en" ? "storm" : tt().tot);
     });
   }
   function table() {

@@ -503,7 +503,7 @@
       O.cv.setAttribute("role", "img");
       cbox.appendChild(O.cv);
       O.w = w; O.h = h; O.dpr = dpr;
-      O.proj = d3.geoEqualEarth().rotate([-150, 0]).fitExtent([[2, 2], [w - 2, h - 2]], { type: "Sphere" });
+      O.proj = d3.geoEqualEarth().rotate([-165, 0]).fitExtent([[2, 2], [w - 2, h - 2]], { type: "Sphere" });
       paint();
     }
     function paint() {

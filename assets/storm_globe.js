@@ -231,7 +231,7 @@
     st.sel.forEach(function (s) {
       var f = fields[s.id];
       if (f && f.iso) f.iso.forEach(function (o) {
-        G.fld.append("path").attr("class", "sg-fill").attr("d", path(o.p)).attr("fill", s.col);
+        G.fld.append("path").attr("class", "sg-fill").attr("d", path(o.p)).style("fill", s.col);
         G.fld.append("path").attr("d", path(o.g)).attr("stroke", s.col).attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)])
           .classed("is-ts", o.lev === 17);
       });

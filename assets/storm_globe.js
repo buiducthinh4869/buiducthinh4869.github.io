@@ -231,6 +231,7 @@
     st.sel.forEach(function (s) {
       var f = fields[s.id];
       if (f && f.iso) f.iso.forEach(function (o) {
+        G.fld.append("path").attr("class", "sg-fill").attr("d", path(o.p)).attr("fill", s.col);
         G.fld.append("path").attr("d", path(o.g)).attr("stroke", s.col).attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)])
           .classed("is-ts", o.lev === 17);
       });
@@ -351,9 +352,14 @@
   function iso(f, vals) {
     var pt = function (c) { return [f.b[0] + (c[0] - 1) * f.res, f.b[3] - (c[1] - 1) * f.res]; };
     return d3.contours().size([f.n2, f.m2]).thresholds(LEVELS)(vals).map(function (mp) {
-      var lines = [];
-      mp.coordinates.forEach(function (poly) { poly.forEach(function (r) { lines.push(r.map(pt)); }); });
-      return { lev: mp.value, g: { type: "MultiLineString", coordinates: lines } };
+      var lines = [], polys = [];
+      mp.coordinates.forEach(function (poly) {
+        var rings = poly.map(function (r) { return r.map(pt); });
+        rings.forEach(function (r) { lines.push(r); });
+        if (d3.geoArea({ type: "Polygon", coordinates: rings }) > 2 * Math.PI) rings.forEach(function (r) { r.reverse(); });
+        polys.push(rings);
+      });
+      return { lev: mp.value, g: { type: "MultiLineString", coordinates: lines }, p: { type: "MultiPolygon", coordinates: polys } };
     }).filter(function (o) { return o.g.coordinates.length; });
   }
 
@@ -386,7 +392,7 @@
 
   // ------------------------------------------------------------------ side panel
   function matches() {
-    var out = IX.storms.filter(function (s) { return A.inRegion(s) && (A.st.year == null || s.season === A.st.year); });
+    var out = IX.storms.filter(function (s) { return (st.scope === "all" || A.inRegion(s)) && (A.st.year == null || s.season === A.st.year); });
     return out.sort(st.sort === "new" ? function (a, b) { return b.t - a.t; } : function (a, b) { return b.vmax_ms - a.vmax_ms || b.t - a.t; });
   }
   function refresh() {
@@ -534,6 +540,13 @@
       b.addEventListener("click", function () {
         st.sort = b.getAttribute("data-sort");
         Array.prototype.forEach.call(fig.querySelectorAll("[data-sort]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        refresh();
+      });
+    });
+    Array.prototype.forEach.call(fig.querySelectorAll("[data-scope]"), function (b) {
+      b.addEventListener("click", function () {
+        st.scope = b.getAttribute("data-scope");
+        Array.prototype.forEach.call(fig.querySelectorAll("[data-scope]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
         refresh();
       });
     });

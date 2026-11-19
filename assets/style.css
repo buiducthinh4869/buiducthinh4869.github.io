@@ -544,8 +544,9 @@ html:not(.js) .storm-explorer .se-live,
 .sg-svg.is-drag { cursor: grabbing; }
 .sg-svg:focus { outline: none; }
 .sg-svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.sg-field path { fill: none; stroke-width: 1px; stroke-linejoin: round; }
-.sg-field path.is-ts { stroke-dasharray: 4 3; }
+.sg-field path { fill: none; stroke-width: 1.3px; stroke-linejoin: round; }
+.sg-field path.sg-fill { stroke: none; fill-opacity: 0.07; } /* five stacked levels: about 30% at the core */
+.sg-field path.is-ts { stroke-dasharray: 4 3; stroke-width: 1px; }
 .sg-trk path { fill: none; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
 .sg-svg .se-storm circle, .sg-svg .se-storm path { stroke: currentColor; }
 .sg-zoom { display: inline-flex; gap: 0.3rem; }
@@ -642,6 +643,15 @@ html:not(.js) .storm-explorer .se-live,
 .ao-legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .at-overview .se-key table { min-width: 34rem; }
 
+/* search bar: stays at the top of the screen through sections 2 and 3, which it scopes */
+.at-bar {
+  position: sticky; top: 0; z-index: 15; background: var(--paper); border-bottom: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.5rem; padding: 0.6rem 0; margin: 0 0 2rem;
+}
+.at-bar .at-region { margin: 0; }
+.at-bar .at-find { flex: 0 1 26rem; }
+.at-bar .at-combo { flex: 1 1 auto; }
+.at-bar .at-find > .se-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .at-find { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.7rem; max-width: none; }
 .at-combo { position: relative; flex: 0 1 26rem; }
 .at-combo input {

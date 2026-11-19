@@ -52,17 +52,22 @@
     </figure>
   </section>
 
-  <section class="at-sec" id="at-explore" aria-labelledby="h-near">
-    <div class="at-head">
-    <h2 id="h-near"><span data-l="en">2. Which storms came near a place?</span><span data-l="vi" lang="vi">2. Những cơn bão nào đã đi gần một nơi?</span></h2>
-    <div><div class="at-find se-text">
+  <div class="at-scope">
+  <div class="at-bar">
+    <div class="at-find se-text">
       <label class="se-label" for="at-q"><span data-l="en">Find a country, ocean basin or storm</span><span data-l="vi" lang="vi">Tìm một quốc gia, vùng biển hoặc cơn bão</span></label>
       <div class="at-combo">
         <input type="text" id="at-q" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="at-sugg" autocomplete="off" spellcheck="false">
         <ul class="at-sugg" id="at-sugg" role="listbox" hidden></ul>
       </div>
     </div>
-    <p class="at-region se-text" id="at-region" aria-live="polite"></p></div>
+    <p class="at-region se-text" id="at-region" aria-live="polite"></p>
+  </div>
+
+  <section class="at-sec" id="at-explore" aria-labelledby="h-near">
+    <div class="at-head">
+    <h2 id="h-near"><span data-l="en">2. Which storms came near a place?</span><span data-l="vi" lang="vi">2. Những cơn bão nào đã đi gần một nơi?</span></h2>
+    <p class="at-how"><span data-l="en">Each dot or bar below follows the place chosen in the search bar.</span><span data-l="vi" lang="vi">Các chấm hoặc cột bên dưới đi theo nơi đang chọn ở thanh tìm kiếm.</span></p>
     </div>
     <figure class="at-timeline">
       <h3 class="atl-title" id="atl-title"></h3>
@@ -84,6 +89,10 @@
           <div class="sg-sort" role="group" aria-labelledby="sg-sort-l"><span class="se-label" id="sg-sort-l"><span data-l="en">Order</span><span data-l="vi" lang="vi">Sắp xếp</span></span>
             <span class="se-seg"><button type="button" data-sort="new" aria-pressed="true"><span data-l="en">Newest</span><span data-l="vi" lang="vi">Mới nhất</span></button><button type="button" data-sort="max" aria-pressed="false"><span data-l="en">Strongest</span><span data-l="vi" lang="vi">Mạnh nhất</span></button></span>
           </div>
+          <div class="sg-sort" role="group" aria-labelledby="sg-scope-l"><span class="se-label" id="sg-scope-l"><span data-l="en">Show</span><span data-l="vi" lang="vi">Hiện</span></span>
+            <span class="se-seg"><button type="button" data-scope="region" aria-pressed="true"><span data-l="en">This region</span><span data-l="vi" lang="vi">Khu vực đang chọn</span></button><button type="button" data-scope="all" aria-pressed="false"><span data-l="en">Anywhere</span><span data-l="vi" lang="vi">Toàn thế giới</span></button></span>
+          </div>
+          <p class="se-hint"><span data-l="en">Chosen storms stay on the globe when you switch, so you can compare storms from different regions.</span><span data-l="vi" lang="vi">Các cơn đã chọn vẫn ở trên quả địa cầu khi bạn chuyển, nên có thể so sánh bão ở các khu vực khác nhau.</span></p>
           <ul class="sg-list" id="sg-list"></ul>
           <p class="se-hint" id="sg-more" aria-live="polite"></p>
         </div>
@@ -100,6 +109,8 @@
       </div>
     </figure>
   </section>
+
+  </div>
 
   <section class="at-sec at-about" aria-labelledby="h-about">
     <div class="at-head">

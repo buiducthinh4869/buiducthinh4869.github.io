@@ -635,6 +635,9 @@ html:not(.js) .storm-explorer .se-live,
 .ao-speed { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); }
 .ao-speed input { width: 8rem; accent-color: var(--accent); }
 .ao-speed output { min-width: 2.6rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.se-btn.ao-step { padding: 0 0.6rem; min-width: 0; }
+.ao-seek { display: block; width: 100%; margin: 0 0 0.6rem; accent-color: var(--accent); }
+.ao-seek[hidden], .ao-bar [hidden] { display: none; }
 .ao-range { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--muted); }
 .ao-year { font-variant-numeric: tabular-nums; color: var(--muted); }
 .ao-year strong { color: var(--ink); font-weight: 500; font-size: 1.05rem; }

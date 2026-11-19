@@ -11,17 +11,18 @@
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LABEL_AT = { WP: [150, 33], NA: [-42, 36], EP: [-128, 4], NI: [72, 2], SI: [62, -33], SP: [178, -36], SA: [-25, -30] };
   var TX = {
-    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms this year", tot: "storms",
+    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms this year", tot: "storms", pause2: "Pause", resume2: "Resume", back: "◀ 1 month", fwd: "1 month ▶",
       card: { n: "{n} storms in {a}–{b}, about {m} a season", busy: "Busiest season: {y} ({n} storms)", top: "Strongest: {s}, {v} m/s ({k} km/h)",
         major: "Category 3 or stronger: {n} ({p}%)", cy: "Most storms near one place in one season: {c}, {y} ({n})", go: "Click to list its storms" },
       map: "Map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed." },
-    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão trong năm", tot: "cơn bão",
+    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão trong năm", tot: "cơn bão", pause2: "Tạm dừng", resume2: "Tiếp tục", back: "◀ 1 tháng", fwd: "1 tháng ▶",
       card: { n: "{n} cơn bão trong {a}–{b}, khoảng {m} cơn mỗi mùa", busy: "Mùa nhiều bão nhất: {y} ({n} cơn)", top: "Mạnh nhất: {s}, {v} m/s ({k} km/h)",
         major: "Từ cấp 3 trở lên: {n} ({p}%)", cy: "Nhiều bão nhất gần một nơi trong một mùa: {c}, {y} ({n} cơn)", go: "Bấm để xem danh sách bão của vùng này" },
       map: "Bản đồ đường đi của mọi cơn bão nhiệt đới từ 1981 đến 2024, tô màu theo vùng biển nơi bão hình thành." }
   };
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
+  var seek = document.getElementById("ao-seek");
   var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.18 }; // speed 1 = 0.9 s per season; the slider sets 1 to 30 s (5 s by default)
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
@@ -214,7 +215,7 @@
   function frame(now) {
     O.raf = null;
     if (!O.vis || (O.paused && O.mode !== "play")) { O.run = false; return; }
-    if (O.mode === "play") playStep(now);
+    if (O.mode === "play") { if (O.hold) { O.run = false; return; } playStep(now); }
     step();
     if (O.dirty) { O.dirty = false; paintBase(true); }
     O.run = true;
@@ -224,27 +225,123 @@
 
   // ------------------------------------------------------------------ Play 44 seasons: each season in 0.9 s, storms start in their order within the season
   var SLOT = 900;
+  // Play works like a video: the state at play time t (in season slots) is computed from t alone, so it can pause,
+  // step a month back or forward, or jump anywhere with the scrubber
+  var MO = SLOT / 12, CROSS = 0.8;
   function playStart() {
     var ya = +document.getElementById("ao-y0").value, yb = +document.getElementById("ao-y1").value;
     O.ya = Math.min(ya, yb); O.yb = Math.max(ya, yb);
-    O.curY = null; O.mode = "play"; legText(); O.tt = 0; O.last = performance.now(); O.next = 0; O.count = 0;
-    O.tracks.forEach(function (tr) { tr.done = false; });
-    var y0 = A.IX.meta.seasons[0];
-    y0 = O.ya;
+    O.mode = "play"; O.hold = false; O.tt = 0; O.last = performance.now(); O.curY = null; O.hi = null;
+    legText();
     // calendar years (January to December in both hemispheres), so the months line up; a storm counts in the year it formed
-    O.tracks.forEach(function (tr) { var d = new Date(tr.s.t); tr.yr = d.getUTCFullYear(); tr.mo = d.getUTCMonth(); });
-    O.queue = O.tracks.filter(function (tr) { return tr.segs.length && tr.yr >= O.ya && tr.yr <= O.yb; }).map(function (tr) {
+    O.byYear = {};
+    O.tracks.forEach(function (tr) {
+      var d = new Date(tr.s.t); tr.yr = d.getUTCFullYear(); tr.mo = d.getUTCMonth(); tr.done = false; tr.lp = null;
+      if (!tr.segs.length || tr.yr < O.ya || tr.yr > O.yb) return;
       var a = Date.UTC(tr.yr, 0, 1), u = Math.max(0, Math.min(0.995, (tr.s.t - a) / (Date.UTC(tr.yr + 1, 0, 1) - a)));
-      return { tr: tr, at: (tr.yr - y0 + u) * SLOT };
-    }).sort(function (a, b) { return a.at - b.at; });
+      (O.byYear[tr.yr] = O.byYear[tr.yr] || []).push({ tr: tr, at: (tr.yr - O.ya + u) * SLOT });
+    });
+    O.end = (O.yb - O.ya + 1) * SLOT;
     O.comets = [];
-    O.hi = null;
-    paintBase(true);
-    O.top.getContext("2d").clearRect(0, 0, O.w, O.h);
-    yearEl.hidden = false;
-    playB.textContent = tt().stop;
+    seek.max = (O.yb - O.ya + 1) * 12 - 1;
+    ctrls(true);
+    stateAt(0, true);
     kick();
   }
+  function partial(c, tr, dist) { // the track from its start to distance dist
+    var left = dist;
+    tr.segs.forEach(function (g) {
+      if (left <= 0) return;
+      c.beginPath(); c.moveTo(g[0][0], g[0][1]);
+      for (var k = 1; k < g.length; k++) {
+        if (g.d[k] >= left) { var u = (left - g.d[k - 1]) / ((g.d[k] - g.d[k - 1]) || 1); c.lineTo(g[k - 1][0] + u * (g[k][0] - g[k - 1][0]), g[k - 1][1] + u * (g[k][1] - g[k - 1][1])); break; }
+        c.lineTo(g[k][0], g[k][1]);
+      }
+      c.stroke();
+      left -= g.d[g.length - 1];
+    });
+  }
+  // snap: redraw the moving storms from scratch (after a pause, a step or a jump); otherwise extend their streaks
+  function stateAt(t, snap) {
+    var y = Math.min(O.yb, O.ya + Math.floor(t / SLOT)), c = O.top.getContext("2d"), dirty = false;
+    if (y !== O.curY) {
+      O.curY = y; snap = true;
+      var by = {}, n = 0;
+      O.monTot = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      O.tracks.forEach(function (tr) { if (tr.yr === y) { by[tr.s.basin] = (by[tr.s.basin] || 0) + 1; n++; O.monTot[tr.mo]++; } });
+      O.seasonN = n;
+      labels(by);
+      O.tracks.forEach(function (tr) { if (tr.yr !== y) tr.done = false; });
+      dirty = true; // a new year always repaints the base: only this year's finished tracks
+    }
+    if (snap) c.clearRect(0, 0, O.w, O.h);
+    c.lineWidth = O.w < 600 ? 1.1 : 1.5; c.lineCap = "round"; c.lineJoin = "round"; c.globalAlpha = 0.9;
+    O.mon = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    (O.byYear[y] || []).forEach(function (it) {
+      var tr = it.tr, f = (t - it.at) / (CROSS * SLOT);
+      if (f < 0) { if (tr.done) { tr.done = false; dirty = true; } tr.lp = null; return; }
+      O.mon[tr.mo]++;
+      var done = f >= 1;
+      if (done !== tr.done) { tr.done = done; dirty = true; }
+      if (done) { tr.lp = null; return; }
+      var p = at(tr, f * tr.len);
+      if (!p) return;
+      c.strokeStyle = tr.col;
+      if (snap) partial(c, tr, f * tr.len);
+      else if (tr.lp && tr.lp.seg === p.seg) { c.beginPath(); c.moveTo(tr.lp.x, tr.lp.y); c.lineTo(p.x, p.y); c.stroke(); }
+      tr.lp = p;
+    });
+    c.globalAlpha = 1;
+    if (dirty) paintBase(true);
+    var mi = Math.min(11, Math.max(0, Math.floor((t / SLOT - (y - O.ya)) * 12)));
+    months(mi);
+    yearEl.textContent = "";
+    yearEl.appendChild(A.el("strong", null, String(y) + " · " + (A.lang() === "vi" ? "tháng " + (mi + 1) : A.TXT.en.mon[mi])));
+    yearEl.appendChild(document.createTextNode(" · " + O.seasonN.toLocaleString(A.lang()) + " " + tt().so));
+    seek.value = Math.floor(t / MO);
+  }
+  function playStep(now) {
+    O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
+    if (O.tt >= O.end) { playEnd(); return; }
+    stateAt(O.tt, false);
+  }
+  function jump(t) {
+    O.tt = Math.max(0, Math.min(O.end - 1, t));
+    O.last = performance.now();
+    stateAt(O.tt, true);
+  }
+  function pauseToggle() {
+    O.hold = !O.hold;
+    O.last = performance.now();
+    if (!O.hold) { stateAt(O.tt, true); kick(); }
+    playLabel();
+  }
+  function playLabel() { playB.textContent = O.mode !== "play" ? tt().play : O.hold ? tt().resume2 : tt().pause2; }
+  function ctrls(on) {
+    ["ao-back", "ao-fwd", "ao-stop", "ao-seek"].forEach(function (id) { document.getElementById(id).hidden = !on; });
+    document.getElementById("ao-back").textContent = tt().back;
+    document.getElementById("ao-fwd").textContent = tt().fwd;
+    document.getElementById("ao-stop").textContent = tt().stop;
+    playLabel();
+  }
+  function playEnd() {
+    O.mode = "ambient"; O.hold = false;
+    O.tracks.forEach(function (tr) { tr.done = false; });
+    paintBase();
+    O.top.getContext("2d").clearRect(0, 0, O.w, O.h);
+    O.comets = [];
+    var n = O.w < 600 ? 220 : 650;
+    for (var i = 0; i < n; i++) O.comets.push(spawn(true));
+    O.curY = null;
+    ctrls(false);
+    labels();
+    legText();
+    O.mbox.hidden = true;
+    summary();
+    if (O.paused) drawStill();
+    kick();
+  }
+
   // the counter line when not playing: the chosen range and its storm count
   function summary() {
     var a = +document.getElementById("ao-y0").value, b = +document.getElementById("ao-y1").value, lo = Math.min(a, b), hi = Math.max(a, b);
@@ -270,57 +367,6 @@
       c.classList.toggle("is-now", i === cur);
     });
   }
-  function playStep(now) {
-    // play time advances at the chosen speed, so changing speed mid-run keeps the place
-    O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
-    var t = O.tt, y0 = O.ya, y1 = O.yb;
-    while (O.next < O.queue.length && O.queue[O.next].at <= t) {
-      var tr = O.queue[O.next++].tr;
-      // each storm crosses its whole track within about 0.8 of a season, so it ends inside its own season
-      O.comets.push({ tr: tr, d: 0, v: Math.max(1.6, tr.len / (SLOT * 0.8 / 16.7)), last: null });
-      O.count++;
-      if (tr.yr === O.curY) O.mon[tr.mo]++;
-    }
-    var y = Math.min(y1, y0 + Math.floor(t / SLOT));
-    if (y !== O.curY) {
-      // a new season: clear the last one, so the map shows only this season's storms
-      O.curY = y;
-      O.comets = O.comets.filter(function (m) { return m.tr.yr === y; });
-      O.top.getContext("2d").clearRect(0, 0, O.w, O.h);
-      paintBase(true);
-      var by = {}, n = 0;
-      O.monTot = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      O.mon = O.monTot.slice();
-      O.tracks.forEach(function (tr) { if (tr.yr === y) { by[tr.s.basin] = (by[tr.s.basin] || 0) + 1; n++; O.monTot[tr.mo]++; } });
-      // storms of this year already started (same frame) count in their month
-      O.comets.forEach(function (m) { O.mon[m.tr.mo]++; });
-      O.seasonN = n;
-      labels(by);
-    }
-    months(Math.min(11, Math.floor((t / SLOT - (y - y0)) * 12)));
-    O.comets = O.comets.filter(function (m) { return !m.dead; });
-    yearEl.textContent = "";
-    var mi = Math.min(11, Math.max(0, Math.floor((t / SLOT - (y - y0)) * 12)));
-    yearEl.appendChild(A.el("strong", null, String(y) + " · " + (A.lang() === "vi" ? "tháng " + (mi + 1) : A.TXT.en.mon[mi])));
-    yearEl.appendChild(document.createTextNode(" · " + O.seasonN.toLocaleString(A.lang()) + " " + tt().so));
-    if (O.next >= O.queue.length && !O.comets.length) playEnd();
-  }
-  function playEnd() {
-    O.mode = "ambient";
-    O.tracks.forEach(function (tr) { tr.done = false; });
-    paintBase();
-    O.comets = [];
-    var n = O.w < 600 ? 220 : 650;
-    for (var i = 0; i < n; i++) O.comets.push(spawn(true));
-    playB.textContent = tt().play;
-    O.curY = null;
-    labels();
-    legText();
-    O.mbox.hidden = true;
-    summary();
-    if (O.paused) drawStill();
-  }
-
   // ------------------------------------------------------------------ hover, legend, table
   function basinAt(x, y) {
     var C = O.cell, cx = Math.floor(x / C), cy = Math.floor(y / C), sum = {}, best = null, bn = 0;
@@ -413,14 +459,18 @@
       sel.addEventListener("change", function () { if (O.mode !== "play") summary(); });
     });
     summary();
-    playB.addEventListener("click", function () { if (O.mode === "play") playEnd(); else playStart(); });
+    playB.addEventListener("click", function () { if (O.mode === "play") pauseToggle(); else playStart(); });
+    document.getElementById("ao-stop").addEventListener("click", playEnd);
+    document.getElementById("ao-back").addEventListener("click", function () { jump(O.tt - MO); });
+    document.getElementById("ao-fwd").addEventListener("click", function () { jump(O.tt + MO); });
+    seek.addEventListener("input", function () { if (O.mode === "play") jump(+seek.value * MO + 1); });
     var sp = document.getElementById("ao-speed"), spv = document.getElementById("ao-speed-v");
     sp.addEventListener("input", function () { O.speed = 0.9 / +sp.value; spv.textContent = sp.value + " s"; });
     motB.addEventListener("click", function () {
       O.paused = !O.paused;
       motB.textContent = O.paused ? tt().resume : tt().pause;
-      paintBase();
-      if (O.paused) drawStill(); else kick();
+      if (O.mode === "play") stateAt(O.tt, true); // Play keeps its own map: only this year's storms
+      else { paintBase(); if (O.paused) drawStill(); else kick(); }
     });
     if (window.IntersectionObserver) new IntersectionObserver(function (es) { O.vis = es[0].isIntersecting; kick(); }).observe(box);
     var lw = box.clientWidth, rt;
@@ -430,7 +480,7 @@
     });
     document.addEventListener("langchange", function () {
       labels(); legText(); table(); if (O.mode !== "play") summary();
-      playB.textContent = O.mode === "play" ? tt().stop : tt().play;
+      if (O.mode === "play") { ctrls(true); O.curY = null; stateAt(O.tt, true); } else playLabel(); // curY reset rebuilds the year's counts on the map
       motB.textContent = O.paused ? tt().resume : tt().pause;
       O.base.setAttribute("aria-label", tt().map);
     });

@@ -550,6 +550,10 @@ html:not(.js) .storm-explorer .se-live,
 .sg-trk path { fill: none; stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; }
 .sg-svg .se-storm circle, .sg-svg .se-storm path { stroke: currentColor; }
 .sg-zoom { display: inline-flex; gap: 0.3rem; }
+.sg-ramp { position: absolute; right: 8px; bottom: 8px; z-index: 2; pointer-events: none; font-size: 0.7rem; color: var(--muted); width: 9rem; text-align: center; background: rgba(250, 249, 245, 0.85); padding: 3px 6px; border-radius: 3px; }
+.sg-ramp-bar { display: flex; height: 6px; margin: 2px 0; border-radius: 2px; overflow: hidden; }
+.sg-ramp-bar span { flex: 1; }
+.sg-ramp-lh { display: flex; justify-content: space-between; }
 .se-btn.sg-z { min-width: 32px; padding: 0; }
 .sg-info p { margin: 0 0 0.4rem; }
 .sg-info .se-link { font-family: var(--sans); font-size: 0.8125rem; }

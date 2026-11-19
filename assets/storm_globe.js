@@ -18,7 +18,7 @@
     en: {
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
       nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}. Narrow the search to see the rest.",
-      play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
+      ramp: ["Night-time light", "low", "high"], play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
       ov: "World map of all tropical storm tracks, coloured by ocean basin."
@@ -26,7 +26,7 @@
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}. Thu hẹp tìm kiếm để xem phần còn lại.",
-      play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
+      ramp: ["Ánh sáng ban đêm", "thấp", "cao"], play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
       ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
     }
@@ -87,6 +87,7 @@
     for (i = 0; i < NB; i++) raw.push([]);
     binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
     LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: pack(raw) };
+    ramp();
     TL.on = new Uint8Array(TW * 15);
     TL.list = {};
     ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });
@@ -124,6 +125,8 @@
     root.selectAll("*").remove();
     G.cv = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.cx = G.cv.getContext("2d");
+    G.ramp = root.append("div").attr("class", "sg-ramp se-text").attr("aria-hidden", "true").node();
+    ramp();
     G.lc = document.createElement("canvas");
     G.lc.width = w * dpr; G.lc.height = h * dpr;
     var svg = G.svg = root.append("svg").attr("class", "sg-svg").attr("viewBox", "0 0 " + w + " " + h)
@@ -533,7 +536,20 @@
     else if (r[0] === "b") fly(A.BAT[r.slice(2)][0], A.BAT[r.slice(2)][1], 1.6);
     else { var c = IX.countries[+r.slice(2)]; fly(c[2], c[3], Math.min(3, 40 / Math.max(2, c[4]))); }
   }
-  function labels() { G.svg.attr("aria-label", tx().map); refresh(); }
+  // key for the night lights: the same colour steps as drawn, low to high
+  function ramp() {
+    if (!LT || !G.ramp) return;
+    var T = tx().ramp, r = G.ramp;
+    r.textContent = "";
+    r.appendChild(A.el("span", "sg-ramp-t", T[0]));
+    var bar = A.el("span", "sg-ramp-bar");
+    LT.cols.forEach(function (c) { var k = A.el("span"); k.style.background = c; bar.appendChild(k); });
+    r.appendChild(bar);
+    var lh = A.el("span", "sg-ramp-lh");
+    lh.appendChild(A.el("span", null, T[1])); lh.appendChild(A.el("span", null, T[2]));
+    r.appendChild(lh);
+  }
+  function labels() { G.svg.attr("aria-label", tx().map); ramp(); refresh(); }
   function init() {
     build();
     Array.prototype.forEach.call(fig.querySelectorAll("[data-sort]"), function (b) {

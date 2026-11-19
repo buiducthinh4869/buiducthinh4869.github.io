@@ -579,7 +579,7 @@ html:not(.js) .storm-explorer .se-live,
 
 .atlas-teaser { margin: 0 0 3.5rem; }
 .atlas-teaser-img { display: block; }
-.atlas-teaser img { display: block; width: 100%; height: auto; }
+.atlas-teaser img, .atlas-teaser video { display: block; width: 100%; height: auto; }
 .atlas-teaser figcaption { margin-top: 0.8rem; max-width: 40rem; }
 .atlas-teaser .se-cap strong { font-weight: 500; }
 .atlas-open {

@@ -97,7 +97,14 @@
           </div>
           <p class="se-hint"><span data-l="en">Chosen storms stay on the globe when you switch, so you can compare storms from different regions.</span><span data-l="vi" lang="vi">Các cơn đã chọn vẫn ở trên quả địa cầu khi bạn chuyển, nên có thể so sánh bão ở các khu vực khác nhau.</span></p>
           <div class="se-find sg-find"><label class="se-label" for="sg-q"><span data-l="en">Storm name</span><span data-l="vi" lang="vi">Tên bão</span></label><input type="search" id="sg-q" autocomplete="off" spellcheck="false"></div>
+          <div class="sg-sort sg-years"><label class="se-label" for="sg-y0"><span data-l="en">Seasons</span><span data-l="vi" lang="vi">Mùa bão</span></label>
+            <select id="sg-y0" class="sg-select sg-y"></select><span aria-hidden="true">–</span><select id="sg-y1" class="sg-select sg-y" aria-label="Last season"></select>
+          </div>
+          <div class="sg-sort" role="group" aria-labelledby="sg-cat-l"><span class="se-label" id="sg-cat-l"><span data-l="en">Category</span><span data-l="vi" lang="vi">Cấp bão</span></span>
+            <span class="se-seg"><button type="button" data-cat="TS" aria-pressed="true"><span data-l="en">TS</span><span data-l="vi" lang="vi">BNĐ</span></button><button type="button" data-cat="C1" aria-pressed="true">1</button><button type="button" data-cat="C2" aria-pressed="true">2</button><button type="button" data-cat="C3" aria-pressed="true">3</button><button type="button" data-cat="C4" aria-pressed="true">4</button><button type="button" data-cat="C5" aria-pressed="true">5</button></span>
+          </div>
           <ul class="sg-list" id="sg-list"></ul>
+          <button type="button" class="se-link sg-morebtn" id="sg-morebtn" hidden></button>
           <p class="se-hint" id="sg-more" aria-live="polite"></p>
         </div>
         <div class="sg-main">

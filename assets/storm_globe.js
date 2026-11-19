@@ -17,7 +17,7 @@
   var TXT = {
     en: {
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
-      nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}. Narrow the search to see the rest.",
+      nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}.",
       ramp: ["Night-time light", "low", "high"], play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
@@ -25,7 +25,7 @@
     },
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
-      nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}. Thu hẹp tìm kiếm để xem phần còn lại.",
+      nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}.",
       ramp: ["Ánh sáng ban đêm", "thấp", "cao"], play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
       ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
@@ -397,13 +397,14 @@
   function matches() {
     // a typed name searches every region: looking for a storm by name means that storm, wherever it was
     var v = A.norm(sq.value), named = function (s) { return !v || (" " + s.key).indexOf(" " + v) >= 0; };
-    var out = IX.storms.filter(function (s) { return named(s) && (v || st.scope === "all" || A.inRegion(s)) && (A.st.year == null || s.season === A.st.year); });
+    var y0 = +$("sg-y0").value, y1 = +$("sg-y1").value;
+    var out = IX.storms.filter(function (s) { return named(s) && st.cat[s["class"]] && s.season >= Math.min(y0, y1) && s.season <= Math.max(y0, y1) && (v || st.scope === "all" || A.inRegion(s)) && (A.st.year == null || s.season === A.st.year); });
     return out.sort(st.sort === "new" ? function (a, b) { return b.t - a.t; } : function (a, b) { return b.vmax_ms - a.vmax_ms || b.t - a.t; });
   }
   function refresh() {
     var T = tx(), m = matches();
     list.textContent = "";
-    m.slice(0, ROWS).forEach(function (s) {
+    m.slice(0, st.limit).forEach(function (s) {
       var li = document.createElement("li"), b = document.createElement("button"), sw = document.createElement("span"), mt = document.createElement("span");
       b.type = "button";
       b.setAttribute("aria-pressed", String(st.sel.indexOf(s) >= 0));
@@ -420,7 +421,10 @@
       li.appendChild(b);
       list.appendChild(li);
     });
-    more.textContent = !m.length ? T.none : m.length > ROWS ? T.shown.replace("{n}", ROWS).replace("{m}", m.length.toLocaleString(lang())) : "";
+    var n = Math.min(st.limit, m.length), mb = $("sg-morebtn");
+    more.textContent = !m.length ? T.none : m.length > n ? T.shown.replace("{n}", n.toLocaleString(lang())).replace("{m}", m.length.toLocaleString(lang())) : "";
+    mb.hidden = m.length <= n;
+    mb.textContent = lang() === "vi" ? "Xem thêm " + Math.min(ROWS, m.length - n) + " cơn" : "Show " + Math.min(ROWS, m.length - n) + " more";
     info.textContent = "";
     st.sel.forEach(function (s) {
       var p = document.createElement("p"), sw = document.createElement("span"), b = document.createElement("strong"), x = document.createElement("button");
@@ -568,7 +572,21 @@
         refresh();
       });
     });
-    sq.addEventListener("input", refresh);
+    // filters: any change starts the list again from its first 60 rows
+    var again = function () { st.limit = ROWS; refresh(); };
+    st.limit = ROWS; st.cat = {};
+    A.CLS.forEach(function (c) { st.cat[c] = true; });
+    ["sg-y0", "sg-y1"].forEach(function (id, k) {
+      var sel = $(id);
+      for (var y = IX.meta.seasons[0]; y <= IX.meta.seasons[1]; y++) { var o = document.createElement("option"); o.value = o.textContent = y; sel.appendChild(o); }
+      sel.value = IX.meta.seasons[k];
+      sel.addEventListener("change", again);
+    });
+    Array.prototype.forEach.call(fig.querySelectorAll("[data-cat]"), function (b) {
+      b.addEventListener("click", function () { var c = b.getAttribute("data-cat"); st.cat[c] = !st.cat[c]; b.setAttribute("aria-pressed", String(st.cat[c])); again(); });
+    });
+    $("sg-morebtn").addEventListener("click", function () { st.limit += ROWS; refresh(); });
+    sq.addEventListener("input", again);
     playBtn.addEventListener("click", togglePlay);
     $("sg-reset").addEventListener("click", function () { st.follow = false; fly(-st.rot[0], -st.rot[1], 1); });
     $("sg-in").addEventListener("click", function () { zoomBy(1.6); });

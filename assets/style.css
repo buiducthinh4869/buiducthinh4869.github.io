@@ -522,6 +522,9 @@ html:not(.js) .storm-explorer .se-live,
 .sg-main { order: -1; margin-bottom: 1.2rem; }
 .sg-side .se-find { margin-bottom: 0.5rem; }
 .sg-find { margin-top: 0.5rem; }
+.sg-years { margin-top: 0.4rem; }
+.sg-select.sg-y { width: 5.2rem; }
+.sg-morebtn { margin-top: 0.3rem; }
 .sg-find input { flex: 1 1 10rem; }
 .sg-select {
   font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;

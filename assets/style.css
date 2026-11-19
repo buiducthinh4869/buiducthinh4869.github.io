@@ -632,6 +632,7 @@ html:not(.js) .storm-explorer .se-live,
 .at-tip-m { color: var(--muted); }
 
 .ao-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; margin-bottom: 0.6rem; max-width: none; }
+.ao-range { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--muted); }
 .ao-year { font-variant-numeric: tabular-nums; color: var(--muted); }
 .ao-year strong { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
 .ao-map { position: relative; width: 100%; }

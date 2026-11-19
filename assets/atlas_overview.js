@@ -11,18 +11,18 @@
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LABEL_AT = { WP: [150, 33], NA: [-42, 36], EP: [-128, 4], NI: [72, 2], SI: [62, -33], SP: [178, -36], SA: [-25, -30] };
   var TX = {
-    en: { play: "Play 44 seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms so far",
+    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms so far",
       card: { n: "{n} storms in {a}–{b}, about {m} a season", busy: "Busiest season: {y} ({n} storms)", top: "Strongest: {s}, {v} m/s ({k} km/h)",
         major: "Category 3 or stronger: {n} ({p}%)", cy: "Most storms near one place in one season: {c}, {y} ({n})", go: "Click to list its storms" },
       map: "Map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed." },
-    vi: { play: "Phát 44 mùa bão", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão tính đến nay",
+    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão tính đến nay",
       card: { n: "{n} cơn bão trong {a}–{b}, khoảng {m} cơn mỗi mùa", busy: "Mùa nhiều bão nhất: {y} ({n} cơn)", top: "Mạnh nhất: {s}, {v} m/s ({k} km/h)",
         major: "Từ cấp 3 trở lên: {n} ({p}%)", cy: "Nhiều bão nhất gần một nơi trong một mùa: {c}, {y} ({n} cơn)", go: "Bấm để xem danh sách bão của vùng này" },
       map: "Bản đồ đường đi của mọi cơn bão nhiệt đới từ 1981 đến 2024, tô màu theo vùng biển nơi bão hình thành." }
   };
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.36 };
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.18 }; // speed 1 = 0.9 s per season; buttons: 8, 5 (default) and 3 s
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {
@@ -213,10 +213,13 @@
   // ------------------------------------------------------------------ Play 44 seasons: each season in 0.9 s, storms start in their order within the season
   var SLOT = 900;
   function playStart() {
+    var ya = +document.getElementById("ao-y0").value, yb = +document.getElementById("ao-y1").value;
+    O.ya = Math.min(ya, yb); O.yb = Math.max(ya, yb);
     O.mode = "play"; O.tt = 0; O.last = performance.now(); O.next = 0; O.count = 0;
     O.tracks.forEach(function (tr) { tr.done = false; });
     var y0 = A.IX.meta.seasons[0];
-    O.queue = O.tracks.filter(function (tr) { return tr.segs.length; }).map(function (tr) {
+    y0 = O.ya;
+    O.queue = O.tracks.filter(function (tr) { return tr.segs.length && tr.s.season >= O.ya && tr.s.season <= O.yb; }).map(function (tr) {
       var s = tr.s, south = /^(SI|SP|SA)$/.test(s.basin), a = south ? Date.UTC(s.season - 1, 6, 1) : Date.UTC(s.season, 0, 1);
       var u = Math.max(0, Math.min(0.98, (s.t - a) / (365.25 * 864e5)));
       return { tr: tr, at: (s.season - y0 + u) * SLOT };
@@ -232,7 +235,7 @@
   function playStep(now) {
     // play time advances at the chosen speed, so changing speed mid-run keeps the place
     O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
-    var t = O.tt, y0 = A.IX.meta.seasons[0], y1 = A.IX.meta.seasons[1];
+    var t = O.tt, y0 = O.ya, y1 = O.yb;
     while (O.next < O.queue.length && O.queue[O.next].at <= t) {
       var tr = O.queue[O.next++].tr;
       // fast enough to cross a long track within about 1.4 seasons
@@ -338,6 +341,12 @@
       if (!b) return;
       if (e.pointerType && e.pointerType !== "mouse" && O.tapped !== b) { O.tapped = b; highlight(b); A.tipShow(e.clientX, e.clientY, card(b)); return; }
       O.tapped = null; A.tipHide(); choose(b);
+    });
+    // the seasons to play: any range; the default is every season
+    ["ao-y0", "ao-y1"].forEach(function (id, k) {
+      var sel = document.getElementById(id);
+      for (var y = A.IX.meta.seasons[0]; y <= A.IX.meta.seasons[1]; y++) { var o = document.createElement("option"); o.value = o.textContent = y; sel.appendChild(o); }
+      sel.value = A.IX.meta.seasons[k];
     });
     playB.addEventListener("click", function () { if (O.mode === "play") playEnd(); else playStart(); });
     Array.prototype.forEach.call(fig.querySelectorAll("[data-speed]"), function (b) {

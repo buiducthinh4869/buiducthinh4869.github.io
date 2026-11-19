@@ -8,7 +8,7 @@
   var D = A.D, RAD = Math.PI / 180;
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
-  var MSH = 60, WAKE = 9;
+  var MSH = 62.5, WAKE = 9; // ms of screen time per storm hour (1.5 s per storm day by default; the slider sets 0.5 to 6 s)
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
@@ -587,6 +587,8 @@
     });
     $("sg-morebtn").addEventListener("click", function () { st.limit += ROWS; refresh(); });
     sq.addEventListener("input", again);
+    var gs = $("sg-speed"), gsv = $("sg-speed-v");
+    gs.addEventListener("input", function () { MSH = 1000 * +gs.value / 24; gsv.textContent = gs.value + " s"; });
     playBtn.addEventListener("click", togglePlay);
     $("sg-reset").addEventListener("click", function () { st.follow = false; fly(-st.rot[0], -st.rot[1], 1); });
     $("sg-in").addEventListener("click", function () { zoomBy(1.6); });

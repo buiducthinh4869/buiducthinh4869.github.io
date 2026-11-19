@@ -12,7 +12,7 @@
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
-  var box = fig.querySelector(".sg-globe"), list = $("sg-list"), more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock"), sq = $("sg-q");
+  var box = fig.querySelector(".sg-globe"), list = $("sg-list"), more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock"), sq = $("sg-q"), seekG = $("sg-seek");
 
   var TXT = {
     en: {
@@ -451,7 +451,7 @@
     if (st.raf) cancelAnimationFrame(st.raf);
     st.raf = null;
     if (reset) {
-      st.tau = 0;
+      st.tau = 0; st.dur = 0;
       st.sel.forEach(function (s) { s.cur = null; s.done = false; s.pi = 0; var f = fields[s.id]; if (f && f.full) f.iso = f.full; });
       clock.textContent = "";
     }
@@ -492,7 +492,13 @@
   function tick(now) {
     st.tau = Math.min(st.dur, st.tau + Math.max(0, Math.min(100, now - st.last)) / MSH);
     st.last = now;
-    var redo = now - (st.ff || 0) > 50, lead = null;
+    apply(now, false);
+    if (st.tau >= st.dur) { st.raf = null; st.sel.forEach(function (s) { var f = fields[s.id]; if (f && f.full) f.iso = f.full; }); render(now); playLabel(); return; }
+    st.raf = requestAnimationFrame(tick);
+  }
+  // the whole picture at play time st.tau (hours since the first storm's first fix), so stepping back works too
+  function apply(now, force) {
+    var redo = force || now - (st.ff || 0) > 50, lead = null;
     if (redo) st.ff = now;
     st.sel.forEach(function (s) {
       if (!s.pts || s.pts.length < 2) return;
@@ -511,8 +517,37 @@
     }
     if (lead) clockText(lead);
     render(now);
-    if (st.tau >= st.dur) { st.raf = null; st.sel.forEach(function (s) { var f = fields[s.id]; if (f && f.full) f.iso = f.full; }); render(now); playLabel(); return; }
-    st.raf = requestAnimationFrame(tick);
+    if (seekG) seekG.value = Math.round(st.tau);
+  }
+  // prepare Play without starting it (for a step or the scrubber before the first Play)
+  function ready() {
+    var ok = st.sel.filter(function (s) { return s.pts && s.pts.length > 1; });
+    if (!ok.length) return false;
+    st.dur = d3.max(ok, function (s) { return (s.pts[s.pts.length - 1].t - s.pts[0].t) / 36e5; });
+    ok.forEach(function (s) { var f = fields[s.id]; if (f && !f.tc) closest(s, f); });
+    if (seekG) seekG.max = Math.ceil(st.dur);
+    return true;
+  }
+  // one step lands on the next (or previous) 6-hourly synoptic time of the first storm: a real IBTrACS record
+  function stepG(dir) {
+    if (!st.dur && !ready()) return;
+    var lead = st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0];
+    var h0 = new Date(lead.pts[0].t).getUTCHours(), cur = st.tau + h0;
+    var next = dir > 0 ? Math.floor(cur / 6 + 1e-6) * 6 + 6 : Math.ceil(cur / 6 - 1e-6) * 6 - 6;
+    seekTo(next - h0);
+  }
+  function seekTo(h) {
+    if (!st.dur && !ready()) return;
+    st.tau = Math.max(0, Math.min(st.dur, h));
+    st.sel.forEach(function (s) { s.pi = 0; });
+    st.follow = true;
+    var now = performance.now();
+    st.last = now;
+    // turn straight to the lead storm, then draw
+    apply(now, true);
+    var lead = st.sel.filter(function (s) { return s.cur; })[0];
+    if (lead) { st.rot = [-lead.cur.xy[0], -lead.cur.xy[1]]; render(now); }
+    playLabel();
   }
   function clockText(s) {
     var c = s.cur, d = new Date(c.t), z = function (n) { return (n < 10 ? "0" : "") + n; };
@@ -524,9 +559,8 @@
     var ok = st.sel.filter(function (s) { return s.pts && s.pts.length > 1; });
     if (!ok.length) return;
     if (st.raf) { stopPlay(); return; }
-    st.dur = d3.max(ok, function (s) { return (s.pts[s.pts.length - 1].t - s.pts[0].t) / 36e5; });
+    ready();
     if (!(st.tau > 0 && st.tau < st.dur)) stopPlay(true);
-    ok.forEach(function (s) { var f = fields[s.id]; if (f && !f.tc) closest(s, f); });
     st.follow = true;
     st.tw = null;
     st.last = performance.now();
@@ -590,6 +624,9 @@
     var gs = $("sg-speed"), gsv = $("sg-speed-v");
     gs.addEventListener("input", function () { MSH = 1000 * +gs.value / 24; gsv.textContent = gs.value + " s"; });
     playBtn.addEventListener("click", togglePlay);
+    $("sg-back").addEventListener("click", function () { stepG(-1); });
+    $("sg-fwd").addEventListener("click", function () { stepG(1); });
+    seekG.addEventListener("input", function () { seekTo(+seekG.value); });
     $("sg-reset").addEventListener("click", function () { st.follow = false; fly(-st.rot[0], -st.rot[1], 1); });
     $("sg-in").addEventListener("click", function () { zoomBy(1.6); });
     $("sg-out").addEventListener("click", function () { zoomBy(1 / 1.6); });

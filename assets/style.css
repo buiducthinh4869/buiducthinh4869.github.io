@@ -647,6 +647,17 @@ html:not(.js) .storm-explorer .se-live,
   text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper);
 }
 .ao-lab.is-dim { opacity: 0.25; }
+.ao-lab-n { display: block; text-align: center; font-size: 0.75rem; color: var(--muted); }
+.ao-lab-n strong { font-size: 1.35rem; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ao-months { position: absolute; left: 3%; bottom: 4%; display: flex; align-items: flex-end; gap: 3px; height: 70px; padding: 4px 6px; background: rgba(250, 249, 245, 0.85); border-radius: 3px; }
+.ao-months[hidden] { display: none; }
+.ao-m { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; width: 16px; height: 100%; }
+.ao-m-n { font-family: var(--sans); font-size: 9px; color: var(--muted); line-height: 1.2; min-height: 11px; }
+.ao-m-bar { width: 10px; background: var(--muted); opacity: 0.45; border-radius: 2px 2px 0 0; transition: height 0.2s; }
+.ao-m-l { font-family: var(--sans); font-size: 9px; color: var(--muted); line-height: 1.4; }
+.ao-m.is-now .ao-m-bar { background: var(--ink); opacity: 1; }
+.ao-m.is-now .ao-m-l, .ao-m.is-now .ao-m-n { color: var(--ink); font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .ao-m-bar { transition: none; } }
 .ao-lab.is-hi { font-weight: 500; }
 .ao-legend { display: flex; flex-wrap: wrap; gap: 0 1.1rem; margin-top: 0.5rem; max-width: none; }
 .ao-legend button {

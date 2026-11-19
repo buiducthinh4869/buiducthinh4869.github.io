@@ -11,11 +11,11 @@
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LABEL_AT = { WP: [150, 33], NA: [-42, 36], EP: [-128, 4], NI: [72, 2], SI: [62, -33], SP: [178, -36], SA: [-25, -30] };
   var TX = {
-    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms so far",
+    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms so far", tot: "storms",
       card: { n: "{n} storms in {a}–{b}, about {m} a season", busy: "Busiest season: {y} ({n} storms)", top: "Strongest: {s}, {v} m/s ({k} km/h)",
         major: "Category 3 or stronger: {n} ({p}%)", cy: "Most storms near one place in one season: {c}, {y} ({n})", go: "Click to list its storms" },
       map: "Map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed." },
-    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão tính đến nay",
+    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão tính đến nay", tot: "cơn bão",
       card: { n: "{n} cơn bão trong {a}–{b}, khoảng {m} cơn mỗi mùa", busy: "Mùa nhiều bão nhất: {y} ({n} cơn)", top: "Mạnh nhất: {s}, {v} m/s ({k} km/h)",
         major: "Từ cấp 3 trở lên: {n} ({p}%)", cy: "Nhiều bão nhất gần một nơi trong một mùa: {c}, {y} ({n} cơn)", go: "Bấm để xem danh sách bão của vùng này" },
       map: "Bản đồ đường đi của mọi cơn bão nhiệt đới từ 1981 đến 2024, tô màu theo vùng biển nơi bão hình thành." }
@@ -177,7 +177,8 @@
   function step() {
     var c = O.top.getContext("2d");
     c.globalCompositeOperation = "destination-out";
-    c.fillStyle = "rgba(0,0,0,0.075)";
+    // trails fade in step with the play speed, so slow play keeps visible streaks
+    c.fillStyle = "rgba(0,0,0," + (O.mode === "play" ? Math.max(0.012, Math.min(0.075, 0.075 * O.speed / 0.6)) : 0.075) + ")";
     c.fillRect(0, 0, O.w, O.h);
     c.globalCompositeOperation = "source-over";
     c.lineWidth = O.w < 600 ? 1.1 : 1.5; c.lineCap = "round";
@@ -232,6 +233,15 @@
     playB.textContent = tt().stop;
     kick();
   }
+  // the counter line when not playing: the chosen range and its storm count
+  function summary() {
+    var a = +document.getElementById("ao-y0").value, b = +document.getElementById("ao-y1").value, lo = Math.min(a, b), hi = Math.max(a, b);
+    var n = A.IX.storms.filter(function (s) { return s.season >= lo && s.season <= hi; }).length;
+    yearEl.hidden = false;
+    yearEl.textContent = "";
+    yearEl.appendChild(A.el("strong", null, lo === hi ? String(lo) : lo + "–" + hi));
+    yearEl.appendChild(document.createTextNode(" · " + n.toLocaleString(A.lang()) + " " + tt().tot));
+  }
   function playStep(now) {
     // play time advances at the chosen speed, so changing speed mid-run keeps the place
     O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
@@ -257,7 +267,7 @@
     var n = O.w < 600 ? 220 : 650;
     for (var i = 0; i < n; i++) O.comets.push(spawn(true));
     playB.textContent = tt().play;
-    setTimeout(function () { if (O.mode !== "play") yearEl.hidden = true; }, 2500);
+    summary();
     if (O.paused) drawStill();
   }
 
@@ -347,7 +357,9 @@
       var sel = document.getElementById(id);
       for (var y = A.IX.meta.seasons[0]; y <= A.IX.meta.seasons[1]; y++) { var o = document.createElement("option"); o.value = o.textContent = y; sel.appendChild(o); }
       sel.value = A.IX.meta.seasons[k];
+      sel.addEventListener("change", function () { if (O.mode !== "play") summary(); });
     });
+    summary();
     playB.addEventListener("click", function () { if (O.mode === "play") playEnd(); else playStart(); });
     var sp = document.getElementById("ao-speed"), spv = document.getElementById("ao-speed-v");
     sp.addEventListener("input", function () { O.speed = 0.9 / +sp.value; spv.textContent = sp.value + " s"; });
@@ -364,7 +376,7 @@
       rt = setTimeout(function () { if (box.clientWidth !== lw) { lw = box.clientWidth; if (O.mode === "play") playEnd(); size(); } }, 150);
     });
     document.addEventListener("langchange", function () {
-      labels(); legText(); table();
+      labels(); legText(); table(); if (O.mode !== "play") summary();
       playB.textContent = O.mode === "play" ? tt().stop : tt().play;
       motB.textContent = O.paused ? tt().resume : tt().pause;
       O.base.setAttribute("aria-label", tt().map);

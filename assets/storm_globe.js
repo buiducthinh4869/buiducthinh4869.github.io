@@ -22,7 +22,7 @@
   var TXT = {
     en: {
       basin: { WP: "Western Pacific", NA: "North Atlantic", EP: "Eastern Pacific", NI: "North Indian", SI: "South Indian", SP: "South Pacific", SA: "South Atlantic" },
-      all: "All regions", basins: "Ocean basins", countries: "Countries",
+      all: "All regions", basins: "Ocean basins", countries: "Countries and territories",
       cls: { TS: "tropical storm", C1: "category 1", C2: "category 2", C3: "category 3", C4: "category 4", C5: "category 5" },
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
       nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}. Narrow the search to see the rest.",
@@ -33,7 +33,7 @@
     },
     vi: {
       basin: { WP: "Tây Thái Bình Dương", NA: "Bắc Đại Tây Dương", EP: "Đông Thái Bình Dương", NI: "Bắc Ấn Độ Dương", SI: "Nam Ấn Độ Dương", SP: "Nam Thái Bình Dương", SA: "Nam Đại Tây Dương" },
-      all: "Tất cả khu vực", basins: "Vùng biển", countries: "Quốc gia",
+      all: "Tất cả khu vực", basins: "Vùng biển", countries: "Quốc gia và vùng lãnh thổ",
       cls: { TS: "bão nhiệt đới", C1: "cấp 1", C2: "cấp 2", C3: "cấp 3", C4: "cấp 4", C5: "cấp 5" },
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}. Thu hẹp tìm kiếm để xem phần còn lại.",
@@ -364,7 +364,7 @@
       var p = document.createElement("p"), sw = document.createElement("span"), b = document.createElement("strong"), x = document.createElement("button");
       sw.className = "sg-sw"; sw.style.background = s.col;
       b.textContent = nm(s) + ", " + s.season + ".";
-      var k = s.near.map(cname), ks = k.length > 4 ? k.slice(0, 4).join(", ") + " " + T.and + " " + (k.length - 4) + " " + T.others : k.join(", ");
+      var k = s.near.map(cname), ks = k.length > 5 ? k.slice(0, 4).join(", ") + " " + T.and + " " + (k.length - 4) + " " + T.others : k.join(", ");
       var f = fields[s.id];
       p.appendChild(sw); p.appendChild(b);
       p.appendChild(document.createTextNode(" " + T.basin[s.basin] + ". " + T.peak + " " + s.vmax_ms + " m/s (" + T.cls[s["class"]] + ")." +

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-lang="en" data-title-en="Storm atlas | Bui Duc Thinh" data-title-vi="Bản đồ bão | Bùi Đức Thịnh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storm atlas | Bui Duc Thinh</title>
+<meta name="description" content="Every tropical storm from 1981 to 2024 on one page: where storms form, which ones came near a country, and each storm's wind field over night-time light.">
+<script>(function(){var l="en";try{l=localStorage.getItem("lang")||l}catch(e){}if(l!=="vi")l="en";var r=document.documentElement;r.setAttribute("data-lang",l);r.lang=l;r.classList.add("js");})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="atlas-page">
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-name" href="index.html"><span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html"><span data-l="en">Home</span><span data-l="vi" lang="vi">Trang chủ</span></a><a href="research.html"><span data-l="en">Research</span><span data-l="vi" lang="vi">Nghiên cứu</span></a><a href="writing.html"><span data-l="en">Writing</span><span data-l="vi" lang="vi">Bài viết</span></a><a href="cv.html"><span data-l="en">CV</span><span data-l="vi" lang="vi">CV</span></a>
+      <span class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="vi" aria-pressed="false">VI</button>
+      </span>
+    </nav>
+  </div>
+</header>
+<main><div class="wrap atlas">
+  <p class="at-back small"><a href="research.html"><span data-l="en">← Research</span><span data-l="vi" lang="vi">← Nghiên cứu</span></a></p>
+  <div class="at-head at-top">
+  <h1 class="page-title"><span data-l="en">Storm atlas</span><span data-l="vi" lang="vi">Bản đồ bão</span></h1>
+  <p class="page-lede"><span data-l="en">About 90 tropical storms form each year. This page shows every one from 1981 to 2024: where they form, which ones came near a country, and how strong the wind was at each place they passed.</span><span data-l="vi" lang="vi">Mỗi năm có khoảng 90 cơn bão nhiệt đới hình thành. Trang này thể hiện mọi cơn bão từ 1981 đến 2024: bão hình thành ở đâu, những cơn nào đã đi gần một quốc gia, và gió mạnh đến đâu tại từng nơi bão đi qua.</span></p>
+  </div>
+
+  <section class="at-sec" aria-labelledby="h-where">
+    <div class="at-head">
+    <h2 id="h-where"><span data-l="en">1. Where do tropical storms form?</span><span data-l="vi" lang="vi">1. Bão nhiệt đới hình thành ở đâu?</span></h2>
+    <p class="at-how"><span data-l="en">Each line is one storm's path, coloured by the ocean basin where it formed. Hover or tap a basin for its numbers; click it to explore its storms below.</span><span data-l="vi" lang="vi">Mỗi đường là đường đi của một cơn bão, tô màu theo vùng biển nơi bão hình thành. Rê chuột hoặc chạm vào một vùng biển để xem số liệu; bấm để xem các cơn bão của vùng đó ở phần dưới.</span></p>
+    </div>
+    <figure class="at-overview">
+      <div class="ao-bar se-text">
+        <button type="button" class="se-btn" id="ao-play">Play 44 seasons</button>
+        <span class="ao-year" id="ao-year" aria-live="polite" hidden></span>
+        <button type="button" class="se-link" id="ao-motion">Pause motion</button>
+      </div>
+      <div class="ao-map"><div class="ao-labels" aria-hidden="true"></div></div>
+      <div class="ao-legend se-text" role="group" aria-labelledby="h-where"></div>
+      <details class="se-key se-text">
+        <summary><span data-l="en">Table: storms by ocean basin</span><span data-l="vi" lang="vi">Bảng: số cơn bão theo vùng biển</span></summary>
+        <div class="se-key-scroll" tabindex="0"><table id="ao-table"></table></div>
+      </details>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="at-explore" aria-labelledby="h-near">
+    <div class="at-head">
+    <h2 id="h-near"><span data-l="en">2. Which storms came near a place?</span><span data-l="vi" lang="vi">2. Những cơn bão nào đã đi gần một nơi?</span></h2>
+    <div><div class="at-find se-text">
+      <label class="se-label" for="at-q"><span data-l="en">Find a country, ocean basin or storm</span><span data-l="vi" lang="vi">Tìm một quốc gia, vùng biển hoặc cơn bão</span></label>
+      <div class="at-combo">
+        <input type="text" id="at-q" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="at-sugg" autocomplete="off" spellcheck="false">
+        <ul class="at-sugg" id="at-sugg" role="listbox" hidden></ul>
+      </div>
+    </div>
+    <p class="at-region se-text" id="at-region" aria-live="polite"></p></div>
+    </div>
+    <figure class="at-timeline">
+      <h3 class="atl-title" id="atl-title"></h3>
+      <p class="at-how" id="atl-how"></p>
+      <div class="atl-plot"></div>
+      <div class="atl-key se-text" aria-hidden="true"></div>
+      <p class="atl-year se-text" id="atl-year" aria-live="polite"></p>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="at-close" aria-labelledby="h-close">
+    <div class="at-head">
+    <h2 id="h-close"><span data-l="en">3. One storm up close</span><span data-l="vi" lang="vi">3. Nhìn gần một cơn bão</span></h2>
+    <p class="at-how"><span data-l="en">Pick up to four storms from the list or the timeline. Lines show the strongest wind each place felt: dashed at 17 m/s (61 km/h, storm force), then 33, 43, 50 and 58 m/s. Darker dots on land are night-time light, where people live and work. Drag to turn the globe; press Play to watch the storms move.</span><span data-l="vi" lang="vi">Chọn tối đa bốn cơn bão từ danh sách hoặc trục thời gian. Các đường thể hiện sức gió mạnh nhất mà mỗi nơi phải chịu: nét đứt là 17 m/s (61 km/h, sức gió bão), tiếp theo là 33, 43, 50 và 58 m/s. Các chấm đậm trên đất liền là ánh sáng ban đêm, nơi con người sống và làm việc. Kéo để xoay quả địa cầu; bấm Phát để xem bão di chuyển.</span></p>
+    </div>
+    <figure class="storm-globe">
+      <div class="sg-live">
+        <div class="sg-side se-text">
+          <div class="sg-sort" role="group" aria-labelledby="sg-sort-l"><span class="se-label" id="sg-sort-l"><span data-l="en">Order</span><span data-l="vi" lang="vi">Sắp xếp</span></span>
+            <span class="se-seg"><button type="button" data-sort="new" aria-pressed="true"><span data-l="en">Newest</span><span data-l="vi" lang="vi">Mới nhất</span></button><button type="button" data-sort="max" aria-pressed="false"><span data-l="en">Strongest</span><span data-l="vi" lang="vi">Mạnh nhất</span></button></span>
+          </div>
+          <ul class="sg-list" id="sg-list"></ul>
+          <p class="se-hint" id="sg-more" aria-live="polite"></p>
+        </div>
+        <div class="sg-main">
+          <div class="sg-globe"></div>
+          <div class="se-bar se-text">
+            <button type="button" class="se-btn" id="sg-play"><span data-l="en">Play</span><span data-l="vi" lang="vi">Phát</span></button>
+            <span class="se-clock" id="sg-clock"></span>
+            <span class="sg-zoom"><button type="button" class="se-btn sg-z" id="sg-in" aria-label="Zoom in">+</button><button type="button" class="se-btn sg-z" id="sg-out" aria-label="Zoom out">−</button></span>
+            <button type="button" class="se-link" id="sg-reset"><span data-l="en">Whole globe</span><span data-l="vi" lang="vi">Cả địa cầu</span></button>
+          </div>
+          <div class="sg-info se-info" id="sg-info" aria-live="polite"></div>
+        </div>
+      </div>
+    </figure>
+  </section>
+
+  <section class="at-sec at-about" aria-labelledby="h-about">
+    <div class="at-head">
+    <h2 id="h-about"><span data-l="en">About the data</span><span data-l="vi" lang="vi">Về dữ liệu</span></h2>
+    <div><details class="se-key se-text">
+      <summary><span data-l="en">Definitions, sources and limits</span><span data-l="vi" lang="vi">Định nghĩa, nguồn và giới hạn</span></summary>
+      <div class="at-about-body">
+        <p><span data-l="en"><strong>Storms.</strong> Every storm in IBTrACS v04r01 (main tracks), seasons 1981 to 2024, all ocean basins, whose strongest wind reached tropical-storm force (34 knots, 17.5 m/s). A season is the calendar year in the northern hemisphere and July to June in the southern hemisphere.</span><span data-l="vi" lang="vi"><strong>Các cơn bão.</strong> Mọi cơn bão trong IBTrACS v04r01 (đường đi chính), các mùa 1981 đến 2024, mọi vùng biển, có sức gió mạnh nhất đạt sức gió bão nhiệt đới (34 hải lý/giờ, 17,5 m/s). Mùa bão là năm dương lịch ở bắc bán cầu và từ tháng 7 đến tháng 6 năm sau ở nam bán cầu.</span></p>
+        <p><span data-l="en"><strong>Wind.</strong> Maximum sustained wind from the U.S. agencies in IBTrACS (1-minute average) where available, otherwise the official regional agency (3 storms near Vietnam use a 10-minute average). Categories follow the Saffir-Simpson scale: tropical storm 17–32 m/s (61–115 km/h), category 1 from 33 m/s, 2 from 43, 3 from 50, 4 from 58, 5 from 70 m/s (252 km/h).</span><span data-l="vi" lang="vi"><strong>Sức gió.</strong> Sức gió duy trì cực đại của các cơ quan Hoa Kỳ trong IBTrACS (trung bình 1 phút) khi có, nếu không thì của cơ quan khí tượng khu vực (3 cơn gần Việt Nam dùng trung bình 10 phút). Cấp bão theo thang Saffir-Simpson: bão nhiệt đới 17–32 m/s (61–115 km/h), cấp 1 từ 33 m/s, cấp 2 từ 43, cấp 3 từ 50, cấp 4 từ 58, cấp 5 từ 70 m/s (252 km/h).</span></p>
+        <p><span data-l="en"><strong>Near a place.</strong> A storm counts for a country or territory when at least one track point lies within 200 km of its land. Wind near a place is the strongest IBTrACS wind among those points. Names follow Natural Earth; no borders are drawn, and the Paracel Islands are counted for no country.</span><span data-l="vi" lang="vi"><strong>Gần một nơi.</strong> Một cơn bão được tính cho một quốc gia hoặc vùng lãnh thổ khi có ít nhất một điểm trên đường đi nằm trong phạm vi 200 km quanh đất liền của nơi đó. Sức gió gần một nơi là sức gió IBTrACS mạnh nhất trong các điểm đó. Tên theo Natural Earth; bản đồ không vẽ đường biên giới, và quần đảo Hoàng Sa không được tính cho quốc gia nào.</span></p>
+        <p><span data-l="en"><strong>Wind fields.</strong> The lines of strongest wind come from a Holland (1980) wind model run hourly along each track, from ongoing work with Laura Bakkensen, Christian Matthes and Toan Phan. They are preliminary. Fields far above the IBTrACS wind (34 storms) are not shown.</span><span data-l="vi" lang="vi"><strong>Trường gió.</strong> Các đường gió mạnh nhất được tính bằng mô hình gió Holland (1980) theo từng giờ dọc đường đi của bão, từ nghiên cứu đang thực hiện cùng Laura Bakkensen, Christian Matthes và Toan Phan. Đây là kết quả sơ bộ. Các trường gió vượt xa sức gió IBTrACS (34 cơn) không được hiển thị.</span></p>
+        <p><span data-l="en"><strong>Night-time light</strong> in 2025 is a common proxy for where people live and work. During Play, lights near the eye dim as an illustration only, not as measured power cuts.</span><span data-l="vi" lang="vi"><strong>Ánh sáng ban đêm</strong> năm 2025 là thước đo gần đúng thường dùng cho nơi con người sống và làm việc. Khi bấm Phát, đèn quanh tâm bão mờ đi chỉ để minh họa, không phải số liệu mất điện thực tế.</span></p>
+        <p class="small"><span data-l="en">Sources: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a> (Knapp et al. 2010); <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like night-time light</a> (Chen et al. 2021); land and names: <a href="https://www.naturalearthdata.com/">Natural Earth</a>.</span><span data-l="vi" lang="vi">Nguồn: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a> (Knapp và cộng sự 2010); <a href="https://doi.org/10.5194/essd-13-889-2021">ánh sáng ban đêm NPP-VIIRS-like</a> (Chen và cộng sự 2021); đất liền và tên: <a href="https://www.naturalearthdata.com/">Natural Earth</a>.</span></p>
+      </div>
+    </details></div>
+    </div>
+  </section>
+  <p class="at-failed-note small"><span data-l="en">The atlas could not load. Please try again later.</span><span data-l="vi" lang="vi">Không tải được bản đồ bão. Vui lòng thử lại sau.</span></p>
+</div></main>
+<footer class="site-footer">
+  <div class="wrap"><p class="small">© 2026 <span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></p></div>
+</footer>
+<script src="assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="assets/atlas_core.js"></script>
+<script src="assets/atlas_overview.js"></script>
+<script src="assets/atlas_timeline.js"></script>
+<script src="assets/storm_globe.js"></script>
+</body>
+</html>

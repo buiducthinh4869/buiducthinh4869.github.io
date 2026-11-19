@@ -565,6 +565,129 @@ html:not(.js) .storm-explorer .se-live,
 .so-legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .storm-globe figcaption, .storm-overview figcaption { margin-top: 1.25rem; max-width: 40rem; }
 
+/* ---------- Storm atlas teaser (research.html) ---------- */
+
+.atlas-teaser { margin: 0 0 3.5rem; }
+.atlas-teaser-img { display: block; }
+.atlas-teaser img { display: block; width: 100%; height: auto; }
+.atlas-teaser figcaption { margin-top: 0.8rem; max-width: 40rem; }
+.atlas-teaser .se-cap strong { font-weight: 500; }
+.atlas-open {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 1rem; border: 1px solid var(--rule); border-radius: 999px;
+  font-family: var(--sans); font-size: 0.875rem; color: var(--ink); text-decoration: none;
+}
+.atlas-open:hover { border-color: var(--muted); }
+
+/* ---------- Storm atlas (storms.html) ---------- */
+
+.atlas-page .wrap { max-width: 72rem; }
+.atlas .page-lede { max-width: 40rem; }
+.at-back { margin: 0 0 0.6rem; }
+.at-sec { margin: 0 0 4rem; }
+.at-sec h2 { font-size: 1.45rem; margin: 0 0 0.4rem; }
+.at-head { margin-bottom: 1rem; }
+.at-head > :last-child { margin-bottom: 0; }
+@media (min-width: 1000px) {
+  /* heading on the left in the width of the globe's list, text on the right above the figures */
+  .at-head { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); column-gap: 3rem; align-items: start; margin-bottom: 1.6rem; }
+  .at-head > h1, .at-head > h2 { margin: 0; }
+  .at-top { align-items: end; margin-bottom: 3rem; }
+  .at-top .page-lede { margin: 0; }
+  .at-head .at-how { margin: 0.25rem 0 0; }
+  .at-head .at-region { margin-bottom: 0; }
+  .at-timeline { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); column-gap: 3rem; }
+  .at-timeline > * { grid-column: 1 / -1; }
+  .at-timeline > .atl-title { grid-column: 1; margin: 0; }
+  .at-timeline > .at-how { grid-column: 2; margin: 0 0 1rem; }
+}
+.at-how { max-width: 40rem; color: var(--muted); font-size: 1rem; line-height: 1.55; margin: 0 0 1rem; }
+.atlas .storm-globe, .atlas .at-overview, .atlas .at-timeline { width: 100%; margin: 0; transform: none; }
+.at-failed-note { display: none; }
+.atlas-failed .at-failed-note { display: block; }
+.atlas-failed .at-sec figure, .atlas-failed .at-find { display: none; }
+
+.at-key { display: inline-block; flex: none; width: 0.9rem; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 0.4rem; }
+.at-key-box { width: 0.7rem; height: 0.7rem; border-radius: 2px; }
+
+.at-tip {
+  position: fixed; z-index: 50; max-width: 19rem; pointer-events: none;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.5rem 0.65rem;
+  font-family: var(--sans); font-size: 0.78rem; line-height: 1.45; color: var(--ink);
+}
+.at-tip[hidden] { display: none; }
+.at-tip-h { display: flex; align-items: center; margin-bottom: 0.15rem; font-weight: 500; }
+.at-tip-h strong { font-weight: 500; }
+.at-tip-r strong { font-weight: 500; }
+.at-tip-r .at-key { width: 0.6rem; height: 0.6rem; }
+.at-tip-m { color: var(--muted); }
+
+.ao-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; margin-bottom: 0.6rem; max-width: none; }
+.ao-year { font-variant-numeric: tabular-nums; color: var(--muted); }
+.ao-year strong { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
+.ao-map { position: relative; width: 100%; }
+.ao-map canvas { position: absolute; inset: 0; display: block; }
+.ao-labels { position: absolute; inset: 0; pointer-events: none; }
+.ao-lab {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
+  font-family: var(--sans); font-size: 0.75rem; color: var(--ink); transition: opacity 0.2s;
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper);
+}
+.ao-lab.is-dim { opacity: 0.25; }
+.ao-lab.is-hi { font-weight: 500; }
+.ao-legend { display: flex; flex-wrap: wrap; gap: 0 1.1rem; margin-top: 0.5rem; max-width: none; }
+.ao-legend button {
+  font: inherit; color: var(--muted); background: none; border: 0; min-height: 32px; padding: 0; cursor: pointer; display: inline-flex; align-items: center;
+}
+.ao-legend button:hover, .ao-legend button[aria-pressed="true"] { color: var(--ink); }
+.ao-legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.at-overview .se-key table { min-width: 34rem; }
+
+.at-find { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.7rem; max-width: none; }
+.at-combo { position: relative; flex: 0 1 26rem; }
+.at-combo input {
+  font: inherit; font-size: 0.875rem; color: var(--ink); background: var(--paper); width: 100%;
+  border: 1px solid var(--muted); border-radius: 3px; min-height: 40px; padding: 0 0.7rem;
+}
+.at-combo input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.at-sugg {
+  position: absolute; z-index: 20; top: 100%; left: 0; right: 0; margin: 2px 0 0; padding: 2px 0; list-style: none;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;
+}
+.at-sugg li { display: flex; justify-content: space-between; gap: 1rem; padding: 0 0.7rem; line-height: 34px; cursor: pointer; }
+.at-sugg li[aria-selected="true"], .at-sugg li:hover { background: var(--ink); color: var(--paper); }
+.at-sugg-k { color: var(--muted); font-size: 0.75rem; }
+.at-sugg li[aria-selected="true"] .at-sugg-k, .at-sugg li:hover .at-sugg-k { color: var(--rule); }
+.at-sugg-none { color: var(--muted); line-height: 1.4 !important; padding: 0.5rem 0.7rem !important; cursor: default !important; background: none !important; }
+.at-region { margin: 0.7rem 0 1.4rem; font-size: 0.9rem; max-width: none; }
+.at-region strong { font-weight: 500; }
+
+.atl-title { font-family: var(--serif); font-size: 1.15rem; font-weight: 500; margin: 0 0 0.2rem; }
+.atl-plot { width: 100%; }
+.atl-svg { display: block; overflow: visible; }
+.atl-svg text { font-family: var(--sans); font-size: 11px; fill: var(--muted); }
+.atl-axis path, .atl-axis line { stroke: var(--muted); }
+.atl-grid line { stroke: var(--rule); }
+.atl-band { fill: var(--ink) !important; opacity: 0.7; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+.atl-dot { stroke: var(--paper); stroke-width: 1px; }
+.atl-dot.is-nd { fill: var(--paper); stroke: var(--muted); }
+.atl-ring { fill: none; stroke-width: 2px; }
+.atl-svg .atl-name { fill: var(--ink); font-size: 12px; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+.atl-bar.is-dim { opacity: 0.25; }
+.atl-hl { fill: var(--ink); fill-opacity: 0.05; }
+.atl-key { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin-top: 0.5rem; color: var(--muted); max-width: none; }
+.atl-k { display: inline-flex; align-items: center; }
+.atl-year { margin: 0.6rem 0 0; min-height: 1.4em; }
+.atl-year strong { font-weight: 500; }
+
+.sg-lab text {
+  font-family: var(--sans); font-size: 10.5px; fill: var(--ink); text-anchor: middle; dominant-baseline: central;
+  paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; pointer-events: none;
+}
+.sg-hit path { fill: none; stroke: transparent; stroke-width: 14px; pointer-events: stroke; cursor: help; }
+.at-about-body { max-width: 40rem; color: var(--ink); }
+.at-about-body p { font-size: 0.85rem; line-height: 1.6; margin: 0.4rem 0 0.8rem; }
+.at-about-body strong { font-weight: 500; }
+
 /* ---------- Home: profile + main ---------- */
 
 .home-grid { position: relative; z-index: 1; }

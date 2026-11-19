@@ -559,8 +559,8 @@
     var ok = st.sel.filter(function (s) { return s.pts && s.pts.length > 1; });
     if (!ok.length) return;
     if (st.raf) { stopPlay(); return; }
-    ready();
-    if (!(st.tau > 0 && st.tau < st.dur)) stopPlay(true);
+    // a fresh start resets first, then prepares (the reset clears the play length)
+    if (!(st.dur && st.tau > 0 && st.tau < st.dur)) { stopPlay(true); ready(); }
     st.follow = true;
     st.tw = null;
     st.last = performance.now();

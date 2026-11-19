@@ -22,7 +22,7 @@
   };
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.6 };
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.36 };
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {

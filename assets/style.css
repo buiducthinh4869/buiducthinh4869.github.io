@@ -655,7 +655,9 @@ html:not(.js) .storm-explorer .se-live,
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.5rem; padding: 0.6rem 0; margin: 0 0 2rem;
 }
 .at-bar .at-region { margin: 0; }
-.at-bar .at-find { flex: 0 1 26rem; }
+.at-bar .at-find { flex: 0 1 22rem; }
+.at-bar .at-basin-f { flex: 0 1 15rem; }
+.at-bar .at-basin-f select { width: 100%; min-height: 40px; }
 .at-bar .at-combo { flex: 1 1 auto; }
 .at-bar .at-find > .se-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .at-find { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.7rem; max-width: none; }

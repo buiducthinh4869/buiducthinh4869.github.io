@@ -23,7 +23,7 @@
       unnamed: "Unnamed", all: "the whole world", country: "Country or territory", basinT: "Ocean basin", storm: "Storm",
       peak: "Peak wind", formed: "Formed", near: "Closest to {c}", within: "Passed within 200 km of", more: "and {n} more",
       showing: "Showing", clear: "Show the whole world", year: "Season {y}", clearYear: "All seasons",
-      none: "Nothing found. Try a country or an ocean basin; storms by name are in section 3.", search: "Country or ocean basin, e.g. Vietnam, Western Pacific"
+      none: "No country or territory found. Storms by name are in section 3.", search: "e.g. Vietnam, Philippines, Hawaii", allB: "All ocean basins"
     },
     vi: {
       basin: { WP: "Tây Thái Bình Dương", NA: "Bắc Đại Tây Dương", EP: "Đông Thái Bình Dương", NI: "Bắc Ấn Độ Dương", SI: "Nam Ấn Độ Dương", SP: "Nam Thái Bình Dương", SA: "Nam Đại Tây Dương" },
@@ -32,7 +32,7 @@
       unnamed: "Không tên", all: "toàn thế giới", country: "Quốc gia hoặc vùng lãnh thổ", basinT: "Vùng biển", storm: "Cơn bão",
       peak: "Sức gió mạnh nhất", formed: "Hình thành", near: "Gần {c} nhất", within: "Đi qua trong phạm vi 200 km quanh", more: "và {n} nơi khác",
       showing: "Đang xem", clear: "Xem toàn thế giới", year: "Mùa bão {y}", clearYear: "Mọi mùa bão",
-      none: "Không tìm thấy. Hãy thử một quốc gia hoặc vùng biển; tìm bão theo tên ở mục 3.", search: "Quốc gia hoặc vùng biển, ví dụ: Việt Nam"
+      none: "Không tìm thấy quốc gia hay vùng lãnh thổ nào. Tìm bão theo tên ở mục 3.", search: "ví dụ: Việt Nam, Philippines", allB: "Mọi vùng biển"
     }
   };
   A.lang = function () { return document.documentElement.getAttribute("data-lang") === "vi" ? "vi" : "en"; };
@@ -197,7 +197,6 @@
         if (!(hit(a[0]) || hit(a[1]))) return;
         A.IX.countries.forEach(function (c, i) { if (c[0] === a[2]) cs.push([2, "c:" + i, A.cname(i) + " (" + (vi ? a[1] : a[0]) + ")", T.country]); });
       });
-      A.BORDER.forEach(function (b) { var h = both(A.TXT.en.basin[b], A.TXT.vi.basin[b]); if (h) cs.push([h, "b:" + b, T.basin[b], T.basinT]); });
       cs.sort(function (a, b) { return b[0] - a[0] || a[2].localeCompare(b[2]); });
       return cs.slice(0, 8);
     }
@@ -237,6 +236,20 @@
         q.setAttribute("aria-activedescendant", "at-opt-" + mi);
       }
     });
+    var bs = document.getElementById("at-basin");
+    function basins() {
+      var T = A.tx(), r = A.st.region;
+      bs.textContent = "";
+      [""].concat(A.BORDER.filter(function (b) { return A.IX.storms.some(function (s) { return s.basin === b; }); })).forEach(function (b) {
+        var o = el("option", null, b ? T.basin[b] : T.allB); o.value = b; bs.appendChild(o);
+      });
+      bs.value = r && r[0] === "b" ? r.slice(2) : "";
+    }
+    // the basin list and the country box are two ways into one region: choosing in one clears the other
+    bs.addEventListener("change", function () { q.value = ""; A.setRegion(bs.value ? "b:" + bs.value : ""); });
+    A.on("region", basins);
+    document.addEventListener("langchange", basins);
+    basins();
     function chipText() {
       var T = A.tx();
       q.placeholder = T.search;

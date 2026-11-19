@@ -46,7 +46,7 @@
     var w = P.w = box.clientWidth, h = P.h = w < 600 ? 210 : 270;
     box.style.height = h + "px";
     P.svg = d3.select(box).append("svg").attr("viewBox", "0 0 " + w + " " + h).attr("width", w).attr("height", h).attr("class", "atl-svg");
-    P.m = { t: 14, r: P.dots ? (P.w < 600 ? 52 : 92) : 10, b: P.dots ? 50 : 26, l: 34 };
+    P.m = { t: 14, r: P.dots ? (P.w < 600 ? 52 : 92) : 10, b: P.dots ? 62 : 26, l: 34 };
     var y0 = A.IX.meta.seasons[0], y1 = A.IX.meta.seasons[1];
     P.x = d3.scaleLinear().domain([y0, y1 + 1]).range([P.m.l, w - P.m.r]);
     (P.dots ? dots : bars)();
@@ -83,7 +83,7 @@
     P.svg.append("g").attr("class", "atl-axis").attr("transform", "translate(" + m.l + ",0)")
       .call(d3.axisLeft(y).tickValues([20, 40, 60]).tickSize(4).tickSizeOuter(0)).select(".domain").attr("stroke", "#6b6f72");
     P.svg.append("text").attr("class", "atl-unit").attr("x", 0).attr("y", 10).text(T.y);
-    var ys = yb + 33;
+    var ys = yb + 32; // strip of storms with no wind record nearby, under the year labels
     P.svg.append("circle").attr("class", "atl-dot is-nd").attr("r", 3).attr("cx", m.l + 4).attr("cy", h - 8);
     P.svg.append("text").attr("class", "atl-unit").attr("x", m.l + 12).attr("y", h - 4).text(T.nd);
     ss.forEach(function (d) { d.cx = P.x(d.fy); d.cy = d.v == null ? ys : y(d.v); });

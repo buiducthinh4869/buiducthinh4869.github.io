@@ -13,7 +13,7 @@
   var KT = 0.5144, CUTS = [34, 64, 83, 96, 113, 137].map(function (k) { return k * KT; }); // class limits, m/s
   var CLS = ["TS", "C1", "C2", "C3", "C4", "C5", "W"];
   var PICKS = [["Damrey", 2017], ["Yagi", 2024], ["Xangsane", 2006], ["Ketsana", 2009], ["Usagi", 2018], ["Linda", 1997]];
-  var FADE = 400, DRAW = 1200, FIT = 600, STEP = 250;
+  var FADE = 400, DRAW = 1200, FIT = 600, MSH = 150, WAKE = 9; // Play: ms of screen time per storm hour; hours over which a place's lines grow in
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
@@ -27,7 +27,7 @@
         C5: "category 5", TD: "tropical depression" },
       unnamed: "Unnamed", peak: "Peak wind", near: "within 200 km of Vietnam",
       nofield: "Wind field not available for this storm.",
-      search: "e.g. Yagi", play: "Play", pause: "Pause", resume: "Resume", step: "Next 6 hours",
+      search: "e.g. Yagi", play: "Play", pause: "Pause", resume: "Resume",
       ts: "tropical-storm force", ramp: ["Night-time light", "low", "high"],
       band: ["TS", "1", "2", "3", "4", "5"], nd: "no wind data", wind: "wind",
       tip: { TS: "TS: 17–32 m/s (61–115 km/h)", C1: "Cat 1: 33–42 m/s (119–151 km/h)", C2: "Cat 2: 43–49 m/s (155–176 km/h)",
@@ -43,7 +43,7 @@
         TD: "áp thấp nhiệt đới" },
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "trong phạm vi 200 km quanh Việt Nam",
       nofield: "Chưa có trường gió cho cơn bão này.",
-      search: "ví dụ: Yagi", play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", step: "6 giờ tiếp theo",
+      search: "ví dụ: Yagi", play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục",
       ts: "gió bão nhiệt đới", ramp: ["Ánh sáng ban đêm", "thấp", "cao"],
       band: ["BNĐ", "C1", "C2", "C3", "C4", "C5"], nd: "không có số liệu gió", wind: "gió",
       tip: { TS: "Bão nhiệt đới: 17–32 m/s (61–115 km/h)", C1: "Cấp 1: 33–42 m/s (119–151 km/h)", C2: "Cấp 2: 43–49 m/s (155–176 km/h)",
@@ -164,9 +164,19 @@
     g.append("path").attr("class", "se-land").attr("d", geo(land));
     g.append("image").attr("class", "se-lights").attr("href", "assets/data/lights_vn.png")
       .attr("x", 0).attr("y", 0).attr("width", w).attr("height", h).attr("preserveAspectRatio", "none");
+    // Play only: a soft disc that dims the lights near the eye (illustration, not measured outages)
+    var gr = svg.append("defs").append("radialGradient").attr("id", "se-dimg");
+    gr.append("stop").attr("offset", "0").attr("stop-color", "#e6e2d8").attr("stop-opacity", 0.95);
+    gr.append("stop").attr("offset", "0.55").attr("stop-color", "#e6e2d8").attr("stop-opacity", 0.6);
+    gr.append("stop").attr("offset", "1").attr("stop-color", "#e6e2d8").attr("stop-opacity", 0);
+    M.dim = g.append("circle").attr("class", "se-dim").attr("fill", "url(#se-dimg)").style("display", "none");
     M.field = g.append("g").attr("class", "se-field");
     M.trk = g.append("g").attr("class", "se-trk");
     M.fix = g.append("g").attr("class", "se-fix");
+    // Play only: rings that spread from the eye and two spiral bands turning anticlockwise, sized by the IBTrACS wind
+    M.storm = g.append("g").attr("class", "se-storm").style("display", "none");
+    M.rings = M.storm.selectAll("circle").data([0, 1, 2]).join("circle");
+    M.arms = M.storm.append("path").attr("d", spiral());
     M.eye = g.append("g").attr("class", "se-eye").style("display", "none");
     M.eye.append("circle").attr("r", 5.5);
     M.eye.append("circle").attr("r", 1.8).attr("class", "se-eye-c");
@@ -237,10 +247,20 @@
       im.src = "assets/data/wind/" + s.id + ".png";
     });
   }
-  function isotachs(f) {
+  function spiral() { // two log-spiral bands, unit radius
+    var d = "";
+    [0, Math.PI].forEach(function (a0) {
+      for (var i = 0; i <= 24; i++) {
+        var a = a0 + i / 24 * 1.6 * Math.PI, r = 0.18 * Math.exp(0.33 * (a - a0));
+        d += (i ? "L" : "M") + f1(100 * r * Math.cos(a)) + "," + f1(100 * r * Math.sin(a));
+      }
+    });
+    return d;
+  }
+  function isotachs(f, vals) {
     // grid value (i, j) sits at contour coordinate (i + 0.5, j + 0.5); one pad cell on each side
     var pt = function (c) { return proj([f.b[0] + (c[0] - 1) * RES, f.b[3] - (c[1] - 1) * RES]); };
-    return d3.contours().size([f.n2, f.m2]).thresholds(LEVELS)(f.v).map(function (mp) {
+    return d3.contours().size([f.n2, f.m2]).thresholds(LEVELS)(vals || f.v).map(function (mp) {
       var d = "", rings = [];
       mp.coordinates.forEach(function (poly) {
         poly.forEach(function (ring) {
@@ -270,19 +290,19 @@
     M.lab.selectAll("*").remove();
     M.eye.style("display", "none");
     st.iso = d.f ? isotachs(d.f) : [];
-    st.iso.forEach(function (o) {
-      M.field.append("path").attr("class", "se-fill").attr("d", o.d);
-      M.field.append("path").attr("class", "se-iso" + (o.lev === 17 ? " is-ts" : "")).attr("d", o.d)
-        .attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)]);
-    });
+    st.tc = null; st.cur = null;
+    renderField(st.iso);
     // IBTrACS fixes for Play (three-element points are window-edge crossings); 6-hourly fixes as dots
-    st.pts = []; st.pi = -1;
+    st.pts = []; st.pi = -1; st.tp = null; hideStorm();
     var t0 = Date.parse(s.t0), h0 = new Date(t0).getUTCHours(), fx = [];
     (s.runs || []).forEach(function (run) {
       M.trk.append("path").attr("d", "M" + run.map(function (p) { var a = proj([p[1], p[2]]); return f1(a[0]) + "," + f1(a[1]); }).join("L"));
+      var first = true;
       run.forEach(function (p) {
         if (p.length < 4) return;
-        st.pts.push({ t: t0 + p[0] * 36e5, xy: [p[1], p[2]], v: p[3], syn: (p[0] + h0) % 6 === 0 });
+        // brk: first fix of a later run; the storm was outside the window in between, so Play does not glide across
+        st.pts.push({ t: t0 + p[0] * 36e5, xy: [p[1], p[2]], v: p[3], brk: first && st.pts.length > 0 });
+        first = false;
         if ((p[0] + h0) % 6 === 0) fx.push(p);
       });
     });
@@ -311,6 +331,15 @@
     });
   }
 
+  function renderField(iso) {
+    M.field.selectAll("*").remove();
+    iso.forEach(function (o) {
+      M.field.append("path").attr("class", "se-fill").attr("d", o.d);
+      M.field.append("path").attr("class", "se-iso" + (o.lev === 17 ? " is-ts" : "")).attr("d", o.d)
+        .attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)]);
+    });
+  }
+
   // ease the view to the storm's wind box (not on touch screens, where a zoomed map would trap page scrolling)
   function fit(s, animate) {
     var t = d3.zoomIdentity, b = s.wind_bbox;
@@ -326,10 +355,13 @@
     else M.svg.call(M.zoom.transform, t);
   }
 
-  function eyeAt() { return st.pi >= 0 && st.pts[st.pi] ? st.pts[st.pi].xy : st.sel && st.sel.eye; }
+  function eyeAt() { return st.cur ? st.cur.xy : st.sel && st.sel.eye; }
   function placeEye() {
     var p = eyeAt();
-    if (p) M.eye.attr("transform", "translate(" + proj(p) + ") scale(" + 1 / st.k + ")");
+    if (!p) return;
+    var tr = "translate(" + proj(p) + ") scale(" + 1 / st.k + ")";
+    M.eye.attr("transform", tr);
+    M.storm.attr("transform", tr);
   }
   function showEye() {
     if (!eyeAt()) return;
@@ -341,6 +373,7 @@
   function placeLabels() {
     if (!M.lab || !st.iso) return;
     M.lab.style("display", null).selectAll("*").remove();
+    if (st.tp != null && st.pts && st.tp < st.pts[st.pts.length - 1].t) return; // field only partly drawn during Play
     var T = tx(), used = [M.rbox], e = eyeAt(), t = st.t;
     if (e) { e = t.apply(proj(e)); used.push([e[0] - 10, e[0] + 10, e[1] - 10, e[1] + 10]); }
     st.iso.forEach(function (o) {
@@ -462,6 +495,7 @@
     if (!s) return;
     o = o || {};
     stopPlay();
+    if (M.storm) { hideStorm(); st.cur = null; }
     st.sel = s;
     if (o.user && window.history && history.replaceState) history.replaceState(null, "", "#storm=" + s.slug);
     markSel();
@@ -522,34 +556,101 @@
     clock.textContent = day + ", " + hm + (p.v == null ? "" : " · " + tx().wind + " " + p.v + " m/s");
   }
   function playLabel() {
-    var T = tx(), end = !st.pts || st.pi >= st.pts.length - 1;
-    playBtn.textContent = st.timer ? T.pause : reduce && st.pi >= 0 && !end ? T.step : st.pi >= 0 && !end ? T.resume : T.play;
+    var T = tx(), end = !st.pts || st.tp == null || st.tp >= st.pts[st.pts.length - 1].t;
+    playBtn.textContent = st.raf ? T.pause : st.tp != null && !end ? T.resume : T.play;
   }
   function stopPlay() {
-    clearInterval(st && st.timer);
-    if (st) st.timer = null;
-    if (st && st.pts) playLabel();
+    if (!st) return;
+    if (st.raf) cancelAnimationFrame(st.raf);
+    st.raf = null;
+    if (st.pts) playLabel();
   }
-  function frame() { placeEye(); M.eye.style("display", null); clockText(); }
+  function hideStorm() { M.storm.style("display", "none"); M.dim.style("display", "none"); }
+
+  // for each wind cell, the time (ms) at which the eye passes closest; the cell's lines grow in over WAKE hours before it
+  function closest() {
+    var f = st.d && st.d.f, p = st.pts;
+    if (!f || st.tc) return;
+    var dense = [], i, j, k;
+    for (i = 0; i < p.length - 1; i++) {
+      var n = p[i + 1].brk ? 1 : Math.max(1, Math.round((p[i + 1].t - p[i].t) / 36e5));
+      for (k = 0; k < n; k++) {
+        var u = k / n;
+        dense.push([p[i].xy[0] + u * (p[i + 1].xy[0] - p[i].xy[0]), p[i].xy[1] + u * (p[i + 1].xy[1] - p[i].xy[1]), p[i].t + u * (p[i + 1].t - p[i].t)]);
+      }
+    }
+    dense.push([p[p.length - 1].xy[0], p[p.length - 1].xy[1], p[p.length - 1].t]);
+    var tc = st.tc = new Float64Array(f.v.length);
+    for (j = 0; j < f.m2; j++) for (i = 0; i < f.n2; i++) {
+      var c = j * f.n2 + i;
+      if (f.v[c] < 10) continue;
+      var lon = f.b[0] + (i - 0.5) * RES, lat = f.b[3] - (j - 0.5) * RES, cl = Math.cos(lat * Math.PI / 180), bd = 1e9, bt = 0;
+      for (k = 0; k < dense.length; k++) {
+        var dx = (dense[k][0] - lon) * cl, dy = dense[k][1] - lat, dd = dx * dx + dy * dy;
+        if (dd < bd) { bd = dd; bt = dense[k][2]; }
+      }
+      tc[c] = bt;
+    }
+    st.wv = new Float32Array(f.v.length);
+  }
+  function wakeField(t) {
+    var f = st.d.f, v = f.v, tc = st.tc, w = st.wv, R = WAKE * 36e5;
+    for (var c = 0; c < v.length; c++) w[c] = v[c] < 10 ? v[c] : v[c] * Math.max(0, Math.min(1, 1 - (tc[c] - t) / R));
+    renderField(isotachs(f, w));
+  }
+  function frameAt(now) {
+    var p = st.pts, t = st.tp, i = st.pi < 0 ? 0 : st.pi;
+    while (i < p.length - 1 && p[i + 1].t <= t) i++;
+    st.pi = i;
+    var a = p[i], b = p[Math.min(i + 1, p.length - 1)], u = b.t > a.t && !b.brk ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 0;
+    var va = a.v == null ? b.v : a.v, vb = b.v == null ? va : b.v, v = va == null ? 20 : va + u * ((vb == null ? va : vb) - va);
+    st.cur = { xy: [a.xy[0] + u * (b.xy[0] - a.xy[0]), a.xy[1] + u * (b.xy[1] - a.xy[1])], v: v };
+    placeEye();
+    M.eye.style("display", null);
+    // glyph: size by wind, rings spread over 1.4 s, bands turn once every 2.4 s
+    var r = 11 + 0.5 * v, ph = now / 1400;
+    M.storm.style("display", null);
+    M.rings.attr("r", function (k) { return r * (0.35 + 1.3 * ((ph + k / 3) % 1)); })
+      .attr("stroke-opacity", function (k) { return 0.55 * (1 - (ph + k / 3) % 1); });
+    M.arms.attr("transform", "rotate(" + (-(now / 2400) * 360 % 360) + ") scale(" + r / 100 + ")")
+      .attr("stroke-opacity", Math.min(0.85, 0.25 + v / 70));
+    // lights near the eye flicker, more so in stronger wind
+    if (now - (st.fl || 0) > 70) {
+      st.fl = now;
+      var c = proj(st.cur.xy), dpx = M.w / (E - W), s = Math.min(1, Math.max(0, (v - 17) / 33));
+      M.dim.style("display", null).attr("cx", c[0]).attr("cy", c[1]).attr("r", dpx * (0.8 + 1.8 * s))
+        .attr("opacity", Math.min(1, 0.25 + s) * (0.45 + 0.55 * Math.random()));
+    }
+    if (st.tc && now - (st.ff || 0) > 45) { st.ff = now; wakeField(t); }
+    clockText();
+  }
+  function tick(now) {
+    var end = st.pts[st.pts.length - 1].t;
+    st.tp = Math.min(end, st.tp + Math.max(0, Math.min(100, now - st.last)) / MSH * 36e5);
+    st.last = now;
+    frameAt(now);
+    if (st.tp >= end) { finish(); return; }
+    st.raf = requestAnimationFrame(tick);
+  }
+  function finish() {
+    st.raf = null;
+    hideStorm();
+    if (st.d && st.d.f) renderField(st.iso);
+    playLabel(); placeLabels();
+  }
+  // Play is started by the reader, so it runs smoothly even when the system asks for reduced motion; Pause stops it
   function togglePlay() {
     var n = st.pts.length;
     if (n < 2) return;
     M.trk.selectAll("path").interrupt().attr("stroke-dasharray", null).attr("stroke-dashoffset", null);
     M.fix.style("opacity", 1);
-    if (reduce) { // no motion: one 6-hourly fix per press
-      var i = st.pi >= n - 1 ? 0 : st.pi + 1;
-      while (i < n - 1 && !st.pts[i].syn) i++;
-      st.pi = i;
-      frame(); playLabel(); placeLabels();
-      return;
-    }
-    if (st.timer) { stopPlay(); placeLabels(); return; }
-    if (st.pi >= n - 1) st.pi = -1;
-    st.timer = setInterval(function () {
-      st.pi++;
-      frame();
-      if (st.pi >= n - 1) { stopPlay(); placeLabels(); }
-    }, STEP);
+    M.field.interrupt().style("opacity", 1);
+    if (st.raf) { stopPlay(); return; }
+    if (st.tp == null || st.tp >= st.pts[n - 1].t) { st.tp = st.pts[0].t; st.pi = -1; }
+    closest();
+    M.lab.style("display", "none");
+    st.last = performance.now();
+    st.raf = requestAnimationFrame(tick);
     playLabel();
   }
 

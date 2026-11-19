@@ -12,7 +12,7 @@
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
-  var box = fig.querySelector(".sg-globe"), list = $("sg-list"), more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock");
+  var box = fig.querySelector(".sg-globe"), list = $("sg-list"), more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock"), sq = $("sg-q");
 
   var TXT = {
     en: {
@@ -395,7 +395,9 @@
 
   // ------------------------------------------------------------------ side panel
   function matches() {
-    var out = IX.storms.filter(function (s) { return (st.scope === "all" || A.inRegion(s)) && (A.st.year == null || s.season === A.st.year); });
+    // a typed name searches every region: looking for a storm by name means that storm, wherever it was
+    var v = A.norm(sq.value), named = function (s) { return !v || (" " + s.key).indexOf(" " + v) >= 0; };
+    var out = IX.storms.filter(function (s) { return named(s) && (v || st.scope === "all" || A.inRegion(s)) && (A.st.year == null || s.season === A.st.year); });
     return out.sort(st.sort === "new" ? function (a, b) { return b.t - a.t; } : function (a, b) { return b.vmax_ms - a.vmax_ms || b.t - a.t; });
   }
   function refresh() {
@@ -549,7 +551,7 @@
     lh.appendChild(A.el("span", null, T[1])); lh.appendChild(A.el("span", null, T[2]));
     r.appendChild(lh);
   }
-  function labels() { G.svg.attr("aria-label", tx().map); ramp(); refresh(); }
+  function labels() { G.svg.attr("aria-label", tx().map); sq.placeholder = lang() === "vi" ? "ví dụ: Haiyan, Katrina" : "e.g. Haiyan, Katrina"; ramp(); refresh(); }
   function init() {
     build();
     Array.prototype.forEach.call(fig.querySelectorAll("[data-sort]"), function (b) {
@@ -566,6 +568,7 @@
         refresh();
       });
     });
+    sq.addEventListener("input", refresh);
     playBtn.addEventListener("click", togglePlay);
     $("sg-reset").addEventListener("click", function () { st.follow = false; fly(-st.rot[0], -st.rot[1], 1); });
     $("sg-in").addEventListener("click", function () { zoomBy(1.6); });

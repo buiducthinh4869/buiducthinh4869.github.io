@@ -23,7 +23,7 @@
       unnamed: "Unnamed", all: "the whole world", country: "Country or territory", basinT: "Ocean basin", storm: "Storm",
       peak: "Peak wind", formed: "Formed", near: "Closest to {c}", within: "Passed within 200 km of", more: "and {n} more",
       showing: "Showing", clear: "Show the whole world", year: "Season {y}", clearYear: "All seasons",
-      none: "Nothing found. Try a country, an ocean basin or a storm name.", search: "e.g. Vietnam, Western Pacific, Haiyan"
+      none: "Nothing found. Try a country or an ocean basin; storms by name are in section 3.", search: "Country or ocean basin, e.g. Vietnam, Western Pacific"
     },
     vi: {
       basin: { WP: "Tây Thái Bình Dương", NA: "Bắc Đại Tây Dương", EP: "Đông Thái Bình Dương", NI: "Bắc Ấn Độ Dương", SI: "Nam Ấn Độ Dương", SP: "Nam Thái Bình Dương", SA: "Nam Đại Tây Dương" },
@@ -32,7 +32,7 @@
       unnamed: "Không tên", all: "toàn thế giới", country: "Quốc gia hoặc vùng lãnh thổ", basinT: "Vùng biển", storm: "Cơn bão",
       peak: "Sức gió mạnh nhất", formed: "Hình thành", near: "Gần {c} nhất", within: "Đi qua trong phạm vi 200 km quanh", more: "và {n} nơi khác",
       showing: "Đang xem", clear: "Xem toàn thế giới", year: "Mùa bão {y}", clearYear: "Mọi mùa bão",
-      none: "Không tìm thấy. Hãy thử tên một quốc gia, một vùng biển hoặc một cơn bão.", search: "ví dụ: Việt Nam, Tây Thái Bình Dương, Haiyan"
+      none: "Không tìm thấy. Hãy thử một quốc gia hoặc vùng biển; tìm bão theo tên ở mục 3.", search: "Quốc gia hoặc vùng biển, ví dụ: Việt Nam"
     }
   };
   A.lang = function () { return document.documentElement.getAttribute("data-lang") === "vi" ? "vi" : "en"; };
@@ -177,6 +177,7 @@
   };
 
   // ------------------------------------------------------------------ the one search box: countries, basins and storms
+  var ALIAS = [["Hawaii", "Hawaii", "United States of America"], ["Guam", "Guam", "Guam"], ["Okinawa", "Okinawa", "Japan"], ["Hainan", "Hải Nam", "China"], ["Hong Kong", "Hồng Kông", "Hong Kong"], ["Taiwan", "Đài Loan", "Taiwan"]].filter(function (a) { return a[0] !== a[2]; });
   A.ready.then(function () {
     var q = document.getElementById("at-q"), ul = document.getElementById("at-sugg"), chip = document.getElementById("at-region");
     if (!q) return;
@@ -184,19 +185,21 @@
     function find() {
       var v = A.norm(q.value), T = A.tx(), out = [];
       if (!v) return out;
-      var hit = function (name) { var k = A.norm(name).indexOf(v); return k === 0 ? 2 : k > 0 ? 1 : 0; };
+      // 2: the name starts with the text; 1: a later word of the name starts with it; 0: no match
+      var hit = function (name) { var n = A.norm(name); return n.indexOf(v) === 0 ? 2 : (" " + n).indexOf(" " + v) >= 0 ? 1 : 0; };
+      var vi = A.lang() === "vi";
+      // the shown language matches on any word; the other language only from the start, so a hidden name never surprises
+      var both = function (en, vn) { var a = hit(vi ? vn : en), b = hit(vi ? en : vn); return Math.max(a, b === 2 ? 2 : 0); };
       var cs = [];
-      A.IX.countries.forEach(function (c, i) { var h = Math.max(hit(c[0]), hit(c[1])); if (h) cs.push([h, "c:" + i, A.cname(i), T.country]); });
-      A.BORDER.forEach(function (b) { var h = Math.max(hit(A.TXT.en.basin[b]), hit(A.TXT.vi.basin[b])); if (h) cs.push([h, "b:" + b, T.basin[b], T.basinT]); });
+      A.IX.countries.forEach(function (c, i) { var h = both(c[0], c[1]); if (h) cs.push([h, "c:" + i, A.cname(i), T.country]); });
+      // places that Natural Earth keeps inside a country: the search offers that country and says so
+      ALIAS.forEach(function (a) {
+        if (!(hit(a[0]) || hit(a[1]))) return;
+        A.IX.countries.forEach(function (c, i) { if (c[0] === a[2]) cs.push([2, "c:" + i, A.cname(i) + " (" + (vi ? a[1] : a[0]) + ")", T.country]); });
+      });
+      A.BORDER.forEach(function (b) { var h = both(A.TXT.en.basin[b], A.TXT.vi.basin[b]); if (h) cs.push([h, "b:" + b, T.basin[b], T.basinT]); });
       cs.sort(function (a, b) { return b[0] - a[0] || a[2].localeCompare(b[2]); });
-      out = cs.slice(0, 4);
-      var ss = [];
-      for (var i = A.IX.storms.length - 1; i >= 0 && ss.length < 40; i--) {
-        var s = A.IX.storms[i], k = s.key.indexOf(v);
-        if (k >= 0) ss.push([k === 0 ? 2 : 1, s, A.nm(s) + " " + s.season, T.storm + " · " + T.basin[s.basin]]);
-      }
-      ss.sort(function (a, b) { return b[0] - a[0] || b[1].t - a[1].t; });
-      return out.concat(ss.slice(0, 8 - out.length));
+      return cs.slice(0, 8);
     }
     function show() {
       m = find(); mi = 0;

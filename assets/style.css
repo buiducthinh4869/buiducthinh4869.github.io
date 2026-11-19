@@ -521,6 +521,8 @@ html:not(.js) .storm-explorer .se-live,
 .sg-live { display: flex; flex-direction: column; }
 .sg-main { order: -1; margin-bottom: 1.2rem; }
 .sg-side .se-find { margin-bottom: 0.5rem; }
+.sg-find { margin-top: 0.5rem; }
+.sg-find input { flex: 1 1 10rem; }
 .sg-select {
   font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;
   min-height: 32px; width: 13rem; max-width: 100%; padding: 0 0.4rem;

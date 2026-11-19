@@ -83,6 +83,49 @@
     </figcaption>
   </figure>
 
+  <figure class="storm-globe" aria-labelledby="sg-cap">
+    <div class="sg-live">
+      <div class="sg-side se-text">
+        <div class="se-find">
+          <label class="se-label" for="sg-region"><span data-l="en">Region</span><span data-l="vi" lang="vi">Khu vực</span></label>
+          <select id="sg-region" class="sg-select"></select>
+        </div>
+        <div class="se-find">
+          <label class="se-label" for="sg-q"><span data-l="en">Find a storm</span><span data-l="vi" lang="vi">Tìm cơn bão</span></label>
+          <input type="text" id="sg-q" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="sg-sort" role="group" aria-labelledby="sg-sort-l"><span class="se-label" id="sg-sort-l"><span data-l="en">Order</span><span data-l="vi" lang="vi">Sắp xếp</span></span>
+          <span class="se-seg"><button type="button" data-sort="new" aria-pressed="true"><span data-l="en">Newest</span><span data-l="vi" lang="vi">Mới nhất</span></button><button type="button" data-sort="max" aria-pressed="false"><span data-l="en">Strongest</span><span data-l="vi" lang="vi">Mạnh nhất</span></button></span>
+        </div>
+        <p class="se-hint"><span data-l="en">Pick up to four storms to compare.</span><span data-l="vi" lang="vi">Chọn tối đa bốn cơn bão để so sánh.</span></p>
+        <ul class="sg-list" id="sg-list"></ul>
+        <p class="se-hint" id="sg-more" aria-live="polite"></p>
+      </div>
+      <div class="sg-main">
+        <div class="sg-globe"></div>
+        <div class="se-bar se-text">
+          <button type="button" class="se-btn" id="sg-play"><span data-l="en">Play</span><span data-l="vi" lang="vi">Phát</span></button>
+          <span class="se-clock" id="sg-clock"></span>
+          <span class="sg-zoom"><button type="button" class="se-btn sg-z" id="sg-in" aria-label="Zoom in">+</button><button type="button" class="se-btn sg-z" id="sg-out" aria-label="Zoom out">−</button></span>
+          <button type="button" class="se-link" id="sg-reset"><span data-l="en">Whole globe</span><span data-l="vi" lang="vi">Cả địa cầu</span></button>
+        </div>
+        <div class="sg-info se-info" id="sg-info" aria-live="polite"></div>
+      </div>
+    </div>
+    <figcaption id="sg-cap">
+      <p class="se-cap"><span data-l="en">Tropical storms worldwide, 1981 to 2024. Choose an ocean basin or a country, then pick up to four storms. Lines show the highest wind each place felt (dashed: 17 m/s, then 33, 43, 50 and 58 m/s), over night-time light. Drag to turn the globe. Play runs the chosen storms together from their first record, and the globe follows the first one; the dimming of lights near the eye is an illustration, not measured power cuts.</span><span data-l="vi" lang="vi">Các cơn bão nhiệt đới trên toàn thế giới, 1981 đến 2024. Chọn một vùng biển hoặc một quốc gia, rồi chọn tối đa bốn cơn bão. Các đường thể hiện sức gió lớn nhất mà mỗi nơi phải chịu (nét đứt: 17 m/s, tiếp theo là 33, 43, 50 và 58 m/s), trên nền ánh sáng ban đêm. Kéo để xoay quả địa cầu. Nút Phát cho các cơn bão đã chọn chạy cùng lúc từ bản ghi đầu tiên của mỗi cơn, quả địa cầu đi theo cơn đầu tiên; hiệu ứng mờ đèn quanh tâm bão chỉ mang tính minh họa, không phải số liệu mất điện thực tế.</span></p>
+      <p class="small"><span data-l="en">Tracks and winds: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a>. Wind field: Holland (1980) model, from ongoing work with Laura Bakkensen, Christian Matthes and Toan Phan (preliminary). Night lights: <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like, Chen et al. (2021)</a>. Land: <a href="https://www.naturalearthdata.com/">Natural Earth</a>. Country lists name countries and territories whose land lies within 200 km of a track; no borders are drawn.</span><span data-l="vi" lang="vi">Đường đi và sức gió: <a href="https://www.ncei.noaa.gov/products/international-best-track-archive">IBTrACS v04r01</a>. Trường gió: mô hình Holland (1980), từ nghiên cứu đang thực hiện cùng Laura Bakkensen, Christian Matthes và Toan Phan (sơ bộ). Ánh sáng ban đêm: <a href="https://doi.org/10.5194/essd-13-889-2021">NPP-VIIRS-like, Chen và cộng sự (2021)</a>. Đất liền: <a href="https://www.naturalearthdata.com/">Natural Earth</a>. Danh sách gồm các quốc gia và vùng lãnh thổ có đất liền nằm trong phạm vi 200 km quanh đường đi của bão; bản đồ không vẽ đường biên giới.</span></p>
+    </figcaption>
+  </figure>
+
+  <figure class="storm-overview" aria-labelledby="so-cap">
+    <div class="so-map"></div>
+    <div class="so-legend se-text" role="group" aria-labelledby="so-cap"></div>
+    <figcaption id="so-cap">
+      <p class="se-cap"><span data-l="en">Every tropical storm track, 1981 to 2024, coloured by the ocean basin where the storm formed (number of storms in brackets). Choose a basin to highlight it and to list its storms on the globe above.</span><span data-l="vi" lang="vi">Đường đi của mọi cơn bão nhiệt đới, 1981 đến 2024, tô màu theo vùng biển nơi bão hình thành (số cơn bão trong ngoặc). Chọn một vùng biển để làm nổi bật và liệt kê các cơn bão của vùng đó trên quả địa cầu phía trên.</span></p>
+    </figcaption>
+  </figure>
+
   <h2><span data-l="en">Under review</span><span data-l="vi" lang="vi">Đang bình duyệt</span></h2>
   <ul class="entries"><li class="entry"><h3 class="entry-title">Trade Diversification and Consolidation of Vietnam in Global Supply Chains under Successive Shocks</h3><p class="small"><span data-l="en">with Doan Quang Hung (Foreign Trade University)</span><span data-l="vi" lang="vi">cùng Đoàn Quang Hưng (Đại học Ngoại thương)</span></p><p class="small"><span data-l="en">Under review, <em>Economic Analysis and Policy</em></span><span data-l="vi" lang="vi">Đang được bình duyệt tại <em>Economic Analysis and Policy</em></span></p></li></ul>
 
@@ -101,5 +144,6 @@
 <script src="assets/site.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="assets/storm_map.js"></script>
+<script src="assets/storm_globe.js"></script>
 </body>
 </html>

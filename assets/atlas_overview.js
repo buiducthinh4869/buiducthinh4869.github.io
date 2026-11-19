@@ -22,7 +22,7 @@
   };
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.18 }; // speed 1 = 0.9 s per season; buttons: 8, 5 (default) and 3 s
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.18 }; // speed 1 = 0.9 s per season; the slider sets 1 to 30 s (5 s by default)
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {
@@ -349,12 +349,8 @@
       sel.value = A.IX.meta.seasons[k];
     });
     playB.addEventListener("click", function () { if (O.mode === "play") playEnd(); else playStart(); });
-    Array.prototype.forEach.call(fig.querySelectorAll("[data-speed]"), function (b) {
-      b.addEventListener("click", function () {
-        O.speed = +b.getAttribute("data-speed");
-        Array.prototype.forEach.call(fig.querySelectorAll("[data-speed]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-      });
-    });
+    var sp = document.getElementById("ao-speed"), spv = document.getElementById("ao-speed-v");
+    sp.addEventListener("input", function () { O.speed = 0.9 / +sp.value; spv.textContent = sp.value + " s"; });
     motB.addEventListener("click", function () {
       O.paused = !O.paused;
       motB.textContent = O.paused ? tt().resume : tt().pause;

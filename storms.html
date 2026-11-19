@@ -39,7 +39,7 @@
     <figure class="at-overview">
       <div class="ao-bar se-text">
         <button type="button" class="se-btn" id="ao-play">Play the seasons</button>
-        <span class="se-seg" role="group" aria-label="Speed"><button type="button" data-speed="0.1125" aria-pressed="false"><span data-l="en">Slow</span><span data-l="vi" lang="vi">Chậm</span></button><button type="button" data-speed="0.18" aria-pressed="true"><span data-l="en">Medium</span><span data-l="vi" lang="vi">Vừa</span></button><button type="button" data-speed="0.3" aria-pressed="false"><span data-l="en">Fast</span><span data-l="vi" lang="vi">Nhanh</span></button></span>
+        <span class="ao-speed"><label for="ao-speed"><span data-l="en">Seconds per season</span><span data-l="vi" lang="vi">Giây mỗi mùa</span></label> <input type="range" id="ao-speed" min="1" max="30" step="1" value="5"> <output id="ao-speed-v" for="ao-speed">5 s</output></span>
         <span class="ao-range"><label for="ao-y0"><span data-l="en">From</span><span data-l="vi" lang="vi">Từ</span></label> <select id="ao-y0" class="sg-select sg-y"></select> <label for="ao-y1"><span data-l="en">to</span><span data-l="vi" lang="vi">đến</span></label> <select id="ao-y1" class="sg-select sg-y"></select></span>
         <span class="ao-year" id="ao-year" aria-live="polite" hidden></span>
         <button type="button" class="se-link" id="ao-motion">Pause motion</button>

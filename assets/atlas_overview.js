@@ -23,7 +23,7 @@
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
   var seek = document.getElementById("ao-seek");
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.015 }; // speed 1 = 0.9 s per year; the slider sets 1 to 20 s per month (5 s, one minute a year, by default)
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.015, loop: 3000 }; // speed 1 = 0.9 s per year; the slider sets 1 to 20 s per month (5 s, one minute a year, by default)
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {
@@ -135,9 +135,12 @@
     A.BORDER.forEach(function (b) {
       if (!O.st[b] || O.st[b].n < 10) return;
       var p = O.proj(LABEL_AT[b]), e = A.el("span", "ao-lab", A.tx().basin[b]);
+      e.style.color = d3.color(A.BAS[b]).darker(0.5).formatHex();
       if (by) { // big: storms formed this month in this basin; small: this year
         var m = (bm || {})[b] || 0, c = A.el("span", "ao-lab-n");
-        c.appendChild(A.el("strong", null, String(m)));
+        var big = A.el("strong", null, String(m));
+        big.style.color = e.style.color;
+        c.appendChild(big);
         var mn = A.lang() === "vi" ? (O.lastMi + 1) + "/" + O.curY : A.TXT.en.mon[O.lastMi] + " " + O.curY;
         c.appendChild(document.createTextNode(" " + (m === 1 && A.lang() === "en" ? "storm in" : tt().inM) + " " + mn));
         e.appendChild(c);
@@ -160,7 +163,7 @@
       c.globalAlpha = O.hi ? (O.hi === b ? 0.42 : 0.04) : (O.mode === "play" ? 0.3 : O.paused ? 0.38 : 0.16); // still map: stronger lines, as no streaks carry the colour
       c.beginPath();
       O.tracks.forEach(function (tr) {
-        if (tr.s.basin !== b || (upTo != null && (!tr.done || tr.yr !== O.curY))) return;
+        if (tr.s.basin !== b || (upTo != null && (tr.yr !== O.curY || tr.mo > O.lastMi))) return;
         tr.segs.forEach(function (g) { c.moveTo(g[0][0], g[0][1]); for (var k = 1; k < g.length; k++) c.lineTo(g[k][0], g[k][1]); });
       });
       c.stroke();
@@ -191,8 +194,7 @@
   function step() {
     var c = O.top.getContext("2d");
     c.globalCompositeOperation = "destination-out";
-    // trails fade in step with the play speed, so slow play keeps visible streaks
-    c.fillStyle = "rgba(0,0,0," + (O.mode === "play" ? Math.max(0.012, Math.min(0.075, 0.075 * O.speed / 0.6)) : 0.075) + ")";
+    c.fillStyle = "rgba(0,0,0," + (O.mode === "play" ? 0.05 : 0.075) + ")";
     c.fillRect(0, 0, O.w, O.h);
     c.globalCompositeOperation = "source-over";
     c.lineWidth = O.w < 600 ? 1.1 : 1.5; c.lineCap = "round";
@@ -217,7 +219,7 @@
   function frame(now) {
     O.raf = null;
     if (!O.vis || (O.paused && O.mode !== "play")) { O.run = false; return; }
-    if (O.mode === "play") { if (O.hold) { O.run = false; return; } playStep(now); }
+    if (O.mode === "play") playStep(now);
     step();
     if (O.dirty) { O.dirty = false; paintBase(true); }
     O.run = true;
@@ -263,54 +265,53 @@
       left -= g.d[g.length - 1];
     });
   }
-  // snap: redraw the moving storms from scratch (after a pause, a step or a jump); otherwise extend their streaks
-  function stateAt(t, snap) {
-    var y = Math.min(O.yb, O.ya + Math.floor(t / SLOT)), c = O.top.getContext("2d"), dirty = false;
+  // Two clocks: the month clock (play time t, set by "seconds per month") decides which month is shown; the storms of that
+  // month loop along their whole tracks on real time (set by "seconds per loop"), again and again until the month ends.
+  function stateAt(t, snap, now) {
+    now = now || performance.now();
+    var y = Math.min(O.yb, O.ya + Math.floor(t / SLOT)), mi = Math.min(11, Math.max(0, Math.floor((t / SLOT - (y - O.ya)) * 12)));
+    var c = O.top.getContext("2d");
     if (y !== O.curY) {
-      O.curY = y; snap = true;
+      O.curY = y; O.lastMi = null;
       var by = {}, n = 0;
       O.monTot = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-      O.tracks.forEach(function (tr) { if (tr.yr === y) { by[tr.s.basin] = (by[tr.s.basin] || 0) + 1; n++; O.monTot[tr.mo]++; } });
-      O.seasonN = n; O.byB = by; O.lastMi = null;
-      O.tracks.forEach(function (tr) { if (tr.yr !== y) tr.done = false; });
-      dirty = true; // a new year always repaints the base: only this year's finished tracks
+      O.tracks.forEach(function (tr) { if (tr.yr === y && tr.segs.length) { by[tr.s.basin] = (by[tr.s.basin] || 0) + 1; n++; O.monTot[tr.mo]++; } });
+      O.seasonN = n; O.byB = by;
     }
-    if (snap) c.clearRect(0, 0, O.w, O.h);
-    c.lineWidth = O.w < 600 ? 1.1 : 1.5; c.lineCap = "round"; c.lineJoin = "round"; c.globalAlpha = 0.9;
-    O.mon = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    (O.byYear[y] || []).forEach(function (it) {
-      var tr = it.tr, f = (t - it.at) / (CROSS * SLOT);
-      if (f < 0) { if (tr.done) { tr.done = false; dirty = true; } tr.lp = null; return; }
-      O.mon[tr.mo]++;
-      var done = f >= 1;
-      if (done !== tr.done) { tr.done = done; dirty = true; }
-      if (done) { tr.lp = null; return; }
-      var p = at(tr, f * tr.len);
-      if (!p) return;
-      c.strokeStyle = tr.col;
-      if (snap) partial(c, tr, f * tr.len);
-      else if (tr.lp && tr.lp.seg === p.seg) { c.beginPath(); c.moveTo(tr.lp.x, tr.lp.y); c.lineTo(p.x, p.y); c.stroke(); }
-      tr.lp = p;
-    });
-    c.globalAlpha = 1;
-    if (dirty) paintBase(true);
-    var mi = Math.min(11, Math.max(0, Math.floor((t / SLOT - (y - O.ya)) * 12)));
-    if (mi !== O.lastMi) { // a new month: storms formed this month, per basin and in all
-      O.lastMi = mi;
+    if (mi !== O.lastMi) { // a new month: its storms start looping; earlier months stay as faint tracks
+      O.lastMi = mi; snap = true;
       var bm = {}; O.monthN = 0;
-      O.tracks.forEach(function (tr) { if (tr.yr === y && tr.mo === mi) { bm[tr.s.basin] = (bm[tr.s.basin] || 0) + 1; O.monthN++; } });
+      O.active = (O.byYear[y] || []).filter(function (it) { return it.tr.mo === mi; }).map(function (it) {
+        bm[it.tr.s.basin] = (bm[it.tr.s.basin] || 0) + 1; O.monthN++;
+        return { tr: it.tr, ph: Math.random(), lp: null, lf: 0 };
+      });
+      O.mon = O.monTot.map(function (v, k) { return k <= mi ? v : 0; });
+      paintBase(true);
       labels(O.byB, bm);
     }
+    if (snap) { c.clearRect(0, 0, O.w, O.h); O.active.forEach(function (a) { a.lp = null; }); }
+    c.lineWidth = O.w < 600 ? 1.3 : 1.8; c.lineCap = "round"; c.globalAlpha = 0.95;
+    O.active.forEach(function (a) {
+      var f = (now / O.loop + a.ph) % 1, p = at(a.tr, f * a.tr.len);
+      if (f < a.lf) a.lp = null; // wrapped round: start the streak again at the track's start
+      a.lf = f;
+      if (!p) { a.lp = null; return; }
+      if (a.lp && a.lp.seg === p.seg) { c.strokeStyle = a.tr.col; c.beginPath(); c.moveTo(a.lp.x, a.lp.y); c.lineTo(p.x, p.y); c.stroke(); }
+      a.lp = p;
+    });
+    c.globalAlpha = 1;
     months(mi);
     yearEl.textContent = "";
     yearEl.appendChild(A.el("strong", null, String(y) + " · " + (A.lang() === "vi" ? "tháng " + (mi + 1) : A.TXT.en.mon[mi])));
     yearEl.appendChild(document.createTextNode(" · " + O.monthN + " " + tt().inMonth + " · " + O.seasonN.toLocaleString(A.lang()) + " " + tt().inYear));
     seek.value = Math.floor(t / MO);
   }
+  // while paused the month clock stops but the month's storms keep looping
   function playStep(now) {
-    O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
+    if (!O.hold) O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed;
+    O.last = now;
     if (O.tt >= O.end) { playEnd(); return; }
-    stateAt(O.tt, false);
+    stateAt(O.tt, false, now);
   }
   function jump(t) {
     O.tt = Math.max(0, Math.min(O.end - 1, t));
@@ -320,7 +321,7 @@
   function pauseToggle() {
     O.hold = !O.hold;
     O.last = performance.now();
-    if (!O.hold) { stateAt(O.tt, true); kick(); }
+    kick();
     playLabel();
   }
   function playLabel() { playB.textContent = O.mode !== "play" ? tt().play : O.hold ? tt().resume2 : tt().pause2; }
@@ -473,6 +474,8 @@
     seek.addEventListener("input", function () { if (O.mode === "play") jump(+seek.value * MO + 1); });
     var sp = document.getElementById("ao-speed"), spv = document.getElementById("ao-speed-v");
     sp.addEventListener("input", function () { O.speed = 0.9 / (12 * +sp.value); spv.textContent = sp.value + " s"; });
+    var lp = document.getElementById("ao-loop"), lpv = document.getElementById("ao-loop-v");
+    lp.addEventListener("input", function () { O.loop = 1000 * +lp.value; lpv.textContent = lp.value + " s"; });
     motB.addEventListener("click", function () {
       O.paused = !O.paused;
       motB.textContent = O.paused ? tt().resume : tt().pause;

@@ -651,6 +651,7 @@ html:not(.js) .storm-explorer .se-live,
 }
 .ao-lab.is-dim { opacity: 0.25; }
 .ao-lab-n { display: block; text-align: center; font-size: 0.75rem; color: var(--muted); }
+.ao-lab-y { display: block; text-align: center; font-size: 0.7rem; color: var(--muted); }
 .ao-lab-n strong { font-size: 1.35rem; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
 .ao-months { position: absolute; left: 3%; bottom: 4%; display: flex; align-items: flex-end; gap: 3px; height: 70px; padding: 4px 6px; background: rgba(250, 249, 245, 0.85); border-radius: 3px; }
 .ao-months[hidden] { display: none; }

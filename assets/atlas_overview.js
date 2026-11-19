@@ -11,11 +11,11 @@
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   var LABEL_AT = { WP: [150, 33], NA: [-42, 36], EP: [-128, 4], NI: [72, 2], SI: [62, -33], SP: [178, -36], SA: [-25, -30] };
   var TX = {
-    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms this year", tot: "storms", inMonth: "storms this month", inYear: "this year", pause2: "Pause", resume2: "Resume", back: "◀ 1 month", fwd: "1 month ▶",
+    en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms this year", tot: "storms", inMonth: "storms this month", inYear: "this year", inM: "storms in", totY: "Total: {n} storms in {y}", pause2: "Pause", resume2: "Resume", back: "◀ 1 month", fwd: "1 month ▶",
       card: { n: "{n} storms in {a}–{b}, about {m} a season", busy: "Busiest season: {y} ({n} storms)", top: "Strongest: {s}, {v} m/s ({k} km/h)",
         major: "Category 3 or stronger: {n} ({p}%)", cy: "Most storms near one place in one season: {c}, {y} ({n})", go: "Click to list its storms" },
       map: "Map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed." },
-    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão trong năm", tot: "cơn bão", inMonth: "cơn trong tháng", inYear: "cơn trong năm", pause2: "Tạm dừng", resume2: "Tiếp tục", back: "◀ 1 tháng", fwd: "1 tháng ▶",
+    vi: { play: "Phát theo mùa", stop: "Dừng", pause: "Tạm dừng chuyển động", resume: "Tiếp tục chuyển động", so: "cơn bão trong năm", tot: "cơn bão", inMonth: "cơn trong tháng", inYear: "cơn trong năm", inM: "cơn trong tháng", totY: "Tổng: {n} cơn trong năm {y}", pause2: "Tạm dừng", resume2: "Tiếp tục", back: "◀ 1 tháng", fwd: "1 tháng ▶",
       card: { n: "{n} cơn bão trong {a}–{b}, khoảng {m} cơn mỗi mùa", busy: "Mùa nhiều bão nhất: {y} ({n} cơn)", top: "Mạnh nhất: {s}, {v} m/s ({k} km/h)",
         major: "Từ cấp 3 trở lên: {n} ({p}%)", cy: "Nhiều bão nhất gần một nơi trong một mùa: {c}, {y} ({n} cơn)", go: "Bấm để xem danh sách bão của vùng này" },
       map: "Bản đồ đường đi của mọi cơn bão nhiệt đới từ 1981 đến 2024, tô màu theo vùng biển nơi bão hình thành." }
@@ -23,7 +23,7 @@
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
   var seek = document.getElementById("ao-seek");
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.18 }; // speed 1 = 0.9 s per season; the slider sets 1 to 30 s (5 s by default)
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.015 }; // speed 1 = 0.9 s per year; the slider sets 1 to 20 s per month (5 s, one minute a year, by default)
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {
@@ -138,9 +138,10 @@
       if (by) { // big: storms formed this month in this basin; small: this year
         var m = (bm || {})[b] || 0, c = A.el("span", "ao-lab-n");
         c.appendChild(A.el("strong", null, String(m)));
-        c.appendChild(document.createTextNode(" " + tt().inMonth));
+        var mn = A.lang() === "vi" ? (O.lastMi + 1) + "/" + O.curY : A.TXT.en.mon[O.lastMi] + " " + O.curY;
+        c.appendChild(document.createTextNode(" " + (m === 1 && A.lang() === "en" ? "storm in" : tt().inM) + " " + mn));
         e.appendChild(c);
-        e.appendChild(A.el("span", "ao-lab-y", (by[b] || 0) + " " + tt().inYear));
+        e.appendChild(A.el("span", "ao-lab-y", (by[b] === 1 && A.lang() === "en" ? "Total: {n} storm in {y}" : tt().totY).replace("{n}", by[b] || 0).replace("{y}", O.curY)));
       }
       e.style.left = (p[0] / O.w * 100) + "%"; e.style.top = (p[1] / O.h * 100) + "%";
       e.setAttribute("data-b", b);
@@ -471,7 +472,7 @@
     document.getElementById("ao-fwd").addEventListener("click", function () { jump(O.tt + MO); });
     seek.addEventListener("input", function () { if (O.mode === "play") jump(+seek.value * MO + 1); });
     var sp = document.getElementById("ao-speed"), spv = document.getElementById("ao-speed-v");
-    sp.addEventListener("input", function () { O.speed = 0.9 / +sp.value; spv.textContent = sp.value + " s"; });
+    sp.addEventListener("input", function () { O.speed = 0.9 / (12 * +sp.value); spv.textContent = sp.value + " s"; });
     motB.addEventListener("click", function () {
       O.paused = !O.paused;
       motB.textContent = O.paused ? tt().resume : tt().pause;

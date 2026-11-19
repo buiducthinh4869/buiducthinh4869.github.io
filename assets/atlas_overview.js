@@ -22,7 +22,7 @@
   };
   function tt() { return TX[A.lang()]; }
   function fmt(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k]; }); }
-  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient" };
+  var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.6 };
 
   A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
     O.lite = L.tracks.map(function (a) {
@@ -183,7 +183,7 @@
     c.lineWidth = O.w < 600 ? 1.1 : 1.5; c.lineCap = "round";
     O.comets.forEach(function (m, i) {
       if (m.wait > 0) { m.wait--; return; }
-      m.d += m.v;
+      m.d += m.v * (O.mode === "play" ? O.speed : 1);
       var p = m.tr.segs.length ? at(m.tr, m.d) : null;
       if (!p) {
         if (O.mode === "play") { m.dead = true; if (!m.tr.done) { m.tr.done = true; O.dirty = true; } return; }
@@ -213,7 +213,7 @@
   // ------------------------------------------------------------------ Play 44 seasons: each season in 0.9 s, storms start in their order within the season
   var SLOT = 900;
   function playStart() {
-    O.mode = "play"; O.t0 = performance.now(); O.next = 0; O.count = 0;
+    O.mode = "play"; O.tt = 0; O.last = performance.now(); O.next = 0; O.count = 0;
     O.tracks.forEach(function (tr) { tr.done = false; });
     var y0 = A.IX.meta.seasons[0];
     O.queue = O.tracks.filter(function (tr) { return tr.segs.length; }).map(function (tr) {
@@ -230,7 +230,9 @@
     kick();
   }
   function playStep(now) {
-    var t = now - O.t0, y0 = A.IX.meta.seasons[0], y1 = A.IX.meta.seasons[1];
+    // play time advances at the chosen speed, so changing speed mid-run keeps the place
+    O.tt += Math.max(0, Math.min(100, now - O.last)) * O.speed; O.last = now;
+    var t = O.tt, y0 = A.IX.meta.seasons[0], y1 = A.IX.meta.seasons[1];
     while (O.next < O.queue.length && O.queue[O.next].at <= t) {
       var tr = O.queue[O.next++].tr;
       // fast enough to cross a long track within about 1.4 seasons
@@ -338,6 +340,12 @@
       O.tapped = null; A.tipHide(); choose(b);
     });
     playB.addEventListener("click", function () { if (O.mode === "play") playEnd(); else playStart(); });
+    Array.prototype.forEach.call(fig.querySelectorAll("[data-speed]"), function (b) {
+      b.addEventListener("click", function () {
+        O.speed = +b.getAttribute("data-speed");
+        Array.prototype.forEach.call(fig.querySelectorAll("[data-speed]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      });
+    });
     motB.addEventListener("click", function () {
       O.paused = !O.paused;
       motB.textContent = O.paused ? tt().resume : tt().pause;

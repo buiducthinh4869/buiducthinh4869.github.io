@@ -1,29 +1,21 @@
-/* Storm globe on research.html: tropical cyclones worldwide, a few at a time, on a globe over night-time light,
-   plus an overview of all tracks by ocean basin. Data in assets/data/globe/ (contract in CLAUDE.md):
-   index.json, land.json, lights.png, lite.json, tracks/<season>.json, wind/<id>.png. Tracks and winds are IBTrACS.
-   Needs D3 v7, loaded before this file. If D3 or the data fail, the figure is hidden. */
+/* Storm atlas (storms.html), section 3: the selected storms on a globe over night-time light.
+   Needs atlas_core.js (data, region, selection, tooltip). Tracks and winds shown are IBTrACS; wind fields from
+   the cyclone project (see CLAUDE.md). Night lights: global 0.2 degree, plus 0.05 degree tiles when zoomed in. */
 (function () {
   "use strict";
-  var fig = document.querySelector(".storm-globe"), ov = document.querySelector(".storm-overview");
-  if (!fig) return;
-  var D = "assets/data/globe/", RAD = Math.PI / 180;
+  var A = window.Atlas, fig = document.querySelector(".storm-globe");
+  if (!A || !fig) return;
+  var D = A.D, RAD = Math.PI / 180;
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
-  var BAS = { WP: ["#1f5f7a", 140, 18], NA: ["#b08a5a", -62, 26], EP: ["#8a9a5b", -115, 15],
-    NI: ["#a65e4e", 82, 14], SI: ["#7a5c8a", 68, -16], SP: ["#6b6f72", 165, -18], SA: ["#9a8f80", -35, -25] };
-  var BORDER = ["WP", "NA", "EP", "NI", "SI", "SP", "SA"];
   var MSH = 60, WAKE = 9;
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
-  var box = fig.querySelector(".sg-globe"), regionSel = $("sg-region"), q = $("sg-q"), list = $("sg-list"),
-    more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock");
+  var box = fig.querySelector(".sg-globe"), list = $("sg-list"), more = $("sg-more"), info = $("sg-info"), playBtn = $("sg-play"), clock = $("sg-clock");
 
   var TXT = {
     en: {
-      basin: { WP: "Western Pacific", NA: "North Atlantic", EP: "Eastern Pacific", NI: "North Indian", SI: "South Indian", SP: "South Pacific", SA: "South Atlantic" },
-      all: "All regions", basins: "Ocean basins", countries: "Countries and territories",
-      cls: { TS: "tropical storm", C1: "category 1", C2: "category 2", C3: "category 3", C4: "category 4", C5: "category 5" },
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
       nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}. Narrow the search to see the rest.",
       play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
@@ -32,9 +24,6 @@
       ov: "World map of all tropical storm tracks, coloured by ocean basin."
     },
     vi: {
-      basin: { WP: "Tây Thái Bình Dương", NA: "Bắc Đại Tây Dương", EP: "Đông Thái Bình Dương", NI: "Bắc Ấn Độ Dương", SI: "Nam Ấn Độ Dương", SP: "Nam Thái Bình Dương", SA: "Nam Đại Tây Dương" },
-      all: "Tất cả khu vực", basins: "Vùng biển", countries: "Quốc gia và vùng lãnh thổ",
-      cls: { TS: "bão nhiệt đới", C1: "cấp 1", C2: "cấp 2", C3: "cấp 3", C4: "cấp 4", C5: "cấp 5" },
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}. Thu hẹp tìm kiếm để xem phần còn lại.",
       play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
@@ -42,20 +31,13 @@
       ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
     }
   };
-  function lang() { return document.documentElement.getAttribute("data-lang") === "vi" ? "vi" : "en"; }
-  function tx() { return TXT[lang()]; }
-  function nm(s) { return s.name === "Unnamed" || s.name === "UNNAMED" ? tx().unnamed : s.name; }
-  function norm(v) { return v.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").trim(); }
-  function cname(i) { var c = IX.countries[i]; return lang() === "vi" ? c[1] : c[0]; }
+  function lang() { return A.lang(); }
+  function tx() { var o = TXT[lang()], c = A.tx(); o.basin = c.basin; o.cls = c.cls; return o; }
+  var nm = A.nm, cname = A.cname;
   function f1(v) { return v.toFixed(1); }
 
-  function fail(err) {
-    if (err && window.console) console.warn("storm globe:", err);
-    fig.hidden = true;
-    if (ov) ov.hidden = true;
-  }
-  if (!window.d3 || !d3.geoOrthographic || !window.fetch || !window.Promise) { fail("D3 or fetch unavailable"); return; }
-  function getJSON(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); }); }
+  function fail(err) { A.fail(err); fig.hidden = true; }
+  var getJSON = A.getJSON;
   function getImg(u) {
     return new Promise(function (ok, no) {
       var im = new Image();
@@ -71,16 +53,11 @@
     });
   }
 
-  var IX, land, LT, G = {}, st = { rot: [-125, -15], k: 1, sel: [], region: "", sort: "new", act: false };
+  var IX, land, LT, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false };
   var seasons = {}, fields = {};
 
-  Promise.all([getJSON(D + "index.json"), getJSON(D + "land.json")]).then(function (r) {
-    IX = r[0]; land = r[1];
-    IX.storms.forEach(function (s) {
-      s.label = s.name + " " + s.season;
-      s.key = norm(s.label);
-      s.t = Date.parse(s.t0);
-    });
+  A.ready.then(function () {
+    IX = A.IX; land = A.land;
     init();
     return getImg(D + "lights.png").then(lights, function (e) { if (window.console) console.warn(e); });
   }).catch(fail);
@@ -94,17 +71,48 @@
     }
     return out;
   }
-  function lights(im) {
-    var m = IX.meta.lights, b = m.bounds, c = m.cell_deg, NB = 16, raw = [], i, j;
-    for (i = 0; i < NB; i++) raw.push([]);
-    for (j = 0; j < im.h; j++) for (i = 0; i < im.w; i++) {
+  var NB = 16, TW = 36; // tiles: 10-degree columns from -180, rows from -60
+  function tid(lonDeg, latDeg) { return Math.floor((lonDeg + 180) / 10) + TW * Math.floor((latDeg + 60) / 10); }
+  function binCells(im, b0, b3, c, out) {
+    for (var j = 0; j < im.h; j++) for (var i = 0; i < im.w; i++) {
       var v = im.px[(j * im.w + i) * 4];
       if (v < 24) continue; // the faintest glow is left out, as it is barely visible and costs time
-      var lat = (b[3] - (j + 0.5) * c) * RAD;
-      raw[Math.min(NB - 1, Math.floor(v / 256 * NB))].push((b[0] + (i + 0.5) * c) * RAD, Math.sin(lat), Math.cos(lat));
+      var lo = b0 + (i + 0.5) * c, la = b3 - (j + 0.5) * c, lat = la * RAD;
+      out[Math.min(NB - 1, Math.floor(v / 256 * NB))].push(lo * RAD, Math.sin(lat), Math.cos(lat), tid(lo, la));
     }
-    LT = { cell: c * RAD, cols: rampColors(NB, m.scale.ink_from), bins: raw.map(function (a) { return new Float32Array(a); }) };
+  }
+  function pack(raw) { return raw.map(function (a) { return new Float32Array(a); }); }
+  function lights(im) {
+    var m = IX.meta.lights, raw = [], i;
+    for (i = 0; i < NB; i++) raw.push([]);
+    binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
+    LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: pack(raw) };
+    TL.on = new Uint8Array(TW * 15);
+    TL.list = {};
+    ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });
+    TL.cell = m.tiles ? m.tiles.cell_deg * RAD : 0;
     draw();
+  }
+  // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
+  function tiles() {
+    if (!LT || !TL.cell || G.R * st.k * LT.cell < 2.5) return;
+    var c = [-st.rot[0], -st.rot[1]], r = 95 / st.k;
+    for (var la = -60; la < 80; la += 10) for (var lo = -180; lo < 180; lo += 10) {
+      var key = lo + "_" + la;
+      if (!TL.list[key] || TL.loaded[key] || TL.want[key]) continue;
+      if (d3.geoDistance([lo + 5, la + 5], c) * 180 / Math.PI > r + 8) continue;
+      TL.want[key] = 1;
+      (function (key, lo, la) {
+        getImg(D + "lights/" + key + ".png").then(function (im) {
+          var raw = [], i;
+          for (i = 0; i < NB; i++) raw.push([]);
+          binCells(im, lo, la + 10, IX.meta.lights.tiles.cell_deg, raw);
+          TL.loaded[key] = pack(raw);
+          TL.on[tid(lo + 5, la + 5)] = 1;
+          draw();
+        }).catch(function () { TL.loaded[key] = []; });
+      })(key, lo, la);
+    }
   }
 
   // ------------------------------------------------------------------ globe
@@ -116,6 +124,8 @@
     root.selectAll("*").remove();
     G.cv = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.cx = G.cv.getContext("2d");
+    G.lc = document.createElement("canvas");
+    G.lc.width = w * dpr; G.lc.height = h * dpr;
     var svg = G.svg = root.append("svg").attr("class", "sg-svg").attr("viewBox", "0 0 " + w + " " + h)
       .attr("width", w).attr("height", h).attr("tabindex", 0).attr("role", "img");
     var gr = svg.append("defs").append("radialGradient").attr("id", "sg-dimg");
@@ -129,11 +139,19 @@
     G.trk = svg.append("g").attr("class", "sg-trk");
     G.glyph = svg.append("g").attr("class", "se-storm");
     G.eye = svg.append("g").attr("class", "se-eye");
+    G.lab = svg.append("g").attr("class", "sg-lab");
+    G.hit = svg.append("g").attr("class", "sg-hit");
+    G.hit.on("pointermove", function (ev) {
+      if (ev.buttons || ev.pointerType !== "mouse") return;
+      var s = ev.target.__data__;
+      if (s) A.tipShow(ev.clientX, ev.clientY, A.card(s));
+    }).on("pointerleave", A.tipHide);
     svg.style("touch-action", coarse ? "pan-y" : "none");
     var p0 = null;
     svg.on("pointerdown", function (ev) {
       st.act = true;
       p0 = [ev.clientX, ev.clientY, st.rot.slice()];
+      G.moving = true;
       svg.classed("is-drag", true);
       if (svg.node().setPointerCapture) svg.node().setPointerCapture(ev.pointerId);
     }).on("pointermove", function (ev) {
@@ -143,7 +161,7 @@
       st.rot = [p0[2][0] + (ev.clientX - p0[0]) * s, Math.max(-85, Math.min(85, p0[2][1] - (ev.clientY - p0[1]) * s))];
       if (st.tw) st.tw = null;
       draw();
-    }).on("pointerup pointercancel", function () { p0 = null; svg.classed("is-drag", false); });
+    }).on("pointerup pointercancel", function () { p0 = null; G.moving = false; svg.classed("is-drag", false); draw(); });
     svg.on("wheel", function (ev) {
       if (!(ev.ctrlKey || st.act || document.activeElement === svg.node())) return; // no scroll trap before the reader engages
       ev.preventDefault();
@@ -163,38 +181,67 @@
     cx.beginPath(); cp({ type: "Sphere" }); cx.fillStyle = "#faf9f5"; cx.fill();
     cx.beginPath(); cp(land); cx.fillStyle = "#e6e2d8"; cx.fill();
     cx.lineWidth = 0.6; cx.strokeStyle = "#c9c4b8"; cx.stroke();
-    if (LT) { // orthographic forward projection by hand, about 20 times faster than through d3 for this many points
-      var L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
-      var sz = Math.max(1, Rk * LT.cell * 1.05);
-      for (var b = 0; b < LT.bins.length; b++) {
-        var a = LT.bins[b];
-        cx.fillStyle = LT.cols[b];
-        for (var i = 0; i < a.length; i += 3) {
-          var l = a[i] - L0, cl = Math.cos(l), cosc = sp * a[i + 1] + cq * a[i + 2] * cl;
-          if (cosc <= 0.02) continue;
-          var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
-          if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
-          cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.4);
-        }
+    if (LT) {
+      var lc = G.lc.getContext("2d");
+      lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
+      lc.clearRect(0, 0, w, h);
+      dots(lc, LT.bins, LT.cell, Rk, true);
+      for (var key in TL.loaded) if (TL.loaded[key].length) dots(lc, TL.loaded[key], TL.cell, Rk, false);
+      cx.save();
+      cx.setTransform(1, 0, 0, 1, 0, 0);
+      // a soft halo under the crisp cells, so lights read as glow rather than squares
+      if (!G.moving && !st.raf && cx.filter !== undefined) {
+        cx.filter = "blur(" + Math.max(1, Math.min(6, Rk * LT.cell * 0.6)) * G.dpr + "px)";
+        cx.globalAlpha = 0.55;
+        cx.drawImage(G.lc, 0, 0);
+        cx.filter = "none";
       }
+      cx.globalAlpha = 0.9;
+      cx.drawImage(G.lc, 0, 0);
+      cx.restore();
+      tiles();
     }
     cx.beginPath(); cp({ type: "Sphere" }); cx.lineWidth = 1; cx.strokeStyle = "#e4e1d8"; cx.stroke();
     drawStorms(now);
   }
 
+  // orthographic forward projection by hand, about 20 times faster than through d3 for this many points
+  function dots(cx, bins, cell, Rk, global) {
+    var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
+    var sz = Math.max(0.8, Rk * cell * 1.05), on = TL.on;
+    for (var b = 0; b < bins.length; b++) {
+      var a = bins[b];
+      cx.fillStyle = LT.cols[b];
+      for (var i = 0; i < a.length; i += 4) {
+        if (global && on[a[i + 3]]) continue;
+        var l = a[i] - L0, cl = Math.cos(l), cosc = sp * a[i + 1] + cq * a[i + 2] * cl;
+        if (cosc <= 0.02) continue;
+        var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
+        if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
+        cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.3);
+      }
+    }
+  }
   function vis(p) { return d3.geoDistance(p, [-st.rot[0], -st.rot[1]]) < Math.PI / 2 - 0.01; }
   function drawStorms(now) {
     var P = G.proj, path = G.path;
     G.dim.selectAll("*").remove(); G.fld.selectAll("*").remove(); G.trk.selectAll("*").remove();
-    G.glyph.selectAll("*").remove(); G.eye.selectAll("*").remove();
+    G.glyph.selectAll("*").remove(); G.eye.selectAll("*").remove(); G.hit.selectAll("*").remove(); G.lab.selectAll("*").remove();
+    var used = [];
     st.sel.forEach(function (s) {
       var f = fields[s.id];
       if (f && f.iso) f.iso.forEach(function (o) {
         G.fld.append("path").attr("d", path(o.g)).attr("stroke", s.col).attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)])
           .classed("is-ts", o.lev === 17);
       });
+      if (f && f.iso && !st.raf) f.iso.forEach(function (o) { label(o, used); });
       if (!s.pts) return;
-      s.lines.forEach(function (ln) { G.trk.append("path").attr("d", path(ln)).attr("stroke", s.col); });
+      s.lines.forEach(function (ln) {
+        var d = path(ln);
+        if (!d) return;
+        G.trk.append("path").attr("d", d).attr("stroke", s.col);
+        G.hit.append("path").attr("d", d).datum(s);
+      });
       s.pts.forEach(function (p) {
         if (!p.syn || !vis(p.xy)) return;
         var a = P(p.xy);
@@ -222,6 +269,22 @@
       ey.append("circle").attr("r", 1.8).attr("class", "se-eye-c");
     });
   }
+  // one label per isotach: the middle of its longest visible line, skipped when it would touch another label
+  function label(o, used) {
+    var best = null, bl = 0, P = G.proj;
+    o.g.coordinates.forEach(function (ln) { if (ln.length > bl) { bl = ln.length; best = ln; } });
+    if (!best || bl < 6) return;
+    for (var k = 0; k < 6; k++) {
+      var q = best[Math.floor(((k * 0.37 + 0.5) % 1) * best.length)];
+      if (!vis(q)) continue;
+      var a = P(q);
+      if (a[0] < 20 || a[0] > G.w - 20 || a[1] < 10 || a[1] > G.h - 10) continue;
+      if (used.some(function (u) { return Math.abs(u[0] - a[0]) < 34 && Math.abs(u[1] - a[1]) < 14; })) continue;
+      used.push(a);
+      G.lab.append("text").attr("x", a[0]).attr("y", a[1]).text(o.lev === 17 ? "17 m/s" : o.lev);
+      return;
+    }
+  }
   var SPIRAL = (function () {
     var d = "";
     [0, Math.PI].forEach(function (a0) {
@@ -246,7 +309,8 @@
       st.rot = [r0[0] + u * (r1[0] - r0[0]), r0[1] + u * (r1[1] - r0[1])];
       st.k = k0 * Math.pow(k / k0, u);
       render(now);
-      if (u < 1) requestAnimationFrame(step); else st.tw = null;
+      G.moving = u < 1;
+      if (u < 1) requestAnimationFrame(step); else { st.tw = null; render(performance.now()); }
     })(t0);
   }
   function flyTo(s, k) {
@@ -296,11 +360,12 @@
   function toggle(s, k) {
     var i = st.sel.indexOf(s);
     stopPlay(true);
-    if (i >= 0) { st.sel.splice(i, 1); recolor(); refresh(); draw(); return; }
+    if (i >= 0) { st.sel.splice(i, 1); recolor(); refresh(); draw(); A.selChanged(); return; }
     if (st.sel.length >= MAXSEL) st.sel.shift();
     st.sel.push(s);
     recolor();
     refresh();
+    A.selChanged();
     loadSeason(s.season).then(function (T) {
       prep(s, T);
       if (st.sel.indexOf(s) < 0) return null;
@@ -320,24 +385,8 @@
   }
 
   // ------------------------------------------------------------------ side panel
-  function regionOptions() {
-    var T = tx(), v = regionSel.value;
-    regionSel.textContent = "";
-    var add = function (par, val, text) { var o = document.createElement("option"); o.value = val; o.textContent = text; par.appendChild(o); };
-    add(regionSel, "", T.all);
-    var g1 = document.createElement("optgroup"); g1.label = T.basins; regionSel.appendChild(g1);
-    BORDER.forEach(function (b) { if (IX.storms.some(function (s) { return s.basin === b; })) add(g1, "b:" + b, T.basin[b]); });
-    var g2 = document.createElement("optgroup"); g2.label = T.countries; regionSel.appendChild(g2);
-    IX.countries.map(function (c, i) { return i; }).sort(function (a, b) { return cname(a).localeCompare(cname(b), lang()); })
-      .forEach(function (i) { add(g2, "c:" + i, cname(i)); });
-    regionSel.value = v;
-  }
   function matches() {
-    var r = st.region, v = norm(q.value), out = IX.storms.filter(function (s) {
-      if (r[0] === "b" && s.basin !== r.slice(2)) return false;
-      if (r[0] === "c" && s.near.indexOf(+r.slice(2)) < 0) return false;
-      return !v || s.key.indexOf(v) >= 0;
-    });
+    var out = IX.storms.filter(function (s) { return A.inRegion(s) && (A.st.year == null || s.season === A.st.year); });
     return out.sort(st.sort === "new" ? function (a, b) { return b.t - a.t; } : function (a, b) { return b.vmax_ms - a.vmax_ms || b.t - a.t; });
   }
   function refresh() {
@@ -355,6 +404,8 @@
       b.appendChild(document.createTextNode(nm(s) + " " + s.season));
       b.appendChild(mt);
       b.addEventListener("click", function () { toggle(s); });
+      b.addEventListener("mouseenter", function (e) { A.tipShow(e.clientX, e.clientY, A.card(s)); });
+      b.addEventListener("mouseleave", A.tipHide);
       li.appendChild(b);
       list.appendChild(li);
     });
@@ -364,7 +415,8 @@
       var p = document.createElement("p"), sw = document.createElement("span"), b = document.createElement("strong"), x = document.createElement("button");
       sw.className = "sg-sw"; sw.style.background = s.col;
       b.textContent = nm(s) + ", " + s.season + ".";
-      var k = s.near.map(cname), ks = k.length > 5 ? k.slice(0, 4).join(", ") + " " + T.and + " " + (k.length - 4) + " " + T.others : k.join(", ");
+      var r = A.st.region, rc = r && r[0] === "c" ? +r.slice(2) : -1;
+      var k = s.near.filter(function (c) { return c === rc; }).concat(s.near.filter(function (c) { return c !== rc; })).map(cname), ks = k.length > 5 ? k.slice(0, 4).join(", ") + " " + T.and + " " + (k.length - 4) + " " + T.others : k.join(", ");
       var f = fields[s.id];
       p.appendChild(sw); p.appendChild(b);
       p.appendChild(document.createTextNode(" " + T.basin[s.basin] + ". " + T.peak + " " + s.vmax_ms + " m/s (" + T.cls[s["class"]] + ")." +
@@ -467,104 +519,17 @@
     playLabel();
   }
 
-  // ------------------------------------------------------------------ overview: every track, coloured by genesis basin
-  function overview() {
-    if (!ov) return;
-    var cbox = ov.querySelector(".so-map"), leg = ov.querySelector(".so-legend"), O = {}, data = null;
-    var counts = {};
-    IX.storms.forEach(function (s) { counts[s.basin] = (counts[s.basin] || 0) + 1; });
-    leg.textContent = "";
-    BORDER.forEach(function (b) {
-      var bt = document.createElement("button"), sw = document.createElement("span"), lab = document.createElement("span");
-      bt.type = "button"; bt.setAttribute("aria-pressed", "false"); bt.setAttribute("data-b", b);
-      bt.hidden = !counts[b];
-      sw.className = "sg-sw"; sw.style.background = BAS[b][0];
-      bt.appendChild(sw); bt.appendChild(lab);
-      bt.addEventListener("click", function () {
-        var on = O.hi !== b;
-        O.hi = on ? b : null;
-        paint();
-        setRegion(on ? "b:" + b : "");
-      });
-      leg.appendChild(bt);
-    });
-    function legend() {
-      Array.prototype.forEach.call(leg.children, function (bt) {
-        var b = bt.getAttribute("data-b");
-        bt.lastChild.textContent = tx().basin[b] + " (" + (counts[b] || 0).toLocaleString(lang()) + ")";
-        bt.setAttribute("aria-pressed", String(O.hi === b));
-      });
-    }
-    function size() {
-      var w = cbox.clientWidth, h = Math.round(w * 0.5), dpr = Math.min(2, window.devicePixelRatio || 1);
-      cbox.textContent = "";
-      O.cv = document.createElement("canvas");
-      O.cv.width = w * dpr; O.cv.height = h * dpr; O.cv.style.width = w + "px"; O.cv.style.height = h + "px";
-      O.cv.setAttribute("role", "img");
-      cbox.appendChild(O.cv);
-      O.w = w; O.h = h; O.dpr = dpr;
-      O.proj = d3.geoEqualEarth().rotate([-165, 0]).fitExtent([[2, 2], [w - 2, h - 2]], { type: "Sphere" });
-      paint();
-    }
-    function paint() {
-      legend();
-      O.cv.setAttribute("aria-label", tx().ov);
-      var c = O.cv.getContext("2d"), path = d3.geoPath(O.proj, c);
-      c.setTransform(O.dpr, 0, 0, O.dpr, 0, 0);
-      c.clearRect(0, 0, O.w, O.h);
-      c.beginPath(); path({ type: "Sphere" }); c.fillStyle = "#faf9f5"; c.fill(); c.strokeStyle = "#e4e1d8"; c.lineWidth = 1; c.stroke();
-      c.beginPath(); path(land); c.fillStyle = "#e6e2d8"; c.fill();
-      if (!data) return;
-      c.lineWidth = O.w < 600 ? 0.4 : 0.6;
-      c.lineJoin = "round";
-      BORDER.forEach(function (b) {
-        c.globalAlpha = O.hi && O.hi !== b ? 0.05 : O.hi ? 0.5 : 0.28;
-        c.strokeStyle = BAS[b][0];
-        c.beginPath();
-        data[b].forEach(function (ln) { path(ln); });
-        c.stroke();
-      });
-      c.globalAlpha = 1;
-    }
-    O.paint = paint;
-    ov.paint = function (b) { O.hi = b; paint(); };
-    size();
-    var lw = cbox.clientWidth;
-    window.addEventListener("resize", function () { if (cbox.clientWidth !== lw) { lw = cbox.clientWidth; size(); } });
-    document.addEventListener("langchange", paint);
-    getJSON(D + "lite.json").then(function (L) {
-      data = {};
-      BORDER.forEach(function (b) { data[b] = []; });
-      L.tracks.forEach(function (a, i) {
-        var s = IX.storms[i], x = a[0], y = a[1], co = [[x / L.q, y / L.q]];
-        for (var j = 2; j < a.length; j += 2) { x += a[j]; y += a[j + 1]; co.push([x / L.q, y / L.q]); }
-        if (s && data[s.basin]) data[s.basin].push({ type: "LineString", coordinates: co });
-      });
-      paint();
-    }).catch(function (e) { if (window.console) console.warn(e); });
-  }
-
   // ------------------------------------------------------------------ wiring
-  function setRegion(v) {
-    regionSel.value = v;
-    st.region = regionSel.value;
-    if (ov && ov.paint) ov.paint(v[0] === "b" ? v.slice(2) : null);
+  function goRegion(r) {
     st.follow = false;
     refresh();
-    if (v[0] === "b") fly(BAS[v.slice(2)][1], BAS[v.slice(2)][2], 1.6);
-    else if (v[0] === "c") { var c = IX.countries[+v.slice(2)]; fly(c[2], c[3], 40 / Math.max(2, c[4])); }
+    if (!r) fly(-st.rot[0], -st.rot[1], 1);
+    else if (r[0] === "b") fly(A.BAT[r.slice(2)][0], A.BAT[r.slice(2)][1], 1.6);
+    else { var c = IX.countries[+r.slice(2)]; fly(c[2], c[3], Math.min(3, 40 / Math.max(2, c[4]))); }
   }
-  function labels() {
-    G.svg.attr("aria-label", tx().map);
-    q.placeholder = tx().search;
-    regionOptions();
-    refresh();
-  }
+  function labels() { G.svg.attr("aria-label", tx().map); refresh(); }
   function init() {
     build();
-    regionOptions();
-    regionSel.addEventListener("change", function () { setRegion(regionSel.value); });
-    q.addEventListener("input", refresh);
     Array.prototype.forEach.call(fig.querySelectorAll("[data-sort]"), function (b) {
       b.addEventListener("click", function () {
         st.sort = b.getAttribute("data-sort");
@@ -577,11 +542,22 @@
     $("sg-in").addEventListener("click", function () { zoomBy(1.6); });
     $("sg-out").addEventListener("click", function () { zoomBy(1 / 1.6); });
     document.addEventListener("langchange", labels);
+    A.on("region", goRegion);
+    A.on("year", refresh);
+    A.on("pick", function (s) {
+      if (st.sel.indexOf(s) < 0) toggle(s); else if (s.pts) flyTo(s);
+      var t = $("at-close");
+      if (t && t.getBoundingClientRect().top > window.innerHeight * 0.6) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    });
+    // start: the region and storms in the link, else Vietnam with Yagi 2024
+    var h = A.fromHash(), vn = IX.countries.filter(function (c) { return c[0] === "Vietnam"; })[0];
+    var r = h.region != null ? h.region : vn ? "c:" + vn.i : "";
+    A.setRegion(r, true);
+    A.emit("region", r);
+    if (h.year != null) A.setYear(h.year);
+    var first = h.sel.length ? h.sel : IX.storms.filter(function (s) { return s.name === "Yagi" && s.season === 2024; });
+    first.slice(0, MAXSEL).forEach(function (s, i) { toggle(s, i === 0 ? 1.4 : null); });
     labels();
-    overview();
-    var first = IX.storms.filter(function (s) { return s.name === "Yagi" && s.season === 2024; })[0] ||
-      IX.storms.slice().sort(function (a, b) { return b.t - a.t; })[0];
-    if (first) toggle(first, 1.15); // first view: the whole globe, turned to the storm
     var lw = box.clientWidth, rt;
     window.addEventListener("resize", function () {
       clearTimeout(rt);

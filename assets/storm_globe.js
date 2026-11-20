@@ -8,7 +8,7 @@
   var D = A.D, RAD = Math.PI / 180;
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
-  var MSH = 62.5, WAKE = 9; // ms of screen time per storm hour (1.5 s per storm day by default; the slider sets 0.5 to 6 s)
+  var MSH = 125, WAKE = 9; // ms of screen time per storm hour (3 s per storm day by default; the slider sets 0.5 to 6 s)
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
   var $ = function (id) { return document.getElementById(id); };
@@ -550,9 +550,11 @@
     playLabel();
   }
   function clockText(s) {
-    var c = s.cur, d = new Date(c.t), z = function (n) { return (n < 10 ? "0" : "") + n; };
+    var c = s.cur, i = s.pts.indexOf(c.fix);
+    while (i > 0 && !s.pts[i].syn) i--;
+    var f = s.pts[Math.max(i, 0)], d = new Date(f.t), z = function (n) { return (n < 10 ? "0" : "") + n; };
     var day = lang() === "vi" ? z(d.getUTCDate()) + "/" + z(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear() : d.getUTCDate() + " " + TXT.en.mon[d.getUTCMonth()] + " " + d.getUTCFullYear();
-    clock.textContent = nm(s) + ": " + day + ", " + z(d.getUTCHours()) + ":" + z(d.getUTCMinutes()) + " UTC" + (c.fix.v == null ? "" : " · " + tx().wind + " " + c.fix.v + " m/s");
+    clock.textContent = nm(s) + ": " + day + ", " + z(d.getUTCHours()) + ":" + z(d.getUTCMinutes()) + " UTC" + (f.v == null ? "" : " · " + tx().wind + "\u00a0" + f.v + "\u00a0m/s");
   }
   // Play is started by the reader, so it runs even when the system asks for reduced motion; Pause stops it
   function togglePlay() {

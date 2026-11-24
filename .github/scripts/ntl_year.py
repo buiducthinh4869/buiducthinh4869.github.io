@@ -48,7 +48,12 @@ INK_FROM = 0.483                       # 95th percentile of L / LMAX over the li
 GRID_W, GRID_H = 80150, 38663
 GRID_TRANSFORM = (0.00449157642059761, 0.0, -180.0, 0.0, -0.00449157642059761, 83.6578941180654)
 GRID_EPSG = 4326
-GRID_TOL = 1e-12
+# Tolerances of check_grid. Older files store the pixel size rounded to 10 decimals (2005: 0.0044915764 against
+# 0.00449157642059761, 2e-11 degree). PX_TOL = 1e-9 degree per pixel is 8e-5 degree (about 0.02 pixel) of
+# cumulative drift over the full 80150-pixel width, irrelevant for a 0.2-degree average.
+PX_TOL = 1e-9
+X_TOL = 1e-6                           # x origin, degrees
+ROT_TOL = 1e-12                        # rotation terms of the transform
 PRODUCT = "NPP-VIIRS-like Version 2 (Chen et al.)"
 DOI = "10.7910/DVN/YGIVCD"
 YEAR_RE = re.compile(r"^lights_(\d{4})\.png$")
@@ -83,22 +88,35 @@ def check_grid(s):
     Required: width of the 2025 file, one float32 band, EPSG:4326, the pixel size of the 2025 file, no rotation,
     x origin -180. Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
     The output window LB must be covered except for less than one output row (LCELL); a smaller gap is accepted
-    with a WARNING, and output rows without any source data stay NaN (drawn as 0)."""
+    with a WARNING, and output rows without any source data stay NaN (drawn as 0).
+    Every violation is collected and reported in one error; one INFO line shows the grid of every year.
+    Tolerances: pixel size PX_TOL, x origin X_TOL, rotation ROT_TOL."""
     tr = tuple(s.transform)[:6]
     ta, tb, tc, td, te, tf = (float(v) for v in tr)
     px = GRID_TRANSFORM[0]
     epsg = s.crs.to_epsg() if s.crs else None
-    assert s.width == GRID_W, f"width {s.width}, expected {GRID_W}"
-    assert s.count == 1 and s.dtypes[0] == "float32", f"bands {s.count}, dtype {s.dtypes}"
-    assert epsg == GRID_EPSG, f"crs {s.crs}"
-    assert abs(ta - px) <= GRID_TOL and abs(-te - px) <= GRID_TOL, f"pixel size {ta} x {-te}, expected {px}"
-    assert abs(tb) <= GRID_TOL and abs(td) <= GRID_TOL, f"rotation terms {tb}, {td}"
-    assert abs(tc - LB[0]) <= GRID_TOL, f"x origin {tc}, expected {LB[0]}"
     top = tf
     bottom = top - s.height * ta
-    assert top >= LB[3] - LCELL and bottom <= LB[1] + LCELL, (
-        f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing more than "
-        f"one output row ({LCELL} degree)")
+    print(f"INFO grid: width {s.width}, height {s.height}, pixel {ta!r} x {-te!r}, x origin {tc!r}, "
+          f"top {top!r}, bottom {bottom!r}", flush=True)
+    bad = []
+    if s.width != GRID_W:
+        bad.append(f"width {s.width}, expected {GRID_W}")
+    if not (s.count == 1 and s.dtypes[0] == "float32"):
+        bad.append(f"bands {s.count}, dtype {s.dtypes}, expected 1 band float32")
+    if epsg != GRID_EPSG:
+        bad.append(f"crs {s.crs}, expected EPSG:{GRID_EPSG}")
+    if not (abs(ta - px) <= PX_TOL and abs(-te - px) <= PX_TOL):
+        bad.append(f"pixel size {ta} x {-te}, expected {px} (tolerance {PX_TOL})")
+    if not (abs(tb) <= ROT_TOL and abs(td) <= ROT_TOL):
+        bad.append(f"rotation terms {tb}, {td}, expected 0 (tolerance {ROT_TOL})")
+    if not abs(tc - LB[0]) <= X_TOL:
+        bad.append(f"x origin {tc}, expected {LB[0]} (tolerance {X_TOL})")
+    if not (top >= LB[3] - LCELL and bottom <= LB[1] + LCELL):
+        bad.append(f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing "
+                   f"more than one output row ({LCELL} degree)")
+    if bad:
+        raise AssertionError(f"grid check failed, {len(bad)} problem(s): " + "; ".join(bad))
     if top < LB[3] or bottom > LB[1]:
         print(f"WARNING: raster covers latitude {bottom:.6f}..{top:.6f}, output window {LB[1]}..{LB[3]}: "
               f"north gap {max(0.0, LB[3] - top):.6f} deg, south gap {max(0.0, bottom - LB[1]):.6f} deg "

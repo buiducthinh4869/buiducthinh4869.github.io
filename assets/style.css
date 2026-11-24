@@ -562,8 +562,6 @@ html:not(.js) .storm-explorer .se-live,
 .sg-wkey { right: auto; left: 8px; width: 10rem; }
 .sg-wkey[hidden] { display: none; }
 .sg-opts { margin-top: 0.3rem; }
-.sg-tw { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; color: var(--muted); cursor: pointer; }
-.sg-tw input { margin: 0; accent-color: var(--accent); }
 .se-btn.sg-z { min-width: 32px; padding: 0; }
 .sg-info p { margin: 0 0 0.4rem; }
 .sg-info .se-link { font-family: var(--sans); font-size: 0.8125rem; }

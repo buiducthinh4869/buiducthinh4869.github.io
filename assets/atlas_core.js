@@ -5,7 +5,7 @@
   "use strict";
   var A = window.Atlas = { D: "assets/data/globe/", KT: 0.5144 };
   // basins: validated categorical order (adjacent CVD and normal-vision checks pass); names are also written on the map
-  A.BAS = { WP: "#2a6fc0", NA: "#d9632e", EP: "#179a6c", NI: "#c98a00", SI: "#c95f8c", SP: "#5a4ac4", SA: "#6b6f72" };
+  A.BAS = { WP: "#7b3fa0", NA: "#82421a", EP: "#c95f8c", NI: "#d9632e", SI: "#a3263a", SP: "#c98a00", SA: "#6b6f72" };
   A.BORDER = ["WP", "NA", "EP", "NI", "SI", "SP", "SA"];
   A.BAT = { WP: [140, 18], NA: [-62, 26], EP: [-115, 15], NI: [82, 14], SI: [68, -16], SP: [165, -18], SA: [-35, -25] };
   // category: one warm hue, light to dark (sequential)

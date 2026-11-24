@@ -1,14 +1,14 @@
 /* Storm atlas (storms.html), section 3: the selected storms on a globe over night-time light.
    Needs atlas_core.js (data, region, selection, tooltip). Tracks and winds shown are IBTrACS; wind fields from
    the cyclone project (see CLAUDE.md). Night lights: global 0.2 degree, plus 0.05 degree tiles when zoomed in; during
-   Play the image follows the season of the first storm (assets/ntl/, one 0.2 degree image per year, see globe_ntl.js).
+   Play the image follows the season of the first storm (assets/ntl/, one 0.2 degree image per year, see ntl_layer.js).
    The Cells (0.1 degree) view is in globe_cells.js. */
 (function () {
   "use strict";
   var A = window.Atlas, fig = document.querySelector(".storm-globe");
   if (!A || !fig) return;
   var D = A.D, RAD = Math.PI / 180, N = A.ntl, C = A.cells;
-  if (!N || !C) { if (A.fail) A.fail(new Error("globe_ntl.js or globe_cells.js is missing")); fig.hidden = true; return; }
+  if (!N || !A.ntlLayer || !C) { if (A.fail) A.fail(new Error("ntl_layer.js or globe_cells.js is missing")); fig.hidden = true; return; }
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
   var MSH = 125, WAKE = 9; // ms of screen time per storm hour (3 s per storm day by default; the slider sets 0.5 to 6 s)
@@ -21,7 +21,7 @@
     en: {
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
       nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}.",
-      ramp: ["Night lights: {y}", "low", "high"], pre: "(no earlier satellite image)", play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
+      ramp: ["low", "high"], play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
       ov: "World map of all tropical storm tracks, coloured by ocean basin."
@@ -29,7 +29,7 @@
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}.",
-      ramp: ["Ánh sáng ban đêm: {y}", "thấp", "cao"], pre: "(không có ảnh vệ tinh sớm hơn)", play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
+      ramp: ["thấp", "cao"], play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
       ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
     }
@@ -41,28 +41,13 @@
 
   function fail(err) { A.fail(err); fig.hidden = true; }
   var getJSON = A.getJSON;
-  function getImg(u) {
-    return new Promise(function (ok, no) {
-      var im = new Image();
-      im.onload = function () {
-        var c = document.createElement("canvas");
-        c.width = im.naturalWidth; c.height = im.naturalHeight;
-        var cx = c.getContext("2d", { willReadFrequently: true });
-        cx.drawImage(im, 0, 0);
-        ok({ w: c.width, h: c.height, px: cx.getImageData(0, 0, c.width, c.height).data });
-      };
-      im.onerror = function () { no(new Error(u + " missing")); };
-      im.src = u;
-    });
-  }
-
-  var IX, land, LT, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
+  var IX, land, LT, DEF, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
   var seasons = {}, fields = {};
 
   A.ready.then(function () {
     IX = A.IX; land = A.land;
     init();
-    return getImg(D + "lights.png").then(lights, function (e) { if (window.console) console.warn(e); });
+    return N.decode(D + "lights.png").then(lights, function (e) { if (window.console) console.warn(e); });
   }).catch(fail);
 
   // ------------------------------------------------------------------ lights: lit cells binned by colour
@@ -78,7 +63,7 @@
   function tid(lonDeg, latDeg) { return Math.floor((lonDeg + 180) / 10) + TW * Math.floor((latDeg + 60) / 10); }
   function binCells(im, b0, b3, c, out) {
     for (var j = 0; j < im.h; j++) for (var i = 0; i < im.w; i++) {
-      var v = im.px[(j * im.w + i) * 4];
+      var v = im.data[j * im.w + i];
       if (v < 24) continue; // the faintest glow is left out, as it is barely visible and costs time
       var lo = b0 + (i + 0.5) * c, la = b3 - (j + 0.5) * c, lat = la * RAD;
       out[Math.min(NB - 1, Math.floor(v / 256 * NB))].push(lo * RAD, Math.sin(lat), Math.cos(lat), tid(lo, la));
@@ -93,18 +78,17 @@
   function lights(im) {
     var m = IX.meta.lights;
     LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg) };
-    N.cur = N.def = { year: m.year, bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
-    ramp();
     TL.on = new Uint8Array(TW * 15);
     TL.list = {};
     ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });
     TL.cell = m.tiles ? m.tiles.cell_deg * RAD : 0;
-    draw();
+    DEF = { bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
+    NT.sync(); // takes the default layer (key text and redraw)
     fxStart();
   }
   // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
   function tiles() {
-    if (!LT || !TL.cell || !N.cur.tiles || G.R * st.k * LT.cell < 2.5) return;
+    if (!LT || !TL.cell || !NT.cur.tiles || G.R * st.k * LT.cell < 2.5) return;
     var c = [-st.rot[0], -st.rot[1]], r = 95 / st.k;
     for (var la = -60; la < 80; la += 10) for (var lo = -180; lo < 180; lo += 10) {
       var key = lo + "_" + la;
@@ -112,7 +96,7 @@
       if (d3.geoDistance([lo + 5, la + 5], c) * 180 / Math.PI > r + 8) continue;
       TL.want[key] = 1;
       (function (key, lo, la) {
-        getImg(D + "lights/" + key + ".png").then(function (im) {
+        N.decode(D + "lights/" + key + ".png").then(function (im) {
           TL.loaded[key] = bins(im, lo, la + 10, IX.meta.lights.tiles.cell_deg);
           TL.on[tid(lo + 5, la + 5)] = 1;
           draw();
@@ -121,12 +105,21 @@
     }
   }
 
-  // ------------------------------------------------------------------ what globe_ntl.js and globe_cells.js need
-  N.env = {
-    getImg: getImg, bins: bins, dots: dots, TL: TL, LT: function () { return LT; }, meta: function () { return IX.meta.lights; },
+  // ------------------------------------------------------------------ what ntl_layer.js and globe_cells.js need
+  function ntlDraw(cx, L, keep, Rk) { // one layer: its 0.2 degree cells, and for the default layer the 0.05 degree tiles that are loaded
+    dots(cx, L.bins, LT.cell, Rk, L.tiles, keep);
+    if (L.tiles) for (var k in TL.loaded) if (TL.loaded[k].length) dots(cx, TL.loaded[k], TL.cell, Rk, false, keep);
+  }
+  var NT = A.ntlLayer({
     lead: function () { return st.dur > 0 ? st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0] : null; },
-    changed: function () { ramp(); draw(); }, redraw: draw, reduce: reduce
-  };
+    build: function (im) {
+      var m = IX.meta.lights;
+      if (im.w !== m.width || im.h !== m.height) throw new Error("ntl image: wrong size");
+      return { bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg), tiles: false };
+    },
+    draw: ntlDraw, redraw: draw, reduce: function () { return reduce; }, changed: function () { ramp(); draw(); },
+    defaultLayer: function () { return DEF ? { layer: DEF, year: IX.meta.lights.year } : null; }
+  });
   C.env = { G: G, st: st, fields: fields, vis: vis };
 
   // ------------------------------------------------------------------ globe
@@ -206,7 +199,7 @@
       lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
       lc.clearRect(0, 0, w, h);
       G.sp = [];
-      N.paint(lc, now, Rk);
+      NT.paint(lc, now, Rk);
       cx.save();
       cx.setTransform(1, 0, 0, 1, 0, 0);
       // a soft halo under the crisp cells, so lights read as glow rather than squares
@@ -389,9 +382,9 @@
   function loadField(s) {
     if (!s.wind_bbox) return Promise.resolve(null);
     if (fields[s.id]) return Promise.resolve(fields[s.id]);
-    return getImg(D + "wind/" + s.id + ".png").then(function (im) {
+    return N.decode(D + "wind/" + s.id + ".png").then(function (im) {
       var n2 = im.w + 2, m2 = im.h + 2, v = new Float32Array(n2 * m2);
-      for (var j = 0; j < im.h; j++) for (var i = 0; i < im.w; i++) v[(j + 1) * n2 + i + 1] = im.px[(j * im.w + i) * 4];
+      for (var j = 0; j < im.h; j++) for (var i = 0; i < im.w; i++) v[(j + 1) * n2 + i + 1] = im.data[j * im.w + i];
       var f = fields[s.id] = { v: v, n2: n2, m2: m2, b: s.wind_bbox, res: IX.meta.wind_res };
       f.iso = iso(f, v);
       return f;
@@ -503,7 +496,7 @@
       st.tau = 0; st.dur = 0;
       st.sel.forEach(function (s) { s.cur = null; s.done = false; s.pi = 0; var f = fields[s.id]; if (f && f.full) { f.iso = f.full; f.cur = null; } });
       clock.textContent = "";
-      N.reset(hold); // back to the 2025 layer, unless Play is about to pick the year
+      NT.reset(hold); // back to the 2025 layer, unless Play is about to pick the year
     }
     playLabel();
   }
@@ -567,7 +560,7 @@
       st.rot = [st.rot[0] + d * 0.06, st.rot[1] + (tr[1] - st.rot[1]) * 0.06];
     }
     if (lead) clockText(lead);
-    N.sync();
+    NT.sync();
     render(now);
     if (seekG) seekG.value = Math.round(st.tau);
   }
@@ -634,15 +627,15 @@
   function ramp() {
     if (!G.ramp) return;
     C.key(G.wkey);
-    if (!LT) return;
+    if (!LT || !NT.cur) return;
     var T = tx().ramp, r = G.ramp;
     r.textContent = "";
-    r.appendChild(A.el("span", "sg-ramp-t", T[0].replace("{y}", N.cur.year) + (N.pre ? " " + tx().pre : "")));
+    r.appendChild(A.el("span", "sg-ramp-t", N.keyText(NT.year, NT.pre, lang())));
     var bar = A.el("span", "sg-ramp-bar");
     LT.cols.forEach(function (c) { var k = A.el("span"); k.style.background = c; bar.appendChild(k); });
     r.appendChild(bar);
     var lh = A.el("span", "sg-ramp-lh");
-    lh.appendChild(A.el("span", null, T[1])); lh.appendChild(A.el("span", null, T[2]));
+    lh.appendChild(A.el("span", null, T[0])); lh.appendChild(A.el("span", null, T[1]));
     r.appendChild(lh);
   }
   function labels() { G.svg.attr("aria-label", tx().map); sq.placeholder = lang() === "vi" ? "ví dụ: Haiyan, Katrina" : "e.g. Haiyan, Katrina"; ramp(); refresh(); }

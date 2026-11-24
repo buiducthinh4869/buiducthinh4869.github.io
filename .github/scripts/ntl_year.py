@@ -58,6 +58,7 @@ PX_TOL = 1e-9
 # such as longitudes 0..360 (x origin 0).
 X_TOL = 0.5 * GRID_TRANSFORM[0]
 ROT_TOL = 1e-12                        # rotation terms of the transform
+SOUTH_MIN = -55.9                      # the raster must reach this latitude (south of it: sea, no lights)
 PRODUCT = "NPP-VIIRS-like Version 2 (Chen et al.)"
 DOI = "10.7910/DVN/YGIVCD"
 YEAR_RE = re.compile(r"^lights_(\d{4})\.png$")
@@ -124,9 +125,11 @@ def check_grid(s):
     elif east < LB[2] - X_TOL:
         print(f"WARNING: raster ends at longitude {east!r}, {LB[2] - east:.6f} deg (one pixel) short of {LB[2]}; "
               f"the easternmost output column averages the source pixels it has", flush=True)
-    if not (top >= LB[3] - LCELL and bottom <= LB[1] + LCELL):
-        bad.append(f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing "
-                   f"more than one output row ({LCELL} degree)")
+    # South: the 2022 file ends at 55.983 S. South of 55.98 S the window holds only sea (Drake Passage) and a few
+    # unlit islands, so any bottom down to SOUTH_MIN is accepted (rows below it stay NaN, drawn as 0).
+    if not (top >= LB[3] - LCELL and bottom <= SOUTH_MIN):
+        bad.append(f"rows {s.height}, top {top}, bottom {bottom}: the raster must reach {LB[3] - LCELL} N and "
+                   f"{SOUTH_MIN} S (output window {LB[1]}..{LB[3]})")
     if bad:
         raise AssertionError(f"grid check failed, {len(bad)} problem(s): " + "; ".join(bad))
     if top < LB[3] or bottom > LB[1]:

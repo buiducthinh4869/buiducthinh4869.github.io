@@ -21,14 +21,16 @@
       ramp: ["Night-time light", "low", "high"], play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
-      ov: "World map of all tropical storm tracks, coloured by ocean basin."
+      ov: "World map of all tropical storm tracks, coloured by ocean basin.",
+      cell: "Peak wind in this 0.1° cell", wkey: "Peak wind (m/s)"
     },
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}.",
       ramp: ["Ánh sáng ban đêm", "thấp", "cao"], play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
-      ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
+      ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển.",
+      cell: "Sức gió mạnh nhất tại ô 0,1° này", wkey: "Sức gió mạnh nhất (m/s)"
     }
   };
   function lang() { return A.lang(); }
@@ -53,7 +55,7 @@
     });
   }
 
-  var IX, land, LT, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false };
+  var IX, land, LT, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
   var seasons = {}, fields = {};
 
   A.ready.then(function () {
@@ -93,6 +95,7 @@
     ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });
     TL.cell = m.tiles ? m.tiles.cell_deg * RAD : 0;
     draw();
+    fxStart();
   }
   // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
   function tiles() {
@@ -126,7 +129,10 @@
     G.cv = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.cx = G.cv.getContext("2d");
     G.ramp = root.append("div").attr("class", "sg-ramp se-text").attr("aria-hidden", "true").node();
+    G.wkey = root.append("div").attr("class", "sg-ramp sg-wkey se-text").attr("aria-hidden", "true").node();
+    G.wkey.hidden = st.view !== "cells";
     ramp();
+    G.fx = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.lc = document.createElement("canvas");
     G.lc.width = w * dpr; G.lc.height = h * dpr;
     var svg = G.svg = root.append("svg").attr("class", "sg-svg").attr("viewBox", "0 0 " + w + " " + h)
@@ -158,13 +164,14 @@
       svg.classed("is-drag", true);
       if (svg.node().setPointerCapture) svg.node().setPointerCapture(ev.pointerId);
     }).on("pointermove", function (ev) {
-      if (!p0) return;
+      if (!p0) { if (ev.pointerType === "mouse" && !(ev.target && ev.target.__data__)) cellTip(ev); return; }
       var s = 180 / Math.PI / (G.R * st.k);
       st.follow = false;
       st.rot = [p0[2][0] + (ev.clientX - p0[0]) * s, Math.max(-85, Math.min(85, p0[2][1] - (ev.clientY - p0[1]) * s))];
       if (st.tw) st.tw = null;
       draw();
-    }).on("pointerup pointercancel", function () { p0 = null; G.moving = false; svg.classed("is-drag", false); draw(); });
+    }).on("pointerup pointercancel", function () { p0 = null; G.moving = false; svg.classed("is-drag", false); draw(); })
+      .on("pointerleave", A.tipHide);
     svg.on("wheel", function (ev) {
       if (!(ev.ctrlKey || st.act || document.activeElement === svg.node())) return; // no scroll trap before the reader engages
       ev.preventDefault();
@@ -188,6 +195,7 @@
       var lc = G.lc.getContext("2d");
       lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
       lc.clearRect(0, 0, w, h);
+      G.sp = [];
       dots(lc, LT.bins, LT.cell, Rk, true);
       for (var key in TL.loaded) if (TL.loaded[key].length) dots(lc, TL.loaded[key], TL.cell, Rk, false);
       cx.save();
@@ -204,6 +212,7 @@
       cx.restore();
       tiles();
     }
+    if (st.view === "cells") cells(cx, Rk);
     cx.beginPath(); cp({ type: "Sphere" }); cx.lineWidth = 1; cx.strokeStyle = "#e4e1d8"; cx.stroke();
     drawStorms(now);
   }
@@ -222,7 +231,85 @@
         var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
         if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
         cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.3);
+        if (b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
       }
+    }
+  }
+  // Cells view: each 0.1-degree cell of 17 m/s and up, by category
+  function cells(cx, Rk) {
+    var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
+    cx.globalAlpha = 0.85;
+    st.sel.forEach(function (s) {
+      var f = fields[s.id], i, j, c;
+      if (!f) return;
+      var v = f.cur || f.v, sz = Math.max(0.8, Rk * f.res * RAD * 1.04), ll = f.ll;
+      if (!ll) {
+        ll = f.ll = new Float32Array(v.length * 3);
+        for (j = 0; j < f.m2; j++) for (i = 0; i < f.n2; i++) {
+          var la = (f.b[3] - (j - 0.5) * f.res) * RAD;
+          c = 3 * (j * f.n2 + i); ll[c] = (f.b[0] + (i - 0.5) * f.res) * RAD; ll[c + 1] = Math.sin(la); ll[c + 2] = Math.cos(la);
+        }
+      }
+      A.LEV.forEach(function (lo, k) {
+        var hi = A.LEV[k + 1] || 999;
+        cx.fillStyle = A.CCOL[A.CLS[k]];
+        for (c = 0; c < v.length; c++) {
+          if (v[c] < lo || v[c] >= hi) continue;
+          var l = ll[3 * c] - L0, cl = Math.cos(l), sl = ll[3 * c + 1], co = ll[3 * c + 2], cosc = sp * sl + cq * co * cl;
+          if (cosc <= 0.02) continue;
+          var x = X + Rk * co * Math.sin(l), y = Y - Rk * (cq * sl - sp * co * cl);
+          if (x < -sz || x > w + sz || y < -sz || y > h + sz) continue;
+          cx.fillRect(x - sz / 2, y - sz / 2, sz * co + 0.3, sz * cosc + 0.3);
+        }
+      });
+    });
+    cx.globalAlpha = 1;
+  }
+  // hover: peak wind of the cell under the pointer
+  function cellTip(ev) {
+    var r = G.svg.node().getBoundingClientRect(), q = G.proj.invert([ev.clientX - r.left, ev.clientY - r.top]), T = tx(), out = A.el("div"), n = 0;
+    if (!q || !vis(q)) return A.tipHide();
+    st.sel.forEach(function (s) {
+      var f = fields[s.id];
+      if (!f) return;
+      for (var k = -1; k <= 1; k++) {
+        var i = Math.floor((q[0] + 360 * k - f.b[0]) / f.res), j = Math.floor((f.b[3] - q[1]) / f.res);
+        if (i < 0 || j < 0 || i >= f.n2 - 2 || j >= f.m2 - 2) continue;
+        var x = Math.floor((f.cur || f.v)[(j + 1) * f.n2 + i + 1]);
+        if (x >= 10) { out.appendChild(A.el("p", null, nm(s) + " " + s.season + ": " + x + " m/s" + (x >= 17 ? ", " + T.cls[A.clsOf(x)] : ""))); n++; }
+        break;
+      }
+    });
+    if (!n) return A.tipHide();
+    out.insertBefore(A.el("p", "se-label", T.cell), out.firstChild);
+    A.tipShow(ev.clientX, ev.clientY, out);
+  }
+
+  // twinkle: bright cells glint in turn (decoration; off under reduced motion)
+  var SPB = 9, FX = { vis: true };
+  function fxClear() { if (G.fx) G.fx.getContext("2d").clearRect(0, 0, G.fx.width, G.fx.height); }
+  function fxStart() { if (!FX.raf && st.glint && FX.vis && !document.hidden) FX.raf = requestAnimationFrame(fxLoop); }
+  function fxLoop(now) {
+    FX.raf = null;
+    if (!st.glint || !FX.vis || document.hidden) { fxClear(); return; }
+    if (now - (FX.t || 0) > 40) { FX.t = now; fxDraw(now); }
+    FX.raf = requestAnimationFrame(fxLoop);
+  }
+  function fxDraw(now) {
+    var c = G.fx.getContext("2d"), a = G.sp, n = a ? a.length / 3 : 0, step = Math.max(1, Math.floor(n / 700));
+    c.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
+    c.clearRect(0, 0, G.w, G.h);
+    if (G.moving || !n) return;
+    for (var k = 0; k < n; k += step) {
+      var u = (now / (1800 + 2600 * ((k * 0.7548776662) % 1)) + (k * 0.6180339887) % 1) % 1;
+      if (u > 0.14) continue;
+      var e = Math.sin(u / 0.14 * Math.PI), x = a[3 * k], y = a[3 * k + 1], r = Math.max(1.2, a[3 * k + 2]);
+      var g = c.createRadialGradient(x, y, 0, x, y, r * (2 + 2.5 * e));
+      g.addColorStop(0, "rgba(255,248,226," + (0.95 * e).toFixed(3) + ")");
+      g.addColorStop(0.35, "rgba(201,219,226," + (0.55 * e).toFixed(3) + ")");
+      g.addColorStop(1, "rgba(201,219,226,0)");
+      c.fillStyle = g;
+      c.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
     }
   }
   function vis(p) { return d3.geoDistance(p, [-st.rot[0], -st.rot[1]]) < Math.PI / 2 - 0.01; }
@@ -233,12 +320,12 @@
     var used = [];
     st.sel.forEach(function (s) {
       var f = fields[s.id];
-      if (f && f.iso) f.iso.forEach(function (o) {
+      if (f && f.iso && st.view === "lines") f.iso.forEach(function (o) {
         G.fld.append("path").attr("class", "sg-fill").attr("d", path(o.p)).style("fill", s.col);
         G.fld.append("path").attr("d", path(o.g)).attr("stroke", s.col).attr("stroke-opacity", OPAC[LEVELS.indexOf(o.lev)])
           .classed("is-ts", o.lev === 17);
       });
-      if (f && f.iso && !st.raf) f.iso.forEach(function (o) { label(o, used); });
+      if (f && f.iso && !st.raf && st.view === "lines") f.iso.forEach(function (o) { label(o, used); });
       if (!s.pts) return;
       s.lines.forEach(function (ln) {
         var d = path(ln);
@@ -452,7 +539,7 @@
     st.raf = null;
     if (reset) {
       st.tau = 0; st.dur = 0;
-      st.sel.forEach(function (s) { s.cur = null; s.done = false; s.pi = 0; var f = fields[s.id]; if (f && f.full) f.iso = f.full; });
+      st.sel.forEach(function (s) { s.cur = null; s.done = false; s.pi = 0; var f = fields[s.id]; if (f && f.full) { f.iso = f.full; f.cur = null; } });
       clock.textContent = "";
     }
     playLabel();
@@ -493,7 +580,7 @@
     st.tau = Math.min(st.dur, st.tau + Math.max(0, Math.min(100, now - st.last)) / MSH);
     st.last = now;
     apply(now, false);
-    if (st.tau >= st.dur) { st.raf = null; st.sel.forEach(function (s) { var f = fields[s.id]; if (f && f.full) f.iso = f.full; }); render(now); playLabel(); return; }
+    if (st.tau >= st.dur) { st.raf = null; st.sel.forEach(function (s) { var f = fields[s.id]; if (f && f.full) { f.iso = f.full; f.cur = null; } }); render(now); playLabel(); return; }
     st.raf = requestAnimationFrame(tick);
   }
   // the whole picture at play time st.tau (hours since the first storm's first fix), so stepping back works too
@@ -509,6 +596,7 @@
         var R = WAKE * 36e5;
         for (var c = 0; c < f.v.length; c++) f.w[c] = f.v[c] < 10 ? f.v[c] : f.v[c] * Math.max(0, Math.min(1, 1 - (f.tc[c] - t) / R));
         f.iso = s.done ? f.full : iso(f, f.w);
+        f.cur = s.done ? null : f.w;
       }
     });
     if (lead && st.follow) { // the globe turns with the first storm
@@ -580,7 +668,9 @@
   }
   // key for the night lights: the same colour steps as drawn, low to high
   function ramp() {
-    if (!LT || !G.ramp) return;
+    if (!G.ramp) return;
+    wkey();
+    if (!LT) return;
     var T = tx().ramp, r = G.ramp;
     r.textContent = "";
     r.appendChild(A.el("span", "sg-ramp-t", T[0]));
@@ -590,6 +680,14 @@
     var lh = A.el("span", "sg-ramp-lh");
     lh.appendChild(A.el("span", null, T[1])); lh.appendChild(A.el("span", null, T[2]));
     r.appendChild(lh);
+  }
+  // key for the Cells view
+  function wkey() {
+    var k = G.wkey, kb = A.el("span", "sg-ramp-bar"), kl = A.el("span", "sg-ramp-lh");
+    k.textContent = "";
+    k.appendChild(A.el("span", "sg-ramp-t", tx().wkey));
+    A.CLS.forEach(function (c, i) { var s = A.el("span"); s.style.background = A.CCOL[c]; kb.appendChild(s); kl.appendChild(A.el("span", null, A.LEV[i])); });
+    k.appendChild(kb); k.appendChild(kl);
   }
   function labels() { G.svg.attr("aria-label", tx().map); sq.placeholder = lang() === "vi" ? "ví dụ: Haiyan, Katrina" : "e.g. Haiyan, Katrina"; ramp(); refresh(); }
   function init() {
@@ -622,6 +720,19 @@
       b.addEventListener("click", function () { var c = b.getAttribute("data-cat"); st.cat[c] = !st.cat[c]; b.setAttribute("aria-pressed", String(st.cat[c])); again(); });
     });
     $("sg-morebtn").addEventListener("click", function () { st.limit += ROWS; refresh(); });
+    Array.prototype.forEach.call(fig.querySelectorAll("[data-view]"), function (b) {
+      b.addEventListener("click", function () {
+        st.view = b.getAttribute("data-view");
+        Array.prototype.forEach.call(fig.querySelectorAll("[data-view]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        G.wkey.hidden = st.view !== "cells";
+        draw();
+      });
+    });
+    var twb = $("sg-tw");
+    twb.checked = st.glint;
+    twb.addEventListener("change", function () { st.glint = twb.checked; if (st.glint) fxStart(); else fxClear(); });
+    document.addEventListener("visibilitychange", fxStart);
+    if (window.IntersectionObserver) new IntersectionObserver(function (e) { FX.vis = e[0].isIntersecting; fxStart(); }).observe(box);
     sq.addEventListener("input", again);
     var gs = $("sg-speed"), gsv = $("sg-speed-v");
     gs.addEventListener("input", function () { MSH = 1000 * +gs.value / 24; gsv.textContent = gs.value + " s"; });

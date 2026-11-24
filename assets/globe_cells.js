@@ -8,16 +8,28 @@
   if (!A) return;
   var C = A.cells = { env: null }, RAD = Math.PI / 180;
   var TX = {
-    en: { cell: "Peak wind in this 0.1° cell", wkey: "Peak wind (m/s)" },
-    vi: { cell: "Sức gió mạnh nhất tại ô 0,1° này", wkey: "Sức gió mạnh nhất (m/s)" }
+    en: { cell: "Peak wind in this 0.1° cell", wkey: "Peak wind (m/s)", lkey: "Peak wind ≥ (m/s)",
+      lines: "Lines: each line encloses the area where the storm's peak wind reached at least 17, 33, 43, 50 or 58 m/s; the darker the shading, the stronger the wind. Hover to see the exact value of a 0.1° cell.",
+      cells: "Cells: each 0.1° grid cell is coloured by the strongest wind it had during the storm. Same data as the lines, without smoothing. Hover to see the exact value." },
+    vi: { cell: "Sức gió mạnh nhất tại ô 0,1° này", wkey: "Sức gió mạnh nhất (m/s)", lkey: "Gió mạnh nhất ≥ (m/s)",
+      lines: "Đường: mỗi đường bao vùng mà sức gió mạnh nhất của cơn bão đạt ít nhất 17, 33, 43, 50 hoặc 58 m/s; vùng càng đậm, gió càng mạnh. Rê chuột để xem giá trị chính xác của từng ô 0,1°.",
+      cells: "Từng ô: mỗi ô lưới 0,1° được tô theo sức gió mạnh nhất mà ô đó chịu trong suốt cơn bão. Cùng dữ liệu với các đường, nhưng không làm trơn. Rê chuột để xem giá trị chính xác." }
   };
-  // key for the Cells view, into the element k
-  C.key = function (k) {
-    var kb = A.el("span", "sg-ramp-bar"), kl = A.el("span", "sg-ramp-lh");
+  // key of the view shown, into the element k, and the one-line note under the view switch (#sg-viewnote)
+  C.key = function (k, view) {
+    var T = TX[A.lang()], kb = A.el("span", "sg-ramp-bar"), kl = A.el("span", "sg-ramp-lh"), cells = view === "cells", n = document.getElementById("sg-viewnote"),
+      sel = C.env && C.env.st.sel, lc = sel && sel.length && sel[0].col || "#23272b";
     k.textContent = "";
-    k.appendChild(A.el("span", "sg-ramp-t", TX[A.lang()].wkey));
-    A.CLS.forEach(function (c, i) { var s = A.el("span"); s.style.background = A.CCOL[c]; kb.appendChild(s); kl.appendChild(A.el("span", null, A.LEV[i])); });
+    k.appendChild(A.el("span", "sg-ramp-t", cells ? T.wkey : T.lkey));
+    A.CLS.forEach(function (c, i) {
+      if (!cells && i > 4) return; // lines stop at 58 m/s; bands stack in the first storm's colour, as drawn (.sg-fill)
+      var s = A.el("span"), q = d3.color(lc);
+      if (!cells) q.opacity = 1 - Math.pow(0.85, i + 1);
+      s.style.background = cells ? A.CCOL[c] : q + "";
+      kb.appendChild(s); kl.appendChild(A.el("span", null, A.LEV[i]));
+    });
     k.appendChild(kb); k.appendChild(kl);
+    if (n) n.textContent = cells ? T.cells : T.lines;
   };
   // each 0.1-degree cell of 17 m/s and up, by category
   C.draw = function (cx, Rk) {

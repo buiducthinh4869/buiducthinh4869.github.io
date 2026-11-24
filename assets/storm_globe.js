@@ -125,7 +125,6 @@
     G.cx = G.cv.getContext("2d");
     G.ramp = root.append("div").attr("class", "sg-ramp se-text").attr("aria-hidden", "true").node();
     G.wkey = root.append("div").attr("class", "sg-ramp sg-wkey se-text").attr("aria-hidden", "true").node();
-    G.wkey.hidden = st.view !== "cells";
     ramp();
     G.fx = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.lc = document.createElement("canvas");
@@ -422,6 +421,7 @@
       }
     });
     IX.storms.forEach(function (s) { if (st.sel.indexOf(s) < 0) s.col = null; });
+    if (G.wkey) C.key(G.wkey, st.view); // the lines key takes the first storm's colour
   }
 
   // ------------------------------------------------------------------ side panel
@@ -618,7 +618,7 @@
   // key for the night lights: the same colour steps as drawn, low to high
   function ramp() {
     if (!G.ramp) return;
-    C.key(G.wkey);
+    C.key(G.wkey, st.view);
     if (!LT || !NT.cur) return;
     var T = tx().ramp, r = G.ramp;
     r.textContent = "";
@@ -665,7 +665,7 @@
       b.addEventListener("click", function () {
         st.view = b.getAttribute("data-view");
         Array.prototype.forEach.call(fig.querySelectorAll("[data-view]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-        G.wkey.hidden = st.view !== "cells";
+        C.key(G.wkey, st.view);
         draw();
       });
     });

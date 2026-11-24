@@ -1,0 +1,292 @@
+name: NTL yearly layers
+
+# One 0.2-degree night-light PNG per year (NPP-VIIRS-like Version 2, doi:10.7910/DVN/YGIVCD), built by
+# .github/scripts/ntl_year.py with the pipeline of the 2025 layer (assets/data/globe/lights.png).
+# Run by hand: Actions > NTL yearly layers > Run workflow. `years`: comma list (2005,2025) or "all" (1992..2025).
+# Nothing is committed unless `commit` is ticked; the result is always available as the artifact "ntl-all".
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: 'Years: comma list such as 2005,2025, or "all" (1992 to 2025)'
+        type: string
+        default: "2005,2025"
+      commit:
+        description: "Commit assets/ntl to the branch this run was started on"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      years: ${{ steps.plan.outputs.years }}
+    steps:
+      - name: Validate the years
+        id: plan
+        env:
+          YEARS_IN: ${{ inputs.years }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys
+          raw = os.environ["YEARS_IN"]
+          first, last = 1992, 2025
+          if raw == "all":
+              years = list(range(first, last + 1))
+          elif re.fullmatch(r"[0-9]{4}(,[0-9]{4})*", raw):
+              years = sorted({int(x) for x in raw.split(",")})
+              bad = [y for y in years if not first <= y <= last]
+              if bad:
+                  print(f"::error::years outside {first}..{last}: {bad}")
+                  sys.exit(1)
+          else:
+              print("::error::years must be four-digit years separated by commas, or exactly: all (got " + repr(raw)[:80] + ")")
+              sys.exit(1)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("years=" + json.dumps(years) + "\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("Years planned: " + ", ".join(map(str, years)) + "\n")
+          PY
+
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        year: ${{ fromJson(needs.plan.outputs.years) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: pip install rasterio numpy pillow geopandas pyogrio
+
+      - name: Find the data file
+        id: res
+        env:
+          YEAR: ${{ matrix.year }}
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 8 --retry-all-errors --retry-delay 20 -o files.json \
+            "https://dataverse.harvard.edu/api/datasets/:persistentId/versions/:latest-published/files?persistentId=doi:10.7910/DVN/YGIVCD&per_page=500"
+          python3 - <<'PY'
+          import json, os, sys
+          label = os.environ["YEAR"] + "_Version2.zip"
+          data = json.load(open("files.json"))["data"]
+          hit = [d for d in data if d.get("label") == label or d.get("dataFile", {}).get("filename") == label]
+          if len(hit) != 1:
+              print(f"::error::{label}: {len(hit)} matches among {len(data)} files of the dataset")
+              sys.exit(1)
+          df = hit[0]["dataFile"]
+          chk = df.get("checksum") or {}
+          md5 = df.get("md5") or (chk.get("value") if chk.get("type") == "MD5" else None)
+          if not md5 or not df.get("filesize"):
+              print(f"::error::{label}: size or md5 missing in the API answer: {sorted(df)}")
+              sys.exit(1)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"file_id={int(df['id'])}\nsize={int(df['filesize'])}\nmd5={md5}\n")
+          print(label, df["id"], df["filesize"], md5)
+          PY
+
+      - name: Download the year zip
+        id: dl
+        env:
+          YEAR: ${{ matrix.year }}
+          FILE_ID: ${{ steps.res.outputs.file_id }}
+          SIZE: ${{ steps.res.outputs.size }}
+          MD5: ${{ steps.res.outputs.md5 }}
+        run: |
+          set -euo pipefail
+          mkdir -p work out
+          zip="work/${YEAR}_Version2.zip"
+          t0=$(date +%s)
+          curl -fL --retry 8 --retry-all-errors --retry-delay 20 -o "$zip" \
+            "https://dataverse.harvard.edu/api/access/datafile/${FILE_ID}"
+          t1=$(date +%s)
+          got=$(stat -c %s "$zip")
+          if [ "$got" != "$SIZE" ]; then
+            echo "::error::size ${got} does not match the dataset record ${SIZE}"
+            exit 1
+          fi
+          echo "${MD5}  ${zip}" | md5sum -c -
+          echo "download_s=$((t1 - t0))" >> "$GITHUB_OUTPUT"
+
+      - name: Download Natural Earth countries
+        run: |
+          set -euo pipefail
+          mkdir -p work
+          if ! curl -fL --retry 5 --retry-all-errors --retry-delay 10 -o work/ne.zip \
+               "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip"; then
+            echo "first host failed, trying the second"
+            curl -fL --retry 5 --retry-all-errors --retry-delay 10 -o work/ne.zip \
+              "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip"
+          fi
+          unzip -tq work/ne.zip
+          unzip -l work/ne.zip | grep -q '\.shp$'
+
+      - name: Build the layer
+        env:
+          YEAR: ${{ matrix.year }}
+        run: |
+          set -euo pipefail
+          python .github/scripts/ntl_year.py year --year "$YEAR" \
+            --zip "$GITHUB_WORKSPACE/work/${YEAR}_Version2.zip" \
+            --out "$GITHUB_WORKSPACE/out" \
+            --ne-zip "$GITHUB_WORKSPACE/work/ne.zip"
+
+      - name: Summary row
+        env:
+          YEAR: ${{ matrix.year }}
+          ZIP_BYTES: ${{ steps.res.outputs.size }}
+          DOWNLOAD_S: ${{ steps.dl.outputs.download_s }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          y = os.environ["YEAR"]
+          st = json.load(open(f"out/stats_{y}.json"))
+          rss = st.get("peak_rss_mb")
+          row = [y, f"{int(os.environ['ZIP_BYTES']) / 1e6:.1f}", os.environ["DOWNLOAD_S"],
+                 f"{st['seconds_aggregate']:.0f}", f"{st['seconds_total']:.0f}",
+                 "" if rss is None else f"{rss:.0f}", f"{st['png_bytes']:,}", f"{st['n_lit_cells']:,}",
+                 f"{st['own_p995']:.4f} vs {st['lmax_used']:.4f}"]
+          head = ["year", "zip MB", "download s", "aggregate s", "total s", "peak RSS MB", "PNG bytes", "lit cells",
+                  "own p99.5 vs LMAX"]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("| " + " | ".join(head) + " |\n|" + "---|" * len(head) + "\n| " + " | ".join(row) + " |\n")
+          PY
+
+      - name: Compare 2025 with the published layer
+        if: ${{ format('{0}', matrix.year) == '2025' }}
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import os
+          import numpy as np
+          from PIL import Image
+          new = np.asarray(Image.open("out/lights_2025.png")).astype(np.int16)
+          ref = np.asarray(Image.open("assets/data/globe/lights.png")).astype(np.int16)
+          assert new.shape == ref.shape, (new.shape, ref.shape)
+          d = np.abs(new - ref)
+          msg = (f"\n2025 against assets/data/globe/lights.png: max abs diff {int(d.max())}, "
+                 f"differing cells {int((d > 0).sum())} of {d.size}\n")
+          print(msg)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(msg)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ntl-${{ matrix.year }}
+          path: |
+            out/lights_${{ matrix.year }}.png
+            out/stats_${{ matrix.year }}.json
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Delete the zip
+        if: always()
+        run: rm -rf work
+
+  gather:
+    needs: [plan, build]
+    if: ${{ always() && needs.plan.result == 'success' && needs.build.result != 'cancelled' && needs.build.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: pip install pillow
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ntl-*
+          merge-multiple: true
+          path: out
+
+      - name: Merge into assets/ntl
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          ls -l out
+          python .github/scripts/ntl_year.py merge --in out --assets assets/ntl --default-year 2025 | tee merge.log
+          {
+            echo "Merged layers: $(tail -n 1 merge.log)"
+            if [ "$BUILD_RESULT" != "success" ]; then
+              echo ""
+              echo "Warning: build result was ${BUILD_RESULT}; only the years that finished are in this set."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$BUILD_RESULT" != "success" ]; then
+            echo "::warning::build result was ${BUILD_RESULT}; some years are missing"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ntl-all
+          path: assets/ntl
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Commit and push
+        if: ${{ inputs.commit == true }}
+        env:
+          BRANCH: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          set -euo pipefail
+          if [ "$REF_TYPE" != "branch" ]; then
+            echo "::error::commit needs a branch, this run was started on a ${REF_TYPE}"
+            exit 1
+          fi
+          ys=$(ls out/lights_*.png | sed -E 's/.*lights_([0-9]{4})\.png/\1/' | sort -n)
+          n=$(echo "$ys" | wc -l)
+          if [ "$n" -le 6 ]; then
+            label=$(echo "$ys" | paste -sd, -)
+          else
+            label="$(echo "$ys" | head -n 1)-$(echo "$ys" | tail -n 1) (${n} years)"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/ntl
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "NTL yearly layers: ${label}"
+          for attempt in 1 2; do
+            if git pull --rebase origin "$BRANCH" && git push origin "HEAD:refs/heads/${BRANCH}"; then
+              exit 0
+            fi
+            echo "push attempt ${attempt} failed"
+            sleep 10
+          done
+          echo "::error::could not push to ${BRANCH}"
+          exit 1

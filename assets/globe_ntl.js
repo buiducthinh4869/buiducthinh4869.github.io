@@ -1,11 +1,13 @@
-/* Storm atlas, section 3: which night-light image the globe shows (assets/ntl/). Loaded before storm_globe.js, which draws it.
+/* Storm atlas, section 3: which night-light image the globe shows (assets/ntl/), and how it is painted. Loaded before storm_globe.js.
    Not playing: lights.png (2025) with the 0.05 degree tiles, as before. While a play-time state is on screen (Play, Pause, a step
    or the scrubber), the season of the first selected storm picks the image: the newest year not after the season, the earliest
-   year for earlier seasons. Tiles exist for 2025 only, so storm_globe.js draws them only with the default layer. The index and
-   the images load lazily; a failed index or image leaves the current layer in place and raises no error.
-   Twinkle (in storm_globe.js) takes its points from the image being shown: they are collected while the cells are drawn.
-   storm_globe.js sets N.env = { load(url) -> Promise of a layer {bins, tiles}, lead() -> the first selected storm while a
-   play-time state is on screen (else null), changed() (key text and redraw), reduce (no crossfade) } and N.def (the 2025 layer). */
+   year for earlier seasons. Tiles exist for 2025 only, so they are drawn only with the default layer. The index and the images
+   load lazily; a failed index or image leaves the current layer in place and raises no error. A change crossfades over N.fade ms.
+   Twinkle (in storm_globe.js) takes its points from the image being shown: dots() collects them for the layer drawn with keep = true.
+   storm_globe.js sets N.def (the 2025 layer {year, bins, tiles: true}; N.cur starts as the same) and N.env = {
+     getImg(url) -> Promise of {w, h, px}, bins(im, west, north, cell_deg) -> binned cells, dots(cx, bins, cell, Rk, skipTiled, keep),
+     TL (the tiles: cell, loaded), LT() (the global layer: cell), meta() (IX.meta.lights), lead() (the first selected storm while a
+     play-time state is on screen, else null), changed() (key text and redraw), redraw(), reduce (no crossfade) }. */
 (function () {
   "use strict";
   var A = window.Atlas;
@@ -29,9 +31,17 @@
     }).catch(function (e) { if (window.console) console.warn(e); return null; });
     return ix;
   }
+  // a 0.2 degree image, lit cells binned by colour
+  function image(url) {
+    var e = N.env, m = e.meta();
+    return e.getImg(url).then(function (im) {
+      if (im.w !== m.width || im.h !== m.height) throw new Error(url + ": wrong size");
+      return { bins: e.bins(im, m.bounds[0], m.bounds[3], m.cell_deg), tiles: false };
+    });
+  }
   function load(y) {
     if (lay[y]) return lay[y];
-    return lay[y] = N.env.load(N.dir + file.replace("{year}", y)).then(function (L) {
+    return lay[y] = image(N.dir + file.replace("{year}", y)).then(function (L) {
       L.year = y;
       ord.push(y);
       for (var i = 0; ord.length > 4 && i < ord.length;) { // keep a few layers; drop the oldest not in use
@@ -61,7 +71,7 @@
     want = w;
     if (w === N.def.year) return swap(N.def, pre);
     load(w).then(function (L) {
-      if (want !== w) return;
+      if (want !== w || N.cur === L) return; // the state moved on, or an earlier request for this year already put it on screen
       swap(L, pre);
       N.years.filter(function (v) { return v > w && v !== N.def.year; }).slice(0, 2).forEach(function (v, i) { // prefetch the next two
         setTimeout(function () { load(v).catch(function () {}); }, 400 * (i + 1));
@@ -73,5 +83,21 @@
     want = null;
     if (ix && !N.years.length) ix = null;
     if (!hold) N.sync();
+  };
+  // one layer: its 0.2 degree cells, and for the default layer the 0.05 degree tiles that are loaded
+  function layer(cx, L, Rk, keep) {
+    var e = N.env, T = e.TL;
+    e.dots(cx, L.bins, e.LT().cell, Rk, L.tiles, keep);
+    if (L.tiles) for (var k in T.loaded) if (T.loaded[k].length) e.dots(cx, T.loaded[k], T.cell, Rk, false, keep);
+  }
+  // paint the lights into cx; during a change the old image fades out while the new one comes in over it (no dip in the middle)
+  N.paint = function (cx, now, Rk) {
+    cx.globalAlpha = 1;
+    if (N.from) {
+      var u = Math.min(1, Math.max(0, (now - N.t0) / N.fade));
+      if (u < 1) { cx.globalAlpha = 1 - u; layer(cx, N.from, Rk, false); cx.globalAlpha = Math.min(1, 2 * u); N.env.redraw(); } else N.from = null;
+    }
+    layer(cx, N.cur, Rk, true);
+    cx.globalAlpha = 1;
   };
 })();

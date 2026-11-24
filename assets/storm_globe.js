@@ -1,12 +1,14 @@
 /* Storm atlas (storms.html), section 3: the selected storms on a globe over night-time light.
    Needs atlas_core.js (data, region, selection, tooltip). Tracks and winds shown are IBTrACS; wind fields from
    the cyclone project (see CLAUDE.md). Night lights: global 0.2 degree, plus 0.05 degree tiles when zoomed in; during
-   Play the image follows the season of the first storm (assets/ntl/, one 0.2 degree image per year, see globe_ntl.js). */
+   Play the image follows the season of the first storm (assets/ntl/, one 0.2 degree image per year, see globe_ntl.js).
+   The Cells (0.1 degree) view is in globe_cells.js. */
 (function () {
   "use strict";
   var A = window.Atlas, fig = document.querySelector(".storm-globe");
   if (!A || !fig) return;
-  var D = A.D, RAD = Math.PI / 180, N = A.ntl || { sync: function () {}, reset: function () {} };
+  var D = A.D, RAD = Math.PI / 180, N = A.ntl, C = A.cells;
+  if (!N || !C) { if (A.fail) A.fail(new Error("globe_ntl.js or globe_cells.js is missing")); fig.hidden = true; return; }
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
   var MSH = 125, WAKE = 9; // ms of screen time per storm hour (3 s per storm day by default; the slider sets 0.5 to 6 s)
@@ -22,16 +24,14 @@
       ramp: ["Night lights: {y}", "low", "high"], pre: "(no earlier satellite image)", play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
-      ov: "World map of all tropical storm tracks, coloured by ocean basin.",
-      cell: "Peak wind in this 0.1° cell", wkey: "Peak wind (m/s)"
+      ov: "World map of all tropical storm tracks, coloured by ocean basin."
     },
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}.",
       ramp: ["Ánh sáng ban đêm: {y}", "thấp", "cao"], pre: "(không có ảnh vệ tinh sớm hơn)", play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
-      ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển.",
-      cell: "Sức gió mạnh nhất tại ô 0,1° này", wkey: "Sức gió mạnh nhất (m/s)"
+      ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển."
     }
   };
   function lang() { return A.lang(); }
@@ -84,12 +84,15 @@
       out[Math.min(NB - 1, Math.floor(v / 256 * NB))].push(lo * RAD, Math.sin(lat), Math.cos(lat), tid(lo, la));
     }
   }
-  function pack(raw) { return raw.map(function (a) { return new Float32Array(a); }); }
-  function lights(im) {
-    var m = IX.meta.lights, raw = [], i;
+  function bins(im, b0, b3, c) {
+    var raw = [], i;
     for (i = 0; i < NB; i++) raw.push([]);
-    binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
-    LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: pack(raw) };
+    binCells(im, b0, b3, c, raw);
+    return raw.map(function (a) { return new Float32Array(a); });
+  }
+  function lights(im) {
+    var m = IX.meta.lights;
+    LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg) };
     N.cur = N.def = { year: m.year, bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
     ramp();
     TL.on = new Uint8Array(TW * 15);
@@ -110,10 +113,7 @@
       TL.want[key] = 1;
       (function (key, lo, la) {
         getImg(D + "lights/" + key + ".png").then(function (im) {
-          var raw = [], i;
-          for (i = 0; i < NB; i++) raw.push([]);
-          binCells(im, lo, la + 10, IX.meta.lights.tiles.cell_deg, raw);
-          TL.loaded[key] = pack(raw);
+          TL.loaded[key] = bins(im, lo, la + 10, IX.meta.lights.tiles.cell_deg);
           TL.on[tid(lo + 5, la + 5)] = 1;
           draw();
         }).catch(function () { TL.loaded[key] = []; });
@@ -121,25 +121,13 @@
     }
   }
 
-  // ------------------------------------------------------------------ night-light layers (which year: globe_ntl.js)
-  // Twinkle: its points are collected while the cells are drawn (dots), so they come from the layer being shown.
-  function ntlImage(url) { // a 0.2 degree image, lit cells binned by colour
-    return getImg(url).then(function (im) {
-      var m = IX.meta.lights, raw = [], i;
-      if (im.w !== m.width || im.h !== m.height) throw new Error(url + ": wrong size");
-      for (i = 0; i < NB; i++) raw.push([]);
-      binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
-      return { bins: pack(raw), tiles: false };
-    });
-  }
-  function ntlLayer(cx, L, Rk, sp) {
-    dots(cx, L.bins, LT.cell, Rk, L.tiles, sp);
-    if (L.tiles) for (var key in TL.loaded) if (TL.loaded[key].length) dots(cx, TL.loaded[key], TL.cell, Rk, false, sp);
-  }
+  // ------------------------------------------------------------------ what globe_ntl.js and globe_cells.js need
   N.env = {
-    load: ntlImage, reduce: reduce, changed: function () { ramp(); draw(); },
-    lead: function () { return st.dur > 0 ? st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0] : null; }
+    getImg: getImg, bins: bins, dots: dots, TL: TL, LT: function () { return LT; }, meta: function () { return IX.meta.lights; },
+    lead: function () { return st.dur > 0 ? st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0] : null; },
+    changed: function () { ramp(); draw(); }, redraw: draw, reduce: reduce
   };
+  C.env = { G: G, st: st, fields: fields, vis: vis };
 
   // ------------------------------------------------------------------ globe
   function build() {
@@ -186,7 +174,7 @@
       svg.classed("is-drag", true);
       if (svg.node().setPointerCapture) svg.node().setPointerCapture(ev.pointerId);
     }).on("pointermove", function (ev) {
-      if (!p0) { if (ev.pointerType === "mouse" && !(ev.target && ev.target.__data__)) cellTip(ev); return; }
+      if (!p0) { if (ev.pointerType === "mouse" && !(ev.target && ev.target.__data__)) C.tip(ev); return; }
       var s = 180 / Math.PI / (G.R * st.k);
       st.follow = false;
       st.rot = [p0[2][0] + (ev.clientX - p0[0]) * s, Math.max(-85, Math.min(85, p0[2][1] - (ev.clientY - p0[1]) * s))];
@@ -218,13 +206,7 @@
       lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
       lc.clearRect(0, 0, w, h);
       G.sp = [];
-      lc.globalAlpha = 1;
-      if (N.from) { // crossfade: the old image fades out, the new one comes in over it (no dip in the middle)
-        var u = Math.min(1, Math.max(0, (now - N.t0) / N.fade));
-        if (u < 1) { lc.globalAlpha = 1 - u; ntlLayer(lc, N.from, Rk, false); lc.globalAlpha = Math.min(1, 2 * u); draw(); } else N.from = null;
-      }
-      ntlLayer(lc, N.cur, Rk, true);
-      lc.globalAlpha = 1;
+      N.paint(lc, now, Rk);
       cx.save();
       cx.setTransform(1, 0, 0, 1, 0, 0);
       // a soft halo under the crisp cells, so lights read as glow rather than squares
@@ -239,13 +221,13 @@
       cx.restore();
       tiles();
     }
-    if (st.view === "cells") cells(cx, Rk);
+    if (st.view === "cells") C.draw(cx, Rk);
     cx.beginPath(); cp({ type: "Sphere" }); cx.lineWidth = 1; cx.strokeStyle = "#e4e1d8"; cx.stroke();
     drawStorms(now);
   }
 
   // orthographic forward projection by hand, about 20 times faster than through d3 for this many points
-  function dots(cx, bins, cell, Rk, global, sp) {
+  function dots(cx, bins, cell, Rk, global, keep) {
     var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
     var sz = Math.max(0.8, Rk * cell * 1.05), on = TL.on;
     for (var b = 0; b < bins.length; b++) {
@@ -258,60 +240,10 @@
         var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
         if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
         cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.3);
-        if (sp && b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
+        if (keep && b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
       }
     }
   }
-  // Cells view: each 0.1-degree cell of 17 m/s and up, by category
-  function cells(cx, Rk) {
-    var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
-    cx.globalAlpha = 0.85;
-    st.sel.forEach(function (s) {
-      var f = fields[s.id], i, j, c;
-      if (!f) return;
-      var v = f.cur || f.v, sz = Math.max(0.8, Rk * f.res * RAD * 1.04), ll = f.ll;
-      if (!ll) {
-        ll = f.ll = new Float32Array(v.length * 3);
-        for (j = 0; j < f.m2; j++) for (i = 0; i < f.n2; i++) {
-          var la = (f.b[3] - (j - 0.5) * f.res) * RAD;
-          c = 3 * (j * f.n2 + i); ll[c] = (f.b[0] + (i - 0.5) * f.res) * RAD; ll[c + 1] = Math.sin(la); ll[c + 2] = Math.cos(la);
-        }
-      }
-      A.LEV.forEach(function (lo, k) {
-        var hi = A.LEV[k + 1] || 999;
-        cx.fillStyle = A.CCOL[A.CLS[k]];
-        for (c = 0; c < v.length; c++) {
-          if (v[c] < lo || v[c] >= hi) continue;
-          var l = ll[3 * c] - L0, cl = Math.cos(l), sl = ll[3 * c + 1], co = ll[3 * c + 2], cosc = sp * sl + cq * co * cl;
-          if (cosc <= 0.02) continue;
-          var x = X + Rk * co * Math.sin(l), y = Y - Rk * (cq * sl - sp * co * cl);
-          if (x < -sz || x > w + sz || y < -sz || y > h + sz) continue;
-          cx.fillRect(x - sz / 2, y - sz / 2, sz * co + 0.3, sz * cosc + 0.3);
-        }
-      });
-    });
-    cx.globalAlpha = 1;
-  }
-  // hover: peak wind of the cell under the pointer
-  function cellTip(ev) {
-    var r = G.svg.node().getBoundingClientRect(), q = G.proj.invert([ev.clientX - r.left, ev.clientY - r.top]), T = tx(), out = A.el("div"), n = 0;
-    if (!q || !vis(q)) return A.tipHide();
-    st.sel.forEach(function (s) {
-      var f = fields[s.id];
-      if (!f) return;
-      for (var k = -1; k <= 1; k++) {
-        var i = Math.floor((q[0] + 360 * k - f.b[0]) / f.res), j = Math.floor((f.b[3] - q[1]) / f.res);
-        if (i < 0 || j < 0 || i >= f.n2 - 2 || j >= f.m2 - 2) continue;
-        var x = Math.floor((f.cur || f.v)[(j + 1) * f.n2 + i + 1]);
-        if (x >= 10) { out.appendChild(A.el("p", null, nm(s) + " " + s.season + ": " + x + " m/s" + (x >= 17 ? ", " + T.cls[A.clsOf(x)] : ""))); n++; }
-        break;
-      }
-    });
-    if (!n) return A.tipHide();
-    out.insertBefore(A.el("p", "se-label", T.cell), out.firstChild);
-    A.tipShow(ev.clientX, ev.clientY, out);
-  }
-
   // twinkle: bright cells glint in turn (decoration; off under reduced motion)
   var SPB = 9, FX = { vis: true };
   function fxClear() { if (G.fx) G.fx.getContext("2d").clearRect(0, 0, G.fx.width, G.fx.height); }
@@ -560,7 +492,10 @@
   }
 
   // ------------------------------------------------------------------ play: all selected storms from their first fix
-  function playLabel() { playBtn.textContent = st.raf ? tx().pause : st.tau > 0 && st.tau < st.dur ? tx().resume : tx().play; }
+  function playLabel() {
+    playBtn.textContent = st.raf ? tx().pause : st.tau > 0 && st.tau < st.dur ? tx().resume : tx().play;
+    $("sg-stop").hidden = !st.dur; // Stop shows once a play-time state is on screen
+  }
   function stopPlay(reset, hold) {
     if (st.raf) cancelAnimationFrame(st.raf);
     st.raf = null;
@@ -698,7 +633,7 @@
   // key for the night lights: the same colour steps as drawn, low to high
   function ramp() {
     if (!G.ramp) return;
-    wkey();
+    C.key(G.wkey);
     if (!LT) return;
     var T = tx().ramp, r = G.ramp;
     r.textContent = "";
@@ -709,14 +644,6 @@
     var lh = A.el("span", "sg-ramp-lh");
     lh.appendChild(A.el("span", null, T[1])); lh.appendChild(A.el("span", null, T[2]));
     r.appendChild(lh);
-  }
-  // key for the Cells view
-  function wkey() {
-    var k = G.wkey, kb = A.el("span", "sg-ramp-bar"), kl = A.el("span", "sg-ramp-lh");
-    k.textContent = "";
-    k.appendChild(A.el("span", "sg-ramp-t", tx().wkey));
-    A.CLS.forEach(function (c, i) { var s = A.el("span"); s.style.background = A.CCOL[c]; kb.appendChild(s); kl.appendChild(A.el("span", null, A.LEV[i])); });
-    k.appendChild(kb); k.appendChild(kl);
   }
   function labels() { G.svg.attr("aria-label", tx().map); sq.placeholder = lang() === "vi" ? "ví dụ: Haiyan, Katrina" : "e.g. Haiyan, Katrina"; ramp(); refresh(); }
   function init() {
@@ -766,6 +693,7 @@
     var gs = $("sg-speed"), gsv = $("sg-speed-v");
     gs.addEventListener("input", function () { MSH = 1000 * +gs.value / 24; gsv.textContent = gs.value + " s"; });
     playBtn.addEventListener("click", togglePlay);
+    $("sg-stop").addEventListener("click", function () { stopPlay(true); seekG.value = 0; draw(); }); // back to the start, with the 2025 lights
     $("sg-back").addEventListener("click", function () { stepG(-1); });
     $("sg-fwd").addEventListener("click", function () { stepG(1); });
     seekG.addEventListener("input", function () { seekTo(+seekG.value); });

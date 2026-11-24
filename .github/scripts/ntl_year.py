@@ -89,8 +89,8 @@ def peak_rss_mb():
 def check_grid(s):
     """Check the raster has what the pipeline needs; return the ACTUAL grid for the stats.
 
-    Required: width of the 2025 file, one float32 band, EPSG:4326, the pixel size of the 2025 file, no rotation,
-    x origin -180 and east edge +180 (each within half a pixel). Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
+    Required: width of the 2025 file or one column less, one float32 band, EPSG:4326, the pixel size of the 2025
+    file, no rotation, x origin -180 (within half a pixel) and east edge +180 (within half a pixel, or one pixel short). Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
     The output window LB must be covered except for less than one output row (LCELL); a smaller gap is accepted
     with a WARNING, and output rows without any source data stay NaN (drawn as 0).
     Every violation is collected and reported in one error; one INFO line shows the grid of every year.
@@ -104,8 +104,10 @@ def check_grid(s):
     print(f"INFO grid: width {s.width}, height {s.height}, pixel {ta!r} x {-te!r}, x origin {tc!r}, "
           f"top {top!r}, bottom {bottom!r}, nodata {s.nodata!r}", flush=True)
     bad = []
-    if s.width != GRID_W:
-        bad.append(f"width {s.width}, expected {GRID_W}")
+    # 20 of the 34 files (1992-2000, 2012-2022) are one column narrower (80149) and end at 179.99543: the last
+    # 0.2-degree column then averages 44 of its 45 source columns. Accepted with a WARNING; nothing narrower.
+    if s.width not in (GRID_W, GRID_W - 1):
+        bad.append(f"width {s.width}, expected {GRID_W} or {GRID_W - 1}")
     if not (s.count == 1 and s.dtypes[0] == "float32"):
         bad.append(f"bands {s.count}, dtype {s.dtypes}, expected 1 band float32")
     if epsg != GRID_EPSG:
@@ -117,8 +119,11 @@ def check_grid(s):
     if not abs(tc - LB[0]) <= X_TOL:
         bad.append(f"x origin {tc}, expected {LB[0]} (tolerance {X_TOL})")
     east = tc + s.width * ta
-    if not abs(east - LB[2]) <= X_TOL:
-        bad.append(f"east edge {east}, expected {LB[2]} (tolerance {X_TOL})")
+    if not (LB[2] - ta - X_TOL <= east <= LB[2] + X_TOL):
+        bad.append(f"east edge {east}, expected {LB[2]} (at most one pixel short, tolerance {X_TOL})")
+    elif east < LB[2] - X_TOL:
+        print(f"WARNING: raster ends at longitude {east!r}, {LB[2] - east:.6f} deg (one pixel) short of {LB[2]}; "
+              f"the easternmost output column averages the source pixels it has", flush=True)
     if not (top >= LB[3] - LCELL and bottom <= LB[1] + LCELL):
         bad.append(f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing "
                    f"more than one output row ({LCELL} degree)")

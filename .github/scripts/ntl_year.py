@@ -8,7 +8,9 @@ Same pipeline as the published 2025 layer (assets/data/globe/lights.png), with t
      the bounds -180, -60, 180, 75 (1800 x 675, row 0 = north).
      Strips are used instead of one big out_shape read so that only one 2.4-degree strip (about 170 MB) is in
      memory, and because the acceptance test is an exact reproduction of the 2025 lights.png, which was built
-     with exactly these strips and this reprojection.
+     with exactly these strips and this reprojection. The raster's own height and transform are used: older years
+     have fewer rows than 2025 (check_grid accepts a gap of less than one output row at the edge of the output
+     window and records the real grid in the stats); output cells without any source data stay NaN (drawn as 0).
   2. Mask: rasterize the geometries of the Natural Earth 10m admin-0 file at 0.2 degree, all_touched. Only the
      mask is used, the polygons are neither published nor kept; the output is a grey picture of light on land.
   3. Render with a FIXED scale: L = log1p(radiance on land), value = round(255 * clip(L / LMAX, 0, 1)).
@@ -41,7 +43,8 @@ STRIP_DEG = 2.4                        # input strip height, degrees (12 output 
 # 2025 file x Natural Earth 10m land mask, all_touched). index.json of the globe shows it rounded: 2.9319.
 LMAX = 2.931900061931104
 INK_FROM = 0.483                       # 95th percentile of L / LMAX over the lit cells of 2025 (as in the globe index)
-# Grid of the 2025 file; every other year must have the same grid.
+# Grid of the 2025 file. Reference values of check_grid: width, pixel size, x origin must match in every year;
+# the height and the top (rows, latitude range) differ between years and are not asserted (GRID_H is information).
 GRID_W, GRID_H = 80150, 38663
 GRID_TRANSFORM = (0.00449157642059761, 0.0, -180.0, 0.0, -0.00449157642059761, 83.6578941180654)
 GRID_EPSG = 4326
@@ -75,16 +78,38 @@ def peak_rss_mb():
 
 
 def check_grid(s):
-    """Assert the raster has the grid of the 2025 file; return the actual values for the stats."""
+    """Check the raster has what the pipeline needs; return the ACTUAL grid for the stats.
+
+    Required: width of the 2025 file, one float32 band, EPSG:4326, the pixel size of the 2025 file, no rotation,
+    x origin -180. Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
+    The output window LB must be covered except for less than one output row (LCELL); a smaller gap is accepted
+    with a WARNING, and output rows without any source data stay NaN (drawn as 0)."""
     tr = tuple(s.transform)[:6]
-    grid = {"width": s.width, "height": s.height, "transform": [float(v) for v in tr],
-            "epsg": s.crs.to_epsg() if s.crs else None, "dtype": s.dtypes[0],
-            "nodata": None if s.nodata is None else float(s.nodata)}
-    assert s.width == GRID_W and s.height == GRID_H, f"size {s.width} x {s.height}, expected {GRID_W} x {GRID_H}"
-    assert all(abs(a - b) <= GRID_TOL for a, b in zip(tr, GRID_TRANSFORM)), f"transform {tr}"
-    assert grid["epsg"] == GRID_EPSG, f"crs {s.crs}"
+    ta, tb, tc, td, te, tf = (float(v) for v in tr)
+    px = GRID_TRANSFORM[0]
+    epsg = s.crs.to_epsg() if s.crs else None
+    assert s.width == GRID_W, f"width {s.width}, expected {GRID_W}"
     assert s.count == 1 and s.dtypes[0] == "float32", f"bands {s.count}, dtype {s.dtypes}"
-    return grid
+    assert epsg == GRID_EPSG, f"crs {s.crs}"
+    assert abs(ta - px) <= GRID_TOL and abs(-te - px) <= GRID_TOL, f"pixel size {ta} x {-te}, expected {px}"
+    assert abs(tb) <= GRID_TOL and abs(td) <= GRID_TOL, f"rotation terms {tb}, {td}"
+    assert abs(tc - LB[0]) <= GRID_TOL, f"x origin {tc}, expected {LB[0]}"
+    top = tf
+    bottom = top - s.height * ta
+    assert top >= LB[3] - LCELL and bottom <= LB[1] + LCELL, (
+        f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing more than "
+        f"one output row ({LCELL} degree)")
+    if top < LB[3] or bottom > LB[1]:
+        print(f"WARNING: raster covers latitude {bottom:.6f}..{top:.6f}, output window {LB[1]}..{LB[3]}: "
+              f"north gap {max(0.0, LB[3] - top):.6f} deg, south gap {max(0.0, bottom - LB[1]):.6f} deg "
+              f"(cells without any source data stay NaN)", flush=True)
+    shift = round(((GRID_TRANSFORM[5] - top) / ta) % 1.0, 4) % 1.0
+    return {"width": s.width, "height": s.height, "transform": [float(v) for v in tr], "epsg": epsg,
+            "dtype": s.dtypes[0], "nodata": None if s.nodata is None else float(s.nodata),
+            "top": top, "bottom": bottom,
+            "uncovered_north_deg": round(max(0.0, LB[3] - top), 9),
+            "uncovered_south_deg": round(max(0.0, bottom - LB[1]), 9),
+            "y_shift_px": shift}
 
 
 def aggregate(s, max_strips=None):
@@ -110,6 +135,10 @@ def aggregate(s, max_strips=None):
         top, bot = N - r0 * cell, N - r1 * cell
         fb_ = from_bounds(W, bot - 0.02, E, top + 0.02, s.transform)
         ra, rb = max(0, math.floor(fb_.row_off)), min(s.height, math.ceil(fb_.row_off + fb_.height))
+        if rb <= ra:   # strip entirely outside the raster: its output rows stay NaN
+            done = r1
+            print(f"  strip {k + 1}: rows {r0}-{r1} of {ny}, not covered by the raster, left NaN", flush=True)
+            continue
         w = Window(0, ra, s.width, rb - ra)
         a = s.read(1, window=w, boundless=False)
         a[(a < -1e30) | ~np.isfinite(a)] = np.nan

@@ -2,8 +2,13 @@ name: NTL yearly layers
 
 # One 0.2-degree night-light PNG per year (NPP-VIIRS-like Version 2, doi:10.7910/DVN/YGIVCD), built by
 # .github/scripts/ntl_year.py with the pipeline of the 2025 layer (assets/data/globe/lights.png).
-# Run by hand: Actions > NTL yearly layers > Run workflow. `years`: comma list (2005,2025) or "all" (1992..2025).
-# Nothing is committed unless `commit` is ticked; the result is always available as the artifact "ntl-all".
+# Manual only. Two ways to start a run:
+#  1. Actions > NTL yearly layers > Run workflow (workflow_dispatch; GitHub offers it only once this file is on the
+#     default branch).
+#  2. Commit a change to .github/ntl_request.json on branch ntl-timeseries, e.g. {"years": "2005,2025", "commit": false}
+#     (the push trigger below; used while this file is not on the default branch).
+# `years`: comma list (2005,2025) or "all" (1992..2025). Nothing is committed unless `commit` is true; the result is
+# always available as the artifact "ntl-all".
 
 on:
   workflow_dispatch:
@@ -16,6 +21,9 @@ on:
         description: "Commit assets/ntl to the branch this run was started on"
         type: boolean
         default: false
+  push:
+    branches: [ntl-timeseries]
+    paths: [".github/ntl_request.json"]
 
 permissions:
   contents: write
@@ -32,15 +40,27 @@ jobs:
       contents: read
     outputs:
       years: ${{ steps.plan.outputs.years }}
+      commit: ${{ steps.plan.outputs.commit }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/ntl_request.json
+          sparse-checkout-cone-mode: false
+
       - name: Validate the years
         id: plan
         env:
+          EVENT: ${{ github.event_name }}
           YEARS_IN: ${{ inputs.years }}
+          COMMIT_IN: ${{ inputs.commit }}
         run: |
           python3 - <<'PY'
           import json, os, re, sys
-          raw = os.environ["YEARS_IN"]
+          if os.environ["EVENT"] == "workflow_dispatch":
+              raw, commit = os.environ["YEARS_IN"], os.environ["COMMIT_IN"] == "true"
+          else:
+              req = json.load(open(".github/ntl_request.json"))
+              raw, commit = str(req.get("years", "")), req.get("commit") is True
           first, last = 1992, 2025
           if raw == "all":
               years = list(range(first, last + 1))
@@ -55,8 +75,9 @@ jobs:
               sys.exit(1)
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write("years=" + json.dumps(years) + "\n")
+              f.write("commit=" + ("true" if commit else "false") + "\n")
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
-              f.write("Years planned: " + ", ".join(map(str, years)) + "\n")
+              f.write("Years planned: " + ", ".join(map(str, years)) + "; commit to the branch: " + str(commit).lower() + "\n")
           PY
 
   build:
@@ -256,7 +277,7 @@ jobs:
           if-no-files-found: error
 
       - name: Commit and push
-        if: ${{ inputs.commit == true }}
+        if: ${{ needs.plan.outputs.commit == 'true' }}
         env:
           BRANCH: ${{ github.ref_name }}
           REF_TYPE: ${{ github.ref_type }}

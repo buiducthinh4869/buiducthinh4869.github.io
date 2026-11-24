@@ -52,7 +52,11 @@ GRID_EPSG = 4326
 # 0.00449157642059761, 2e-11 degree). PX_TOL = 1e-9 degree per pixel is 8e-5 degree (about 0.02 pixel) of
 # cumulative drift over the full 80150-pixel width, irrelevant for a 0.2-degree average.
 PX_TOL = 1e-9
-X_TOL = 1e-6                           # x origin, degrees
+# x origin and east edge (x origin + width * pixel) may be off the exact -180 / +180 by up to half a pixel
+# (about 0.00225 degree): the 2005 file starts at -179.999925055 (0.017 pixel). A sub-pixel shift does not matter for
+# an area-weighted mean on a 0.2-degree grid (44 pixels per cell); the check only has to catch another frame,
+# such as longitudes 0..360 (x origin 0).
+X_TOL = 0.5 * GRID_TRANSFORM[0]
 ROT_TOL = 1e-12                        # rotation terms of the transform
 PRODUCT = "NPP-VIIRS-like Version 2 (Chen et al.)"
 DOI = "10.7910/DVN/YGIVCD"
@@ -86,7 +90,7 @@ def check_grid(s):
     """Check the raster has what the pipeline needs; return the ACTUAL grid for the stats.
 
     Required: width of the 2025 file, one float32 band, EPSG:4326, the pixel size of the 2025 file, no rotation,
-    x origin -180. Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
+    x origin -180 and east edge +180 (each within half a pixel). Not required: the height or the latitude range of the 2025 file (older years have fewer rows).
     The output window LB must be covered except for less than one output row (LCELL); a smaller gap is accepted
     with a WARNING, and output rows without any source data stay NaN (drawn as 0).
     Every violation is collected and reported in one error; one INFO line shows the grid of every year.
@@ -98,7 +102,7 @@ def check_grid(s):
     top = tf
     bottom = top - s.height * ta
     print(f"INFO grid: width {s.width}, height {s.height}, pixel {ta!r} x {-te!r}, x origin {tc!r}, "
-          f"top {top!r}, bottom {bottom!r}", flush=True)
+          f"top {top!r}, bottom {bottom!r}, nodata {s.nodata!r}", flush=True)
     bad = []
     if s.width != GRID_W:
         bad.append(f"width {s.width}, expected {GRID_W}")
@@ -112,6 +116,9 @@ def check_grid(s):
         bad.append(f"rotation terms {tb}, {td}, expected 0 (tolerance {ROT_TOL})")
     if not abs(tc - LB[0]) <= X_TOL:
         bad.append(f"x origin {tc}, expected {LB[0]} (tolerance {X_TOL})")
+    east = tc + s.width * ta
+    if not abs(east - LB[2]) <= X_TOL:
+        bad.append(f"east edge {east}, expected {LB[2]} (tolerance {X_TOL})")
     if not (top >= LB[3] - LCELL and bottom <= LB[1] + LCELL):
         bad.append(f"rows {s.height}, top {top}, bottom {bottom}: the output window {LB[1]}..{LB[3]} is missing "
                    f"more than one output row ({LCELL} degree)")
@@ -127,7 +134,7 @@ def check_grid(s):
             "top": top, "bottom": bottom,
             "uncovered_north_deg": round(max(0.0, LB[3] - top), 9),
             "uncovered_south_deg": round(max(0.0, bottom - LB[1]), 9),
-            "y_shift_px": shift}
+            "y_shift_px": shift, "x_shift_px": round((tc - LB[0]) / ta, 4)}
 
 
 def aggregate(s, max_strips=None):

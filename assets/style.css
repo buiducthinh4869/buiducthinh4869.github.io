@@ -580,11 +580,11 @@ html:not(.js) .storm-explorer .se-live,
 .so-legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .storm-globe figcaption, .storm-overview figcaption { margin-top: 1.25rem; max-width: 40rem; }
 
-/* ---------- Storm atlas teaser (research.html) ---------- */
+/* ---------- Storm atlas teaser (research.html): the live section-1 map (atlas_overview.js), without Play ---------- */
 
 .atlas-teaser { margin: 0 0 3.5rem; }
-.atlas-teaser-img { display: block; }
-.atlas-teaser img, .atlas-teaser video { display: block; width: 100%; height: auto; }
+.atlas-teaser .ao-map { aspect-ratio: 2 / 1; } /* the height the script sets (width x 0.5), reserved so the page does not jump when the data arrive */
+html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :not(figcaption) { display: none; }
 .atlas-teaser figcaption { margin-top: 0.8rem; max-width: 40rem; }
 .atlas-teaser .se-cap strong { font-weight: 500; }
 .atlas-open {

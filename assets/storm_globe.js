@@ -1,11 +1,12 @@
 /* Storm atlas (storms.html), section 3: the selected storms on a globe over night-time light.
    Needs atlas_core.js (data, region, selection, tooltip). Tracks and winds shown are IBTrACS; wind fields from
-   the cyclone project (see CLAUDE.md). Night lights: global 0.2 degree, plus 0.05 degree tiles when zoomed in. */
+   the cyclone project (see CLAUDE.md). Night lights: global 0.2 degree, plus 0.05 degree tiles when zoomed in; during
+   Play the image follows the season of the first storm (assets/ntl/, one 0.2 degree image per year, see globe_ntl.js). */
 (function () {
   "use strict";
   var A = window.Atlas, fig = document.querySelector(".storm-globe");
   if (!A || !fig) return;
-  var D = A.D, RAD = Math.PI / 180;
+  var D = A.D, RAD = Math.PI / 180, N = A.ntl || { sync: function () {}, reset: function () {} };
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
   var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
   var MSH = 125, WAKE = 9; // ms of screen time per storm hour (3 s per storm day by default; the slider sets 0.5 to 6 s)
@@ -18,7 +19,7 @@
     en: {
       unnamed: "Unnamed", peak: "Peak wind", near: "Passed within 200 km of", and: "and", others: "others",
       nofield: "No wind field.", remove: "Remove", none: "No storms match.", shown: "Showing {n} of {m}.",
-      ramp: ["Night-time light", "low", "high"], play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
+      ramp: ["Night lights: {y}", "low", "high"], pre: "(no earlier satellite image)", play: "Play", pause: "Pause", resume: "Resume", search: "e.g. Haiyan", storms: "storms", wind: "wind",
       mon: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       map: "Globe with the selected storms: tracks, lines of equal peak wind in m/s, over night-time light. Drag to turn it.",
       ov: "World map of all tropical storm tracks, coloured by ocean basin.",
@@ -27,7 +28,7 @@
     vi: {
       unnamed: "Không tên", peak: "Sức gió mạnh nhất", near: "Đi qua trong phạm vi 200 km quanh", and: "và", others: "nước khác",
       nofield: "Chưa có trường gió.", remove: "Bỏ chọn", none: "Không có cơn bão nào phù hợp.", shown: "Đang hiện {n} trên {m}.",
-      ramp: ["Ánh sáng ban đêm", "thấp", "cao"], play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
+      ramp: ["Ánh sáng ban đêm: {y}", "thấp", "cao"], pre: "(không có ảnh vệ tinh sớm hơn)", play: "Phát", pause: "Tạm dừng", resume: "Tiếp tục", search: "ví dụ: Haiyan", storms: "cơn bão", wind: "gió",
       map: "Quả địa cầu với các cơn bão đang chọn: đường đi, các đường đẳng tốc gió lớn nhất (m/s), trên nền ánh sáng ban đêm. Kéo để xoay.",
       ov: "Bản đồ thế giới với đường đi của mọi cơn bão nhiệt đới, tô màu theo vùng biển.",
       cell: "Sức gió mạnh nhất tại ô 0,1° này", wkey: "Sức gió mạnh nhất (m/s)"
@@ -89,6 +90,7 @@
     for (i = 0; i < NB; i++) raw.push([]);
     binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
     LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: pack(raw) };
+    N.cur = N.def = { year: m.year, bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
     ramp();
     TL.on = new Uint8Array(TW * 15);
     TL.list = {};
@@ -99,7 +101,7 @@
   }
   // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
   function tiles() {
-    if (!LT || !TL.cell || G.R * st.k * LT.cell < 2.5) return;
+    if (!LT || !TL.cell || !N.cur.tiles || G.R * st.k * LT.cell < 2.5) return;
     var c = [-st.rot[0], -st.rot[1]], r = 95 / st.k;
     for (var la = -60; la < 80; la += 10) for (var lo = -180; lo < 180; lo += 10) {
       var key = lo + "_" + la;
@@ -118,6 +120,26 @@
       })(key, lo, la);
     }
   }
+
+  // ------------------------------------------------------------------ night-light layers (which year: globe_ntl.js)
+  // Twinkle: its points are collected while the cells are drawn (dots), so they come from the layer being shown.
+  function ntlImage(url) { // a 0.2 degree image, lit cells binned by colour
+    return getImg(url).then(function (im) {
+      var m = IX.meta.lights, raw = [], i;
+      if (im.w !== m.width || im.h !== m.height) throw new Error(url + ": wrong size");
+      for (i = 0; i < NB; i++) raw.push([]);
+      binCells(im, m.bounds[0], m.bounds[3], m.cell_deg, raw);
+      return { bins: pack(raw), tiles: false };
+    });
+  }
+  function ntlLayer(cx, L, Rk, sp) {
+    dots(cx, L.bins, LT.cell, Rk, L.tiles, sp);
+    if (L.tiles) for (var key in TL.loaded) if (TL.loaded[key].length) dots(cx, TL.loaded[key], TL.cell, Rk, false, sp);
+  }
+  N.env = {
+    load: ntlImage, reduce: reduce, changed: function () { ramp(); draw(); },
+    lead: function () { return st.dur > 0 ? st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0] : null; }
+  };
 
   // ------------------------------------------------------------------ globe
   function build() {
@@ -196,8 +218,13 @@
       lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
       lc.clearRect(0, 0, w, h);
       G.sp = [];
-      dots(lc, LT.bins, LT.cell, Rk, true);
-      for (var key in TL.loaded) if (TL.loaded[key].length) dots(lc, TL.loaded[key], TL.cell, Rk, false);
+      lc.globalAlpha = 1;
+      if (N.from) { // crossfade: the old image fades out, the new one comes in over it (no dip in the middle)
+        var u = Math.min(1, Math.max(0, (now - N.t0) / N.fade));
+        if (u < 1) { lc.globalAlpha = 1 - u; ntlLayer(lc, N.from, Rk, false); lc.globalAlpha = Math.min(1, 2 * u); draw(); } else N.from = null;
+      }
+      ntlLayer(lc, N.cur, Rk, true);
+      lc.globalAlpha = 1;
       cx.save();
       cx.setTransform(1, 0, 0, 1, 0, 0);
       // a soft halo under the crisp cells, so lights read as glow rather than squares
@@ -218,7 +245,7 @@
   }
 
   // orthographic forward projection by hand, about 20 times faster than through d3 for this many points
-  function dots(cx, bins, cell, Rk, global) {
+  function dots(cx, bins, cell, Rk, global, sp) {
     var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
     var sz = Math.max(0.8, Rk * cell * 1.05), on = TL.on;
     for (var b = 0; b < bins.length; b++) {
@@ -231,7 +258,7 @@
         var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
         if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
         cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.3);
-        if (b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
+        if (sp && b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
       }
     }
   }
@@ -534,13 +561,14 @@
 
   // ------------------------------------------------------------------ play: all selected storms from their first fix
   function playLabel() { playBtn.textContent = st.raf ? tx().pause : st.tau > 0 && st.tau < st.dur ? tx().resume : tx().play; }
-  function stopPlay(reset) {
+  function stopPlay(reset, hold) {
     if (st.raf) cancelAnimationFrame(st.raf);
     st.raf = null;
     if (reset) {
       st.tau = 0; st.dur = 0;
       st.sel.forEach(function (s) { s.cur = null; s.done = false; s.pi = 0; var f = fields[s.id]; if (f && f.full) { f.iso = f.full; f.cur = null; } });
       clock.textContent = "";
+      N.reset(hold); // back to the 2025 layer, unless Play is about to pick the year
     }
     playLabel();
   }
@@ -604,6 +632,7 @@
       st.rot = [st.rot[0] + d * 0.06, st.rot[1] + (tr[1] - st.rot[1]) * 0.06];
     }
     if (lead) clockText(lead);
+    N.sync();
     render(now);
     if (seekG) seekG.value = Math.round(st.tau);
   }
@@ -650,7 +679,7 @@
     if (!ok.length) return;
     if (st.raf) { stopPlay(); return; }
     // a fresh start resets first, then prepares (the reset clears the play length)
-    if (!(st.dur && st.tau > 0 && st.tau < st.dur)) { stopPlay(true); ready(); }
+    if (!(st.dur && st.tau > 0 && st.tau < st.dur)) { stopPlay(true, true); ready(); }
     st.follow = true;
     st.tw = null;
     st.last = performance.now();
@@ -673,7 +702,7 @@
     if (!LT) return;
     var T = tx().ramp, r = G.ramp;
     r.textContent = "";
-    r.appendChild(A.el("span", "sg-ramp-t", T[0]));
+    r.appendChild(A.el("span", "sg-ramp-t", T[0].replace("{y}", N.cur.year) + (N.pre ? " " + tx().pre : "")));
     var bar = A.el("span", "sg-ramp-bar");
     LT.cols.forEach(function (c) { var k = A.el("span"); k.style.background = c; bar.appendChild(k); });
     r.appendChild(bar);

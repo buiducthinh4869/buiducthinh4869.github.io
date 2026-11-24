@@ -29,9 +29,10 @@
   <h1 class="page-title"><span data-l="en">Research</span><span data-l="vi" lang="vi">Nghiên cứu</span></h1>
   <p class="page-lede"><span data-l="en">Climate economics, macroeconomic theory, international trade and applied econometrics.</span><span data-l="vi" lang="vi">Kinh tế học khí hậu, lý thuyết kinh tế vĩ mô, thương mại quốc tế và kinh tế lượng ứng dụng.</span></p>
 
-  <figure class="atlas-teaser">
-    <a href="storms.html" class="atlas-teaser-img"><video id="atlas-teaser-v" autoplay muted loop playsinline preload="metadata" width="1600" height="802" poster="assets/storm_atlas_teaser.png" aria-label="Animated world map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed."><source src="assets/storm_atlas_teaser.mp4" type="video/mp4"><img src="assets/storm_atlas_teaser.png" width="1600" height="802" alt="World map of every tropical storm track from 1981 to 2024, coloured by the ocean basin where each storm formed."></video></a>
-    <script>(function(){var v=document.getElementById("atlas-teaser-v");if(v&&window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches){v.removeAttribute("autoplay");v.pause();}})();</script>
+  <figure class="at-overview atlas-teaser" data-ao-manual>
+    <div class="ao-bar se-text"><button type="button" class="se-link" id="ao-motion"><span data-l="en">Pause motion</span><span data-l="vi" lang="vi">Tạm dừng chuyển động</span></button></div>
+    <div class="ao-map"><div class="ao-labels" aria-hidden="true"></div></div>
+    <div class="ao-legend se-text" role="group"></div>
     <figcaption>
       <p class="se-cap"><span data-l="en"><strong>Storm atlas.</strong> Every tropical storm from 1981 to 2024: where storms form, which ones came near each country, and the wind each place felt, over night-time light.</span><span data-l="vi" lang="vi"><strong>Bản đồ bão.</strong> Mọi cơn bão nhiệt đới từ 1981 đến 2024: bão hình thành ở đâu, những cơn nào đã đi gần từng quốc gia, và sức gió mà mỗi nơi phải chịu, trên nền ánh sáng ban đêm.</span></p>
       <p><a class="atlas-open" href="storms.html"><span data-l="en">Open the storm atlas →</span><span data-l="vi" lang="vi">Mở bản đồ bão →</span></a></p>
@@ -54,5 +55,9 @@
   <div class="wrap"><p class="small">© 2026 <span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></p></div>
 </footer>
 <script src="assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="assets/atlas_core.js"></script>
+<script src="assets/atlas_overview.js"></script>
+<script>if (window.Atlas && Atlas.overview) Atlas.overview(document.querySelector(".atlas-teaser"), { play: false, href: "storms.html" }); else document.documentElement.classList.add("atlas-failed");</script>
 </body>
 </html>

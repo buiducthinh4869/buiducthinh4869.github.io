@@ -1,6 +1,6 @@
 /* Storm atlas (storms.html), shared core: data, region and selection state, URL hash, the one search box,
    the tooltip and the storm card. Loaded before atlas_overview.js, atlas_timeline.js and storm_globe.js.
-   Data contract: CLAUDE.md, "Storm atlas". Needs D3 v7. */
+   Data contract: CLAUDE.md, "Storm atlas". Needs D3 v7. Also loaded by research.html (teaser), which has no search box, timeline or globe. */
 (function () {
   "use strict";
   var A = window.Atlas = { D: "assets/data/globe/", KT: 0.5144 };

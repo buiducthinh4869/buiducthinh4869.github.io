@@ -10,7 +10,7 @@
   var D = A.D, RAD = Math.PI / 180, N = A.ntl, C = A.cells;
   if (!N || !A.ntlLayer || !C) { if (A.fail) A.fail(new Error("ntl_layer.js or globe_cells.js is missing")); fig.hidden = true; return; }
   var LEVELS = [17, 33, 43, 50, 58], OPAC = [0.4, 0.52, 0.65, 0.78, 0.9];
-  var SEL = ["#a3263a", "#c98a00", "#7b3fa0", "#c95f8c"], MAXSEL = 4, ROWS = 60;
+  var SEL = ["#1f5f7a", "#b08a5a", "#7a4f6e", "#4f6e3a"], MAXSEL = 4, ROWS = 60;
   var MSH = 125, WAKE = 9; // ms of screen time per storm hour (3 s per storm day by default; the slider sets 0.5 to 6 s)
   var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
   var reduce = mq("(prefers-reduced-motion: reduce)"), coarse = mq("(pointer: coarse)");
@@ -41,7 +41,7 @@
 
   function fail(err) { A.fail(err); fig.hidden = true; }
   var getJSON = A.getJSON;
-  var IX, land, LT, DEF, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines" };
+  var IX, land, LT, DEF, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
   var seasons = {}, fields = {};
 
   A.ready.then(function () {
@@ -76,6 +76,7 @@
     TL.cell = m.tiles ? m.tiles.cell_deg * RAD : 0;
     DEF = { bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
     NT.sync(); // takes the default layer (key text and redraw)
+    fxStart();
   }
   // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
   function tiles() {
@@ -126,6 +127,7 @@
     G.wkey = root.append("div").attr("class", "sg-ramp sg-wkey se-text").attr("aria-hidden", "true").node();
     G.wkey.hidden = st.view !== "cells";
     ramp();
+    G.fx = root.append("canvas").attr("width", w * dpr).attr("height", h * dpr).style("width", w + "px").style("height", h + "px").node();
     G.lc = document.createElement("canvas");
     G.lc.width = w * dpr; G.lc.height = h * dpr;
     var svg = G.svg = root.append("svg").attr("class", "sg-svg").attr("viewBox", "0 0 " + w + " " + h)
@@ -188,6 +190,7 @@
       var lc = G.lc.getContext("2d");
       lc.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
       lc.clearRect(0, 0, w, h);
+      G.sp = [];
       NT.paint(lc, now, Rk);
       cx.save();
       cx.setTransform(1, 0, 0, 1, 0, 0);
@@ -222,7 +225,35 @@
         var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);
         if (x < -2 || x > w + 2 || y < -2 || y > h + 2) continue;
         cx.fillRect(x - sz / 2, y - sz / 2, sz, sz * cosc + 0.3);
+        if (keep && b >= SPB && G.sp.length < 24000) G.sp.push(x, y, sz);
       }
+    }
+  }
+  // twinkle: bright cells glint in turn (decoration; off under reduced motion)
+  var SPB = 9, FX = { vis: true };
+  function fxClear() { if (G.fx) G.fx.getContext("2d").clearRect(0, 0, G.fx.width, G.fx.height); }
+  function fxStart() { if (!FX.raf && st.glint && FX.vis && !document.hidden) FX.raf = requestAnimationFrame(fxLoop); }
+  function fxLoop(now) {
+    FX.raf = null;
+    if (!st.glint || !FX.vis || document.hidden) { fxClear(); return; }
+    if (now - (FX.t || 0) > 40) { FX.t = now; fxDraw(now); }
+    FX.raf = requestAnimationFrame(fxLoop);
+  }
+  function fxDraw(now) {
+    var c = G.fx.getContext("2d"), a = G.sp, n = a ? a.length / 3 : 0, step = Math.max(1, Math.floor(n / 700));
+    c.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
+    c.clearRect(0, 0, G.w, G.h);
+    if (G.moving || !n) return;
+    for (var k = 0; k < n; k += step) {
+      var u = (now / (1800 + 2600 * ((k * 0.7548776662) % 1)) + (k * 0.6180339887) % 1) % 1;
+      if (u > 0.14) continue;
+      var e = Math.sin(u / 0.14 * Math.PI), x = a[3 * k], y = a[3 * k + 1], r = Math.max(1.2, a[3 * k + 2]);
+      var g = c.createRadialGradient(x, y, 0, x, y, r * (2 + 2.5 * e));
+      g.addColorStop(0, "rgba(255,248,226," + (0.95 * e).toFixed(3) + ")");
+      g.addColorStop(0.35, "rgba(201,219,226," + (0.55 * e).toFixed(3) + ")");
+      g.addColorStop(1, "rgba(201,219,226,0)");
+      c.fillStyle = g;
+      c.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
     }
   }
   function vis(p) { return d3.geoDistance(p, [-st.rot[0], -st.rot[1]]) < Math.PI / 2 - 0.01; }
@@ -638,6 +669,11 @@
         draw();
       });
     });
+    var twb = $("sg-tw");
+    twb.checked = st.glint;
+    twb.addEventListener("change", function () { st.glint = twb.checked; if (st.glint) fxStart(); else fxClear(); });
+    document.addEventListener("visibilitychange", fxStart);
+    if (window.IntersectionObserver) new IntersectionObserver(function (e) { FX.vis = e[0].isIntersecting; fxStart(); }).observe(box);
     sq.addEventListener("input", again);
     var gs = $("sg-speed"), gsv = $("sg-speed-v");
     gs.addEventListener("input", function () { MSH = 1000 * +gs.value / 24; gsv.textContent = gs.value + " s"; });

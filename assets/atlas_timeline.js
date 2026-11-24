@@ -186,7 +186,7 @@
     A.st.sel.forEach(function (s) {
       var d = P.items.filter(function (x) { return x.s === s; })[0];
       if (!d) return;
-      P.ring.append("circle").attr("class", "atl-ring").attr("cx", d.cx).attr("cy", d.cy).attr("r", 8).attr("stroke", s.col || "#a3263a");
+      P.ring.append("circle").attr("class", "atl-ring").attr("cx", d.cx).attr("cy", d.cy).attr("r", 8).attr("stroke", s.col || "#1f5f7a");
       P.ring.append("text").attr("class", "atl-name").attr("x", d.cx + (d.cx > P.w - 110 ? -11 : 11)).attr("y", d.cy - 9)
         .attr("text-anchor", d.cx > P.w - 110 ? "end" : "start").text(A.nm(s) + " " + s.season);
     });

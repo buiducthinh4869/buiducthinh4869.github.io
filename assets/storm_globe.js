@@ -51,14 +51,6 @@
   }).catch(fail);
 
   // ------------------------------------------------------------------ lights: lit cells binned by colour
-  function rampColors(n, t95) {
-    var lo = d3.interpolateRgb("#faf9f5", "#1f5f7a"), hi = d3.interpolateRgb("#1f5f7a", "#23272b"), out = [];
-    for (var i = 0; i < n; i++) {
-      var t = (i + 0.5) / n, a = Math.min(1, t / t95);
-      out.push(d3.interpolateRgb("#e6e2d8", d3.rgb(t <= t95 ? lo(t / t95) : hi((t - t95) / (1 - t95))))(a));
-    }
-    return out;
-  }
   var NB = 16, TW = 36; // tiles: 10-degree columns from -180, rows from -60
   function tid(lonDeg, latDeg) { return Math.floor((lonDeg + 180) / 10) + TW * Math.floor((latDeg + 60) / 10); }
   function binCells(im, b0, b3, c, out) {
@@ -77,7 +69,7 @@
   }
   function lights(im) {
     var m = IX.meta.lights;
-    LT = { cell: m.cell_deg * RAD, cols: rampColors(NB, m.scale.ink_from), bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg) };
+    LT = { cell: m.cell_deg * RAD, cols: A.ntl.colors(NB, m.scale.ink_from), bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg) };
     TL.on = new Uint8Array(TW * 15);
     TL.list = {};
     ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });

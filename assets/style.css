@@ -822,3 +822,7 @@ html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :n
 @media (min-width: 1000px) and (max-height: 800px) {
   .profile { position: static; }
 }
+
+/* 2D map night lights */
+.ao-ntl { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); max-width: none; margin: 0.4rem 0 0; }
+.ao-ntl[hidden] { display: none; }

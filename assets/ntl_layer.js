@@ -6,7 +6,8 @@
      decode(url): Promise of {w, h, data} (8-bit grey, row 0 = north, from the PNG's red channel),
      pixels(year): Promise of the same for the image of that year, cached (4 years kept), requests de-duplicated,
      keyText(year, pre, lang): "Night lights: 2005" (EN, VI), with the "(no earlier satellite image)" note when pre,
-     fadeU(now, t0, reduce): crossfade progress 0..1 over FADE ms (1 when reduce).
+     fadeU(now, t0, reduce): crossfade progress 0..1 over FADE ms (1 when reduce),
+     colors(n, t95): the n ink colours of the night-light ramp (d3 needed), as storm_globe.js draws them; bin = min(n - 1, floor(grey / 256 * n)), t95 = index meta.lights.scale.ink_from.
    Atlas.ntlLayer(env) -> controller with its own state (several can live on one page). env hooks:
      lead() the first shown storm {season} or the year source (a season or calendar year in .season), null for the default year,
      build(pixels, year) -> the layer object (opaque here; may be a Promise), draw(cx, layer, keep, arg) paints a layer (keep = true
@@ -34,6 +35,14 @@
   };
   N.keyText = function (y, pre, lang) { var t = KT[lang] || KT.en; return t[0].replace("{y}", y) + (pre ? " " + t[1] : ""); };
   N.fadeU = function (now, t0, reduce) { return reduce ? 1 : Math.min(1, Math.max(0, (now - t0) / N.FADE)); };
+  N.colors = function (n, t95) {
+    var lo = d3.interpolateRgb("#faf9f5", "#1f5f7a"), hi = d3.interpolateRgb("#1f5f7a", "#23272b"), out = [];
+    for (var i = 0; i < n; i++) {
+      var t = (i + 0.5) / n, a = Math.min(1, t / t95);
+      out.push(d3.interpolateRgb("#e6e2d8", d3.rgb(t <= t95 ? lo(t / t95) : hi((t - t95) / (1 - t95))))(a));
+    }
+    return out;
+  };
   N.load = function () {
     if (!ix) ix = A.getJSON(N.dir + "index.json").then(function (d) {
       N.years = (d.years || []).map(Number).sort(function (a, b) { return a - b; });

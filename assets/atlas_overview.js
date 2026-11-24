@@ -6,12 +6,15 @@
    Another page (research.html) mounts its own figure with the same drawing code and the same constants:
      play  (default true)  false = no Play, no season range, no counter, no month bars (the markup then leaves them out)
      href  (default none)  a page to open instead of scrolling to section 2: a basin opens href#r=b-<basin>, a click elsewhere on the map opens href
-   A figure that carries data-ao-manual is not mounted by this file. */
+   A figure that carries data-ao-manual is not mounted by this file.
+   Night lights (ntl_layer.js, loaded before this file): the yearly image under the tracks, 2025 when not playing, the year on show during
+   Play (the rule of the globe), with a key line under the map. */
 (function () {
   "use strict";
   var A = window.Atlas;
   if (!A) return;
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var NTL_ALPHA = 0.55; // opacity of the night-light layer on the land and sea of the map
   var LABEL_AT = { WP: [150, 33], NA: [-42, 36], EP: [-128, 4], NI: [72, 2], SI: [62, -33], SP: [178, -36], SA: [-25, -30] };
   var TX = {
     en: { play: "Play the seasons", stop: "Stop", pause: "Pause motion", resume: "Resume motion", so: "storms this year", tot: "storms", inMonth: "storms this month", inYear: "this year", inM: "storms in", totY: "Total: {n} storms in {y}", pause2: "Pause", resume2: "Resume", back: "◀ 1 month", fwd: "1 month ▶",
@@ -36,6 +39,76 @@
     // without Play the map is a teaser: nothing starts the streaks under reduced motion, so the motion link goes too
     if (!canPlay && reduce && motB) { var bar = fig.querySelector(".ao-bar"); if (bar) bar.remove(); motB = null; }
     var O = { hi: null, tracks: null, comets: [], run: false, vis: true, paused: reduce, mode: "ambient", speed: 0.015, loop: 3000 }; // speed 1 = 0.9 s per year; the slider sets 1 to 20 s per month (5 s, one minute a year, by default)
+
+    // ------------------------------------------------------------------ night lights: one grey image per year (1800 x 675, 0.2 degree), projected by a lookup table
+    var nop = function () {}, NL = { lut: null, v: 0, tab: null, raf: 0 };
+    var ntl = A.ntlLayer ? A.ntlLayer({
+      lead: function () { return O.mode === "play" && O.curY != null ? { season: O.curY } : null; }, // the calendar year on show
+      build: ntlBuild, draw: ntlDraw, redraw: ntlRedraw, reduce: function () { return reduce; }, changed: function () { ntlKey(); ntlRedraw(); }
+    }) : { sync: nop, reset: nop, paint: nop };
+    NL.key = A.el("p", "ao-ntl se-hint");
+    NL.key.setAttribute("aria-live", "polite");
+    NL.key.hidden = true;
+    box.parentNode.insertBefore(NL.key, box.nextSibling);
+    function ntlKey() { var y = ntl.year; NL.key.hidden = y == null; NL.key.textContent = y == null ? "" : A.ntl.keyText(y, ntl.pre, A.lang()); }
+    function ntlRedraw() { // another frame of the base (a crossfade, or a new layer); never inside paintBase
+      if (NL.raf || !O.base) return;
+      NL.raf = requestAnimationFrame(function () { NL.raf = 0; paintBase(O.mode === "play" ? true : undefined); });
+    }
+    // a layer keeps the image max-pooled 2 x 2, so a lit cell is not lost where a pixel is wider than a cell, and its picture for the current table
+    function ntlBuild(im) {
+      var m = A.IX.meta.lights, W = im.w, H = im.h, g = im.data, D = new Uint8Array(W * H);
+      if (W !== m.width || H !== m.height) throw new Error("ntl image: wrong size");
+      for (var j = 0; j < H; j++) {
+        var r0 = j * W, r1 = (j < H - 1 ? j + 1 : j) * W;
+        for (var i = 0; i < W; i++) { var i1 = i + 1 < W ? i + 1 : 0; D[r0 + i] = Math.max(g[r0 + i], g[r0 + i1], g[r1 + i], g[r1 + i1]); }
+      }
+      return { g: D, c: null, v: -1 };
+    }
+    // grey -> colour of the globe's ramp (16 bins); below 24 nothing (as the globe leaves the faintest glow out)
+    function ntlTab() {
+      var cols = A.ntl.colors(16, A.IX.meta.lights.scale.ink_from), t = new Uint32Array(256);
+      for (var v = 24; v < 256; v++) { var c = d3.rgb(cols[v >> 4]); t[v] = ((255 << 24) | (c.b << 16) | (c.g << 8) | c.r) >>> 0; } // little-endian RGBA
+      return t;
+    }
+    // pixel -> image cell, once per canvas size. Equal Earth is pseudocylindrical: a row has one latitude and longitude is linear in x,
+    // so two inversions per row give the whole row. Source cell (top-left of the 2 x 2 around the point), -1 outside the sphere and 60 S to 75 N.
+    function ntlLut() {
+      var w = O.w, h = O.h, W = 1800, H = 675, lut = new Int32Array(w * h).fill(-1), P = O.proj, tx = P.translate()[0];
+      for (var y = 0; y < h; y++) {
+        var c = P.invert([tx, y + 0.5]), e = P.invert([tx + 1, y + 0.5]);
+        if (!c || !e || c[1] !== c[1] || c[1] > 75 || c[1] < -60) continue;
+        var d = e[0] - c[0];
+        if (d > 180) d -= 360; else if (d < -180) d += 360;
+        if (!(d > 0)) continue;
+        var j = Math.max(0, Math.min(H - 2, Math.floor((75 - c[1]) / 0.2 - 0.5)));
+        for (var x = 0; x < w; x++) {
+          var rel = (x + 0.5 - tx) * d;
+          if (rel > 180 || rel < -180) continue;
+          var lon = c[0] + rel;
+          if (lon > 180) lon -= 360; else if (lon < -180) lon += 360;
+          var i = Math.floor((lon + 180) / 0.2 - 0.5);
+          lut[y * w + x] = j * W + (i < 0 ? i + W : i >= W ? i - W : i);
+        }
+      }
+      return lut;
+    }
+    function ntlPaint(L) { // the layer's picture at the size of the map (CSS pixels; drawn scaled up on a sharp screen)
+      var w = O.w, h = O.h, n = NL.lut, tab = NL.tab || (NL.tab = ntlTab());
+      if (!L.c || L.c.width !== w || L.c.height !== h) { L.c = document.createElement("canvas"); L.c.width = w; L.c.height = h; }
+      var x = L.c.getContext("2d"), im = x.createImageData(w, h), px = new Uint32Array(im.data.buffer);
+      for (var i = 0; i < n.length; i++) if (n[i] >= 0) px[i] = tab[L.g[n[i]]];
+      x.putImageData(im, 0, 0);
+      L.v = NL.v;
+    }
+    function ntlDraw(cx, L) {
+      if (!NL.lut) return;
+      if (L.v !== NL.v) ntlPaint(L);
+      var a = cx.globalAlpha;
+      cx.globalAlpha = a * NTL_ALPHA;
+      cx.drawImage(L.c, 0, 0, O.w, O.h);
+      cx.globalAlpha = a;
+    }
 
     A.ready.then(function () { return A.getJSON(A.D + "lite.json"); }).then(function (L) {
       O.lite = L.tracks.map(function (a) {
@@ -128,6 +201,7 @@
           });
         });
       });
+      NL.lut = ntlLut(); NL.v++;
       labels();
       paintBase();
       O.comets = [];
@@ -135,6 +209,7 @@
       for (var i = 0; i < n; i++) O.comets.push(spawn(true));
       if (reduce) drawStill();
       kick();
+      ntl.sync();
     }
     function mk() {
       var c = document.createElement("canvas");
@@ -173,6 +248,7 @@
       c.clearRect(0, 0, O.w, O.h);
       c.beginPath(); path({ type: "Sphere" }); c.fillStyle = "#faf9f5"; c.fill(); c.strokeStyle = "#e4e1d8"; c.lineWidth = 1; c.stroke();
       c.beginPath(); path(A.land); c.fillStyle = "#e6e2d8"; c.fill();
+      ntl.paint(c, performance.now());
       c.lineWidth = O.w < 600 ? 0.5 : 0.7; c.lineJoin = "round";
       A.BORDER.forEach(function (b) {
         c.strokeStyle = A.BAS[b];
@@ -289,6 +365,7 @@
       var c = O.top.getContext("2d");
       if (y !== O.curY) {
         O.curY = y; O.lastMi = null;
+        ntl.sync(); // the image of this calendar year
         var by = {}, n = 0;
         O.monTot = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         O.tracks.forEach(function (tr) { if (tr.yr === y && tr.segs.length) { by[tr.s.basin] = (by[tr.s.basin] || 0) + 1; n++; O.monTot[tr.mo]++; } });
@@ -359,6 +436,7 @@
       var n = O.w < 600 ? 220 : 650;
       for (var i = 0; i < n; i++) O.comets.push(spawn(true));
       O.curY = null;
+      ntl.reset(); // back to the default year
       ctrls(false);
       labels();
       legText();
@@ -490,7 +568,7 @@
           var sel = $(id);
           for (var y = A.IX.meta.seasons[0]; y <= A.IX.meta.seasons[1]; y++) { var o = document.createElement("option"); o.value = o.textContent = y; sel.appendChild(o); }
           sel.value = A.IX.meta.seasons[k];
-          sel.addEventListener("change", function () { if (O.mode !== "play") summary(); });
+          sel.addEventListener("change", function () { if (O.mode !== "play") { summary(); ntl.reset(); } });
         });
         summary();
         playB.addEventListener("click", function () { if (O.mode === "play") pauseToggle(); else playStart(); });
@@ -516,7 +594,7 @@
         rt = setTimeout(function () { if (box.clientWidth !== lw) { lw = box.clientWidth; if (O.mode === "play") playEnd(); size(); } }, 150);
       });
       document.addEventListener("langchange", function () {
-        labels(); legText(); table(); if (canPlay && O.mode !== "play") summary();
+        ntlKey(); labels(); legText(); table(); if (canPlay && O.mode !== "play") summary();
         if (O.mode === "play") { ctrls(true); O.curY = null; O.lastMi = null; stateAt(O.tt, true); } else if (canPlay) playLabel(); // curY reset rebuilds the year's counts on the map
         if (motB) motB.textContent = O.paused ? tt().resume : tt().pause;
         O.base.setAttribute("aria-label", tt().map);

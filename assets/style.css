@@ -561,6 +561,7 @@ html:not(.js) .storm-explorer .se-live,
 .sg-ramp-lh { display: flex; justify-content: space-between; }
 .sg-wkey { right: auto; left: 8px; width: 10rem; }
 .sg-wkey[hidden] { display: none; }
+.sg-viewnote { margin: 0.2rem 0 0.5rem; font-size: 0.8rem; line-height: 1.45; color: var(--muted); max-width: 40rem; }
 .sg-opts { margin-top: 0.3rem; }
 .sg-tw { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; color: var(--muted); cursor: pointer; }
 .sg-tw input { margin: 0; accent-color: var(--accent); }

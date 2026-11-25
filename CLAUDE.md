@@ -21,6 +21,7 @@ Every visible text exists twice: `<span data-l="en">…</span><span data-l="vi" 
 - Fonts: Newsreader (reading text, headings), Be Vietnam Pro (nav, labels, meta lines). Both support Vietnamese.
 - One decorative element only: the isobar drawing on the home page and its small mark. Do not add other ornaments, cards, shadows, gradients or all-caps labels.
 - Reading width is 40rem. Must work at 375px wide without horizontal scroll.
+- Reading paragraphs are justified with hyphenation (bio on Home, `.page-lede`, `.at-how`, `.hs-take`, `.prose p`; Thinh, 2026-11-25); labels, captions, lists and tables stay ragged right.
 - Layout, breakpoint 1000px. Below it every page is one stacked 40rem column. From 1000px the container (`.wrap`, header and footer included) is 72rem:
   - Home: two columns in `.home-grid`. `.profile` (photo, name, field, bio, links) on the left, sticky (static when the viewport is under 800px high); `.home-main` (Research, Writing) on the right at 40rem.
   - Research, Writing, CV: any `main > .wrap` that has `h2` children becomes a grid. Each `h2` sits in a 14rem left rail and the element after it in the 40rem right column; the page title, lede, `figure`, `.cv-actions` and `.cv-frame` span the full width. Keep `h2` and its list as direct children of `.wrap`.

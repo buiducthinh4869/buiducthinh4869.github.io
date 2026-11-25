@@ -1128,3 +1128,9 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
   .hs-angle input { height: 36px; }
 }
 .hs-mlg-lab span, .hs-mlegend { font-size: max(0.6875rem, 11px); }
+
+/* Justified reading paragraphs (Thinh, 2026-11-25): bio, ledes, atlas "how to read" and take sentences, post body.
+   Hyphenation keeps the word gaps even; short labels, captions, lists and tables stay ragged right. */
+.profile p:not(.role):not(.contact), .page-lede, .at-how, .hs-take, .prose p {
+  text-align: justify; hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 7 3 3; text-wrap: pretty;
+}

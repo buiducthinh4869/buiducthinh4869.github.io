@@ -22,7 +22,7 @@ on:
         type: boolean
         default: false
   push:
-    branches: [ntl-timeseries]
+    branches: [ntl-timeseries, ntl-tiles]
     paths: [".github/ntl_request.json"]
 
 permissions:
@@ -209,6 +209,15 @@ jobs:
           d = np.abs(new - ref)
           msg = (f"\n2025 against assets/data/globe/lights.png: max abs diff {int(d.max())}, "
                  f"differing cells {int((d > 0).sum())} of {d.size}\n")
+          import glob
+          ref_t = {os.path.basename(p) for p in glob.glob("assets/data/globe/lights/*.png")}
+          new_t = {os.path.basename(p) for p in glob.glob("out/tiles_2025/*.png")}
+          dm = [int(np.abs(np.asarray(Image.open("out/tiles_2025/" + k)).astype(np.int16)
+                       - np.asarray(Image.open("assets/data/globe/lights/" + k)).astype(np.int16)).max())
+                for k in sorted(ref_t & new_t)]
+          msg += (f"2025 tiles: new {len(new_t)}, published {len(ref_t)}, shared {len(ref_t & new_t)}, "
+                  f"max abs diff over shared {max(dm) if dm else None}, mean of tile maxima "
+                  f"{(sum(dm) / len(dm)) if dm else None}\n")
           print(msg)
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
               f.write(msg)
@@ -220,6 +229,7 @@ jobs:
           path: |
             out/lights_${{ matrix.year }}.png
             out/stats_${{ matrix.year }}.json
+            out/tiles_${{ matrix.year }}/
           retention-days: 7
           if-no-files-found: error
 

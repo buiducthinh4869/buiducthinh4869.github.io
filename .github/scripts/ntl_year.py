@@ -39,6 +39,11 @@ LB = (-180.0, -60.0, 180.0, 75.0)      # west, south, east, north of the output 
 LCELL = 0.2                            # output cell, degrees
 NX, NY = 1800, 675                     # (E - W) / LCELL, (N - S) / LCELL
 STRIP_DEG = 2.4                        # input strip height, degrees (12 output rows)
+# 0.05-degree tiles (zoomed-in globe), same scale as the 0.2-degree layer, as assets/data/globe/lights/ of 2025:
+# 10 x 10 degree tiles of 200 x 200 px named <west>_<south>.png, written only when some cell reaches TILE_MIN
+# (the globe leaves out values below 24 when drawing).
+TCELL, TSIZE, TILE_MIN = 0.05, 10, 24
+TNX, TNY = 7200, 2700
 # 99.5th percentile of log1p(radiance) over the lit land cells of the 2025 layer (cached aggregate of the
 # 2025 file x Natural Earth 10m land mask, all_touched). index.json of the globe shows it rounded: 2.9319.
 LMAX = 2.931900061931104
@@ -145,10 +150,11 @@ def check_grid(s):
             "y_shift_px": shift, "x_shift_px": round((tc - LB[0]) / ta, 4)}
 
 
-def aggregate(s, max_strips=None):
+def aggregate(s, max_strips=None, tiles=False):
     """Mean radiance per 0.2-degree cell over LB, strip by strip (as global_lights() of the 2025 build).
 
-    Returns (array float32 ny x nx, rows done). Rows not reached with max_strips stay NaN."""
+    Returns (array float32 ny x nx, rows done, tile array or None). Rows not reached with max_strips stay NaN.
+    With tiles, each strip is also averaged onto the 0.05-degree grid (TNY x TNX) from the same read."""
     import numpy as np
     from rasterio.transform import from_origin
     from rasterio.warp import Resampling, reproject
@@ -158,6 +164,8 @@ def aggregate(s, max_strips=None):
     nx, ny = round((E - W) / cell), round((N - S) / cell)
     assert (nx, ny) == (NX, NY)
     out = np.full((ny, nx), np.nan, dtype="float32")
+    tout = np.full((TNY, TNX), np.nan, dtype="float32") if tiles else None
+    tk = round(cell / TCELL)
     step = round(STRIP_DEG / cell)
     done = 0
     for k, r0 in enumerate(range(0, ny, step)):
@@ -181,12 +189,18 @@ def aggregate(s, max_strips=None):
                   dst_transform=from_origin(W, top, cell, cell), dst_crs="EPSG:4326",
                   resampling=Resampling.average, src_nodata=np.nan, dst_nodata=np.nan)
         out[r0:r1] = dst
+        if tiles:
+            td = np.full(((r1 - r0) * tk, TNX), np.nan, dtype="float32")
+            reproject(a, td, src_transform=s.window_transform(w), src_crs="EPSG:4326",
+                      dst_transform=from_origin(W, top, TCELL, TCELL), dst_crs="EPSG:4326",
+                      resampling=Resampling.average, src_nodata=np.nan, dst_nodata=np.nan)
+            tout[r0 * tk:r1 * tk] = td
         done = r1
         print(f"  strip {k + 1}: rows {r0}-{r1} of {ny}, {time.time() - t0:.1f} s", flush=True)
-    return out, done
+    return out, done, tout
 
 
-def land_mask(ne_path):
+def land_mask(ne_path, cell=LCELL):
     """Boolean ny x nx mask: every geometry of the Natural Earth 10m admin-0 file, rasterized all_touched."""
     import geopandas as gpd
     from rasterio import features
@@ -195,8 +209,9 @@ def land_mask(ne_path):
     world = gpd.read_file(str(ne_path), engine="pyogrio", columns=[])
     assert len(world) > 200, len(world)
     geoms = [g for g in world.geometry if g is not None and not g.is_empty]
-    mask = features.rasterize(((g, 1) for g in geoms), out_shape=(NY, NX),
-                              transform=from_origin(W, N, LCELL, LCELL), all_touched=True, dtype="uint8")
+    shape = (round((N - S) / cell), round((E - W) / cell))
+    mask = features.rasterize(((g, 1) for g in geoms), out_shape=shape,
+                              transform=from_origin(W, N, cell, cell), all_touched=True, dtype="uint8")
     return mask.astype(bool)
 
 
@@ -204,7 +219,7 @@ def render(agg, mask, lmax=LMAX):
     """Fixed-scale 8-bit picture. Returns (li8 uint8, L float64)."""
     import numpy as np
     agg = agg.astype("float64")
-    assert agg.shape == mask.shape == (NY, NX)
+    assert agg.shape == mask.shape and agg.shape in ((NY, NX), (TNY, TNX)), (agg.shape, mask.shape)
     L = np.log1p(np.where(np.isfinite(agg) & mask, agg, 0.0))
     tt = np.clip(L / lmax, 0, 1)
     return np.rint(255 * tt).astype(np.uint8), L
@@ -214,6 +229,31 @@ def own_p995(L):
     import numpy as np
     pos = L > 0
     return float(np.percentile(L[pos], 99.5)) if pos.any() else None
+
+
+def write_tiles(tagg, tmask, tdir):
+    """0.05-degree tiles <west>_<south>.png (200 x 200, row 0 = north) where some cell reaches TILE_MIN."""
+    import numpy as np
+    from PIL import Image
+    t8, _ = render(tagg, tmask)
+    pad = round((80 - LB[3]) / TCELL)  # the top tile row (70..80 N) reaches past the grid: zeros there
+    t8 = np.vstack([np.zeros((pad, TNX), np.uint8), t8])
+    n = round(TSIZE / TCELL)
+    tdir.mkdir(parents=True, exist_ok=True)
+    keys, size = [], 0
+    for la in range(-60, 80, TSIZE):
+        r0 = round((80 - la - TSIZE) / TCELL)
+        for lo in range(-180, 180, TSIZE):
+            c0 = round((lo + 180) / TCELL)
+            t = t8[r0:r0 + n, c0:c0 + n]
+            assert t.shape == (n, n), (lo, la, t.shape)
+            if t.max() < TILE_MIN:
+                continue
+            p = tdir / f"{lo}_{la}.png"
+            Image.fromarray(np.ascontiguousarray(t)).save(p, optimize=True)
+            keys.append(f"{lo}_{la}")
+            size += p.stat().st_size
+    return {"tile_count": len(keys), "tile_bytes": size}
 
 
 # ---------------------------------------------------------------------------------------------- year
@@ -233,7 +273,7 @@ def cmd_year(a):
     with rasterio.open(src) as s:
         grid = check_grid(s)
         t_agg = time.time()
-        agg, done = aggregate(s, a.max_strips)
+        agg, done, tagg = aggregate(s, a.max_strips, tiles=not a.no_tiles)
     seconds_aggregate = round(time.time() - t_agg, 1)
     if a.dump_npy:
         np.save(a.dump_npy, agg[:done])
@@ -253,6 +293,8 @@ def cmd_year(a):
         stats.update({"n_lit_cells": int((li8 > 0).sum()), "n_cells_ge24": int((li8 >= 24).sum()),
                       "sum_li8": int(li8.sum(dtype=np.int64)), "own_p995": own_p995(L),
                       "png_bytes": png.stat().st_size})
+        if tagg is not None:
+            stats.update(write_tiles(tagg, land_mask(a.ne_zip, TCELL), out_dir / f"tiles_{a.year}"))
     stats["peak_rss_mb"] = peak_rss_mb()
     stats["seconds_aggregate"] = seconds_aggregate
     stats["seconds_total"] = round(time.time() - t_start, 1)
@@ -277,6 +319,7 @@ def cmd_merge(a):
         om = old.get("scale", {}).get("max")
         assert om is not None and abs(om - LMAX) < 1e-12, f"existing index.json has scale max {om}, script has {LMAX}"
     years = set(old.get("years", []))
+    tlist = dict(old.get("tiles", {}).get("list", {}))
     source = dict(old.get("source", {}))
     new = []
     for p in sorted(src.glob("lights_*.png")):
@@ -295,6 +338,20 @@ def cmd_merge(a):
         shutil.copyfile(p, dst / f"ntl_{y}.png")
         years.add(y)
         source[str(y)] = st["zip"]
+        td = src / f"tiles_{y}"
+        if td.is_dir():
+            od = dst / "tiles" / str(y)
+            if od.exists():
+                shutil.rmtree(od)
+            od.mkdir(parents=True)
+            ks = []
+            for t in sorted(td.glob("*.png")):
+                im = Image.open(t)
+                assert im.size == (200, 200) and im.mode == "L", (t, im.size, im.mode)
+                shutil.copyfile(t, od / t.name)
+                ks.append(t.stem)
+            assert len(ks) == st.get("tile_count"), (y, len(ks), st.get("tile_count"))
+            tlist[str(y)] = ",".join(ks)
         new.append(y)
     if not new:
         sys.exit(f"error: no lights_<year>.png in {src}")
@@ -308,9 +365,12 @@ def cmd_merge(a):
            "bounds": [int(v) for v in LB], "cell_deg": LCELL, "width": NX, "height": NY, "product": PRODUCT, "doi": DOI,
            "scale": {"transform": "log1p", "max": LMAX, "ink_from": INK_FROM},
            "source": {k: source[k] for k in sorted(source)}}
+    if tlist:
+        idx["tiles"] = {"cell_deg": TCELL, "size_deg": TSIZE, "dir": "tiles/{year}/",
+                        "list": {k: tlist[k] for k in sorted(tlist)}}
     with open(idx_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(dumps_index(idx))
-    total = sum(p.stat().st_size for p in dst.iterdir() if p.is_file())
+    total = sum(p.stat().st_size for p in dst.rglob("*") if p.is_file())
     print(f"merged {sorted(new)}; index years {ys[0]}..{ys[-1]} ({len(ys)}); {total:,} bytes in {dst}")
 
 
@@ -340,6 +400,7 @@ def main():
     y.add_argument("--ne-zip", help="Natural Earth 10m admin_0_countries zip (or .shp); not downloaded here")
     y.add_argument("--max-strips", type=int, help="only the first N strips (quick test; partial stats, no png)")
     y.add_argument("--dump-npy", help=argparse.SUPPRESS)
+    y.add_argument("--no-tiles", action="store_true", help="skip the 0.05-degree tiles")
     y.set_defaults(fn=cmd_year)
     m = sub.add_parser("merge", help="lights_<Y>.png + stats_<Y>.json -> assets/ntl")
     m.add_argument("--in", dest="input", required=True)

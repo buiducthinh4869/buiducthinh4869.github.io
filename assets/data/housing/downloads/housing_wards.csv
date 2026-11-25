@@ -1,0 +1,254 @@
+city,code,name,n_sample,price_index,ppm2_median_mil,lon,lat,old_district,old_district_source,segment
+hn,00004,Phường Ba Đình,30,1.9405,355.74,105.836465,21.03949,Quận Ba Đình,listings,Townhouse mid-market
+hn,00008,Phường Ngọc Hà,68,1.2121,248.06,105.816856,21.039385,Quận Ba Đình,listings,Townhouse mid-market
+hn,00025,Phường Giảng Võ,52,1.269,258.39,105.81673,21.026695,Quận Ba Đình,listings,Townhouse mid-market
+hn,00070,Phường Hoàn Kiếm,22,2.7189,627.19,105.849652,21.033045,Quận Hoàn Kiếm,listings,Prime core
+hn,00082,Phường Cửa Nam,6,2.6859,603.7,105.851086,21.023745,Quận Hoàn Kiếm,listings,Prime core
+hn,00091,Phường Phú Thượng,20,1.1583,183.18,105.801926,21.083485,Quận Tây Hồ,listings,Townhouse mid-market
+hn,00097,Phường Hồng Hà,74,1.2616,241.8,105.852514,21.04799,Quận Hai Bà Trưng,listings,Townhouse mid-market
+hn,00103,Phường Tây Hồ,56,1.2544,233.33,105.818443,21.06189,Quận Tây Hồ,listings,Townhouse mid-market
+hn,00118,Phường Bồ Đề,109,1.1504,213.73,105.875843,21.050565,Quận Long Biên,listings,Townhouse mid-market
+hn,00127,Phường Việt Hưng,73,1.002,174.29,105.906108,21.062755,Quận Long Biên,listings,Townhouse mid-market
+hn,00136,Phường Phúc Lợi,47,0.9054,164.36,105.917752,21.0416,Quận Long Biên,listings,Townhouse mid-market
+hn,00145,Phường Long Biên,82,1.0331,208.17,105.899165,21.02295,Quận Long Biên,listings,Townhouse mid-market
+hn,00160,Phường Nghĩa Đô,69,1.2914,261.83,105.793553,21.0433,Quận Cầu Giấy,listings,Apartment mid-market
+hn,00166,Phường Cầu Giấy,29,1.3664,111.16,105.79015,21.02974,Quận Cầu Giấy,listings,Apartment mid-market
+hn,00175,Phường Yên Hoà,50,1.5536,86.76,105.795288,21.01434,Quận Cầu Giấy,listings,Apartment mid-market
+hn,00190,Phường Ô Chợ Dừa,50,1.5816,296.88,105.82529,21.022185,Quận Đống Đa,listings,Townhouse mid-market
+hn,00199,Phường Láng,21,1.3358,139.73,105.804845,21.021095,Quận Đống Đa,listings,Townhouse mid-market
+hn,00226,Phường Văn Miếu - Quốc Tử Giám,73,1.1273,233.33,105.835983,21.019835,Quận Đống Đa,listings,Townhouse mid-market
+hn,00229,Phường Kim Liên,19,1.6103,272.59,105.832153,21.006295,Quận Đống Đa,listings,Townhouse mid-market
+hn,00235,Phường Đống Đa,44,1.7129,335.02,105.818154,21.01089,Quận Đống Đa,listings,Townhouse mid-market
+hn,00256,Phường Hai Bà Trưng,47,1.7856,346.67,105.852231,21.014315,Quận Hai Bà Trưng,listings,Townhouse mid-market
+hn,00283,Phường Vĩnh Tuy,19,1.5611,272.41,105.867782,20.998095,Quận Hai Bà Trưng,listings,Townhouse mid-market
+hn,00292,Phường Bạch Mai,157,1.5305,304.0,105.851441,21.00261,Quận Hai Bà Trưng,listings,Townhouse mid-market
+hn,00301,Phường Vĩnh Hưng,7,1.1477,264.71,105.882881,20.99126,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00316,Phường Định Công,38,1.0985,181.25,105.824427,20.97788,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00322,Phường Tương Mai,53,1.5967,325.0,105.852642,20.99082,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00328,Phường Lĩnh Nam,8,0.9258,174.09,105.89614,20.975985,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00331,Phường Hoàng Mai,37,1.0997,198.57,105.861785,20.973855,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00337,Phường Hoàng Liệt,28,1.2467,217.37,105.828408,20.96133,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00340,Phường Yên Sở,5,1.0247,89.7,105.856803,20.955585,Quận Hoàng Mai,listings,Apartment mid-market
+hn,00352,Phường Phương Liệt,39,1.4015,256.23,105.831484,20.993385,Quận Thanh Xuân,listings,Apartment mid-market
+hn,00364,Phường Khương Đình,17,1.0443,130.0,105.813402,20.99077,Quận Thanh Xuân,listings,Apartment mid-market
+hn,00367,Phường Thanh Xuân,42,1.4607,115.38,105.805398,20.999095,Quận Thanh Xuân,listings,Apartment mid-market
+hn,00376,Xã Sóc Sơn,0,,,105.849824,21.245415,Huyện Sóc Sơn,gadm,
+hn,00382,Xã Kim Anh,1,,20.0,105.77368,21.295635,Huyện Sóc Sơn,listings,
+hn,00385,Xã Trung Giã,0,,,105.831635,21.33151,Huyện Sóc Sơn,gadm,
+hn,00430,Xã Đa Phúc,0,,,105.912974,21.247295,Huyện Sóc Sơn,gadm,
+hn,00433,Xã Nội Bài,0,,,105.773548,21.23599,Huyện Sóc Sơn,gadm,
+hn,00454,Xã Đông Anh,12,0.7588,104.0,105.875799,21.110025,Huyện Đông Anh,listings,Peripheral growth
+hn,00466,Xã Phúc Thịnh,7,0.4575,65.77,105.808703,21.15892,Huyện Đông Anh,listings,Peripheral growth
+hn,00475,Xã Thư Lâm,4,,56.98,105.884445,21.162775,Huyện Đông Anh,listings,Peripheral growth
+hn,00493,Xã Thiên Lộc,2,,64.0,105.773146,21.12619,Huyện Đông Anh,listings,Peripheral growth
+hn,00508,Xã Vĩnh Thanh,0,,,105.81656,21.103735,Huyện Đông Anh,gadm,Peripheral growth
+hn,00541,Xã Phù Đổng,0,,,105.932482,21.0791,Huyện Gia Lâm,gadm,Townhouse mid-market
+hn,00562,Xã Thuận An,16,0.3763,56.19,105.982188,21.032435,Huyện Gia Lâm,listings,Townhouse mid-market
+hn,00565,Xã Gia Lâm,31,0.9194,123.78,105.951267,21.00277,Huyện Gia Lâm,listings,Townhouse mid-market
+hn,00577,Xã Bát Tràng,21,0.6541,96.55,105.908058,20.969695,Huyện Gia Lâm,listings,Townhouse mid-market
+hn,00592,Phường Từ Liêm,55,1.2317,116.07,105.767162,21.02181,Quận Nam Từ Liêm,listings,Apartment mid-market
+hn,00598,Phường Thượng Cát,2,,97.22,105.748861,21.08678,Quận Bắc Từ Liêm,listings,Apartment mid-market
+hn,00602,Phường Đông Ngạc,7,1.0754,160.84,105.778924,21.076755,Quận Bắc Từ Liêm,listings,Apartment mid-market
+hn,00611,Phường Xuân Đỉnh,31,1.2154,217.24,105.795558,21.06556,Quận Bắc Từ Liêm,listings,Apartment mid-market
+hn,00613,Phường Tây Tựu,3,,280.0,105.740192,21.065235,Quận Bắc Từ Liêm,listings,Apartment mid-market
+hn,00619,Phường Phú Diễn,28,1.2004,179.98,105.763586,21.048215,Quận Cầu Giấy,listings,Apartment mid-market
+hn,00622,Phường Xuân Phương,6,0.9679,177.78,105.747992,21.031285,Quận Nam Từ Liêm,listings,Apartment mid-market
+hn,00634,Phường Tây Mỗ,6,0.8268,90.83,105.747815,20.99965,Quận Nam Từ Liêm,listings,Apartment mid-market
+hn,00637,Phường Đại Mỗ,8,1.0929,70.29,105.776797,20.993205,Quận Nam Từ Liêm,listings,Apartment mid-market
+hn,00640,Xã Thanh Trì,12,0.9939,204.21,105.861269,20.93939,Huyện Thanh Trì,listings,Peripheral growth
+hn,00643,Phường Thanh Liệt,12,1.0229,191.92,105.802368,20.970645,Huyện Thanh Trì,listings,Peripheral growth
+hn,00664,Xã Đại Thanh,12,0.7769,133.11,105.819541,20.934615,Huyện Thanh Trì,listings,Peripheral growth
+hn,00679,Xã Ngọc Hồi,3,,323.11,105.833584,20.912325,Huyện Thanh Trì,listings,Peripheral growth
+hn,00685,Xã Nam Phù,1,,92.05,105.886542,20.919005,Huyện Thanh Trì,listings,Peripheral growth
+hn,04930,Xã Yên Xuân,2,,26.91,105.47912,20.973735,Huyện Thạch Thất,listings,Peripheral growth
+hn,08974,Xã Quang Minh,3,,91.76,105.752915,21.1989,Huyện Mê Linh,listings,
+hn,08980,Xã Yên Lãng,0,,,105.664193,21.17151,Huyện Mê Linh,gadm,
+hn,08995,Xã Tiến Thắng,0,,,105.685052,21.20753,Huyện Mê Linh,gadm,
+hn,09022,Xã Mê Linh,1,,114.71,105.734591,21.146385,Huyện Mê Linh,listings,
+hn,09552,Phường Kiến Hưng,11,1.2569,282.83,105.775194,20.954245,Quận Hà Đông,listings,Apartment mid-market
+hn,09556,Phường Hà Đông,60,1.2854,215.13,105.777979,20.97447,Quận Hà Đông,listings,Apartment mid-market
+hn,09562,Phường Yên Nghĩa,3,,150.83,105.73732,20.938085,Quận Hà Đông,listings,Apartment mid-market
+hn,09568,Phường Phú Lương,4,,153.09,105.767091,20.93864,Quận Hà Đông,listings,Apartment mid-market
+hn,09574,Phường Sơn Tây,5,0.2352,34.5,105.487125,21.1425,Thị Xã Sơn Tây,listings,
+hn,09604,Phường Tùng Thiện,1,,18.89,105.458339,21.122475,Thị Xã Sơn Tây,listings,
+hn,09616,Xã Đoài Phương,4,,29.24,105.495119,21.064045,Thị Xã Sơn Tây,listings,
+hn,09619,Xã Quảng Oai,0,,,105.431833,21.18216,Huyện Ba Vì,gadm,
+hn,09634,Xã Cổ Đô,0,,,105.398104,21.26644,Huyện Ba Vì,gadm,
+hn,09661,Xã Minh Châu,0,,,105.452031,21.212105,Huyện Ba Vì,gadm,
+hn,09664,Xã Vật Lại,0,,,105.379918,21.212065,Huyện Ba Vì,gadm,
+hn,09676,Xã Bất Bạt,2,,9.5,105.329534,21.15867,Huyện Ba Vì,listings,
+hn,09694,Xã Suối Hai,1,,9.0,105.373962,21.124955,Huyện Ba Vì,listings,
+hn,09700,Xã Ba Vì,1,,8.0,105.338364,21.06004,Huyện Ba Vì,listings,
+hn,09706,Xã Yên Bài,1,,20.25,105.418706,21.05816,Huyện Ba Vì,listings,
+hn,09715,Xã Phúc Thọ,2,,33.88,105.546406,21.107295,Huyện Phúc Thọ,listings,
+hn,09739,Xã Phúc Lộc,5,0.1393,21.19,105.571726,21.14528,Huyện Phúc Thọ,listings,
+hn,09772,Xã Hát Môn,1,,36.23,105.619995,21.088955,Huyện Phúc Thọ,listings,
+hn,09784,Xã Đan Phượng,3,,75.79,105.668505,21.09448,Huyện Đan Phượng,listings,
+hn,09787,Xã Liên Minh,0,,,105.650574,21.13092,Huyện Đan Phượng,gadm,
+hn,09817,Xã Ô Diên,9,0.9696,166.67,105.710115,21.10581,Huyện Đan Phượng,listings,
+hn,09832,Xã Hoài Đức,14,0.7722,154.96,105.706402,21.061525,Huyện Hoài Đức,listings,Peripheral growth
+hn,09856,Xã Dương Hoà,2,,112.66,105.671258,21.04834,Huyện Hoài Đức,listings,Peripheral growth
+hn,09871,Xã Sơn Đồng,9,0.6761,109.56,105.70857,21.02693,Huyện Hoài Đức,listings,Peripheral growth
+hn,09877,Xã An Khánh,8,0.8855,151.43,105.708272,20.983335,Huyện Hoài Đức,listings,Peripheral growth
+hn,09886,Phường Dương Nội,11,1.0675,160.0,105.749947,20.974465,Quận Hà Đông,listings,Apartment mid-market
+hn,09895,Xã Quốc Oai,5,0.2113,31.0,105.65243,21.00845,Huyện Quốc Oai,listings,
+hn,09910,Xã Kiều Phú,0,,,105.602383,20.97455,Huyện Quốc Oai,gadm,
+hn,09931,Xã Hưng Đạo,6,0.4212,62.58,105.657783,20.969775,Huyện Quốc Oai,listings,
+hn,09952,Xã Phú Cát,12,0.1956,28.7,105.55676,20.949485,Huyện Quốc Oai,listings,
+hn,09955,Xã Thạch Thất,3,,25.0,105.562066,21.06644,Huyện Thạch Thất,listings,Peripheral growth
+hn,09982,Xã Hạ Bằng,19,0.1975,28.93,105.571081,21.01633,Huyện Thạch Thất,listings,Peripheral growth
+hn,09988,Xã Hoà Lạc,15,0.2045,30.0,105.506396,21.01365,Huyện Thạch Thất,listings,Peripheral growth
+hn,10003,Xã Tây Phương,0,,,105.611801,21.03969,Huyện Thạch Thất,gadm,Peripheral growth
+hn,10015,Phường Chương Mỹ,4,,100.54,105.702642,20.92537,Quận Hà Đông,listings,Apartment mid-market
+hn,10030,Xã Phú Nghĩa,0,,,105.639523,20.918175,Huyện Chương Mỹ,gadm,
+hn,10045,Xã Xuân Mai,2,,20.99,105.602604,20.86078,Huyện Chương Mỹ,listings,
+hn,10072,Xã Quảng Bị,0,,,105.69911,20.87184,Huyện Chương Mỹ,gadm,
+hn,10081,Xã Trần Phú,1,,40.0,105.66267,20.836935,Huyện Chương Mỹ,listings,
+hn,10096,Xã Hoà Phú,0,,,105.724964,20.83195,Huyện Chương Mỹ,gadm,
+hn,10114,Xã Thanh Oai,0,,,105.767773,20.844175,Huyện Thanh Oai,gadm,
+hn,10126,Xã Bình Minh,0,,,105.757628,20.90472,Huyện Thanh Oai,gadm,
+hn,10144,Xã Tam Hưng,0,,,105.793342,20.87862,Huyện Thanh Oai,gadm,
+hn,10180,Xã Dân Hoà,0,,,105.794421,20.81048,Huyện Thanh Oai,gadm,
+hn,10183,Xã Thường Tín,0,,,105.844576,20.87002,Huyện Thường Tín,gadm,
+hn,10210,Xã Hồng Vân,1,,59.65,105.898838,20.87932,Huyện Thường Tín,listings,
+hn,10231,Xã Thượng Phúc,0,,,105.847824,20.82983,Huyện Thường Tín,gadm,
+hn,10237,Xã Chương Dương,0,,,105.898103,20.83521,Huyện Thường Tín,gadm,
+hn,10273,Xã Phú Xuyên,0,,,105.922977,20.764,Huyện Phú Xuyên,gadm,
+hn,10279,Xã Phượng Dực,0,,,105.842102,20.772015,Huyện Phú Xuyên,gadm,
+hn,10330,Xã Chuyên Mỹ,0,,,105.881231,20.71559,Huyện Phú Xuyên,gadm,
+hn,10342,Xã Đại Xuyên,0,,,105.953314,20.69722,Huyện Phú Xuyên,gadm,
+hn,10354,Xã Vân Đình,0,,,105.774935,20.73624,Huyện Ứng Hòa,gadm,
+hn,10369,Xã Ứng Thiên,0,,,105.770813,20.77317,Huyện Ứng Hòa,gadm,
+hn,10402,Xã Ứng Hoà,0,,,105.840451,20.69246,Huyện Ứng Hòa,gadm,
+hn,10417,Xã Hoà Xá,0,,,105.799814,20.667015,Huyện Ứng Hòa,gadm,
+hn,10441,Xã Mỹ Đức,0,,,105.697426,20.654455,Huyện Mỹ Đức,gadm,
+hn,10459,Xã Phúc Sơn,0,,,105.683955,20.78138,Huyện Mỹ Đức,gadm,
+hn,10465,Xã Hồng Sơn,2,,24.5,105.715001,20.71591,Huyện Mỹ Đức,listings,
+hcm,25747,Phường Thủ Dầu Một,0,,,106.664312,10.968185,Thành phố Thủ Dầu Một,gadm,
+hcm,25750,Phường Phú Lợi,0,,,106.68058,10.987755,Thành phố Thủ Dầu Một,gadm,
+hcm,25760,Phường Bình Dương,0,,,106.689061,11.05485,Thành phố Thủ Dầu Một,gadm,
+hcm,25768,Phường Phú An,0,,,106.601699,11.048515,Thị xã Bến Cát,gadm,
+hcm,25771,Phường Chánh Hiệp,0,,,106.641668,11.018655,Thành phố Thủ Dầu Một,gadm,
+hcm,25813,Phường Bến Cát,0,,,106.61542,11.204115,Huyện Bàu Bàng,gadm,
+hcm,25837,Phường Chánh Phú Hoà,0,,,106.670005,11.188215,Thị xã Bến Cát,gadm,
+hcm,25840,Phường Long Nguyên,0,,,106.561881,11.167955,Huyện Bàu Bàng,gadm,
+hcm,25843,Phường Tây Nam,0,,,106.533382,11.13279,Thị xã Bến Cát,gadm,
+hcm,25846,Phường Thới Hoà,0,,,106.626311,11.10227,Thị xã Bến Cát,gadm,
+hcm,25849,Phường Hoà Lợi,0,,,106.65697,11.083865,Thị xã Bến Cát,gadm,
+hcm,25888,Phường Tân Uyên,0,,,106.79901,11.091415,Thị xã Tân Uyên,gadm,
+hcm,25891,Phường Tân Khánh,0,,,106.740694,10.999405,Thị xã Tân Uyên,gadm,
+hcm,25906,Xã Bắc Tân Uyên,0,,,106.863426,11.170905,Huyện Bắc Tân Uyên,gadm,
+hcm,25909,Xã Thường Tân,0,,,106.919445,11.1048,Huyện Bắc Tân Uyên,gadm,
+hcm,25912,Phường Vĩnh Tân,0,,,106.698986,11.13792,Thị xã Tân Uyên,gadm,
+hcm,25915,Phường Bình Cơ,0,,,106.74379,11.152405,Huyện Bắc Tân Uyên,gadm,
+hcm,25920,Phường Tân Hiệp,0,,,106.743131,11.06175,Thị xã Tân Uyên,gadm,
+hcm,25942,Phường Dĩ An,0,,,106.755362,10.901505,Thị xã Dĩ An,gadm,
+hcm,25945,Phường Tân Đông Hiệp,0,,,106.759496,10.943515,Thị xã Dĩ An,gadm,
+hcm,25951,Phường Đông Hoà,0,,,106.796443,10.89394,Thị xã Dĩ An,gadm,
+hcm,25966,Phường Lái Thiêu,0,,,106.702234,10.906805,Thị xã Thuận An,gadm,
+hcm,25969,Phường Thuận Giao,0,,,106.708644,10.962555,Thị xã Thuận An,gadm,
+hcm,25975,Phường An Phú,0,,,106.737633,10.959905,Thị xã Thuận An,gadm,
+hcm,25978,Phường Thuận An,0,,,106.682413,10.942155,Thị xã Thuận An,gadm,
+hcm,25987,Phường Bình Hoà,0,,,106.725858,10.90089,Thị xã Thuận An,gadm,
+hcm,26737,Phường Tân Định,64,2.6233,459.27,106.694994,10.790915,Quận 1,listings,Prime core
+hcm,26740,Phường Sài Gòn,4,,181.87,106.702405,10.779835,Quận 1,listings,Prime core
+hcm,26743,Phường Bến Thành,9,3.9187,692.31,106.694106,10.771275,Quận 1,listings,Prime core
+hcm,26758,Phường Cầu Ông Lãnh,14,1.6943,200.88,106.689948,10.76124,Quận 1,listings,Prime core
+hcm,26767,Phường An Phú Đông,26,0.7492,87.79,106.690456,10.86714,Quận 12,listings,Townhouse mid-market
+hcm,26773,Phường Thới An,57,0.7741,96.48,106.663504,10.8784,Quận 12,listings,Townhouse mid-market
+hcm,26782,Phường Tân Thới Hiệp,14,0.6697,84.18,106.640724,10.87318,Quận 12,listings,Townhouse mid-market
+hcm,26785,Phường Trung Mỹ Tây,15,0.661,70.45,106.620933,10.85987,Quận 12,listings,Townhouse mid-market
+hcm,26791,Phường Đông Hưng Thuận,37,0.7124,74.54,106.620611,10.83713,Quận 12,listings,Townhouse mid-market
+hcm,26800,Phường Linh Xuân,7,0.6956,65.71,106.771243,10.871385,Quận Thủ Đức (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26803,Phường Tam Bình,3,,109.34,106.735801,10.87074,Quận Thủ Đức (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26809,Phường Hiệp Bình,13,0.9346,107.14,106.718143,10.84658,Quận Thủ Đức (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26824,Phường Thủ Đức,36,0.9373,95.06,106.753252,10.837445,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26833,Phường Long Bình,11,0.6794,63.64,106.830361,10.86301,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26842,Phường Tăng Nhơn Phú,53,0.8013,82.67,106.79241,10.84393,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26848,Phường Phước Long,36,0.8766,103.33,106.773075,10.817615,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26857,Phường Long Phước,1,,71.02,106.858995,10.802985,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26860,Phường Long Trường,62,0.7812,77.78,106.809535,10.793175,Quận 9 (TP. Thủ Đức),listings,Townhouse mid-market
+hcm,26876,Phường An Nhơn,9,0.7828,96.29,106.685834,10.83623,Quận Gò Vấp,listings,Townhouse mid-market
+hcm,26878,Phường An Hội Đông,25,0.9894,124.44,106.666489,10.8494,Quận Gò Vấp,listings,Townhouse mid-market
+hcm,26882,Phường An Hội Tây,55,0.7936,94.89,106.637081,10.84448,Quận 12,listings,Townhouse mid-market
+hcm,26884,Phường Gò Vấp,21,0.953,119.33,106.675102,10.839285,Quận Gò Vấp,listings,Townhouse mid-market
+hcm,26890,Phường Hạnh Thông,15,1.1849,43.08,106.680848,10.82217,Quận Gò Vấp,listings,Townhouse mid-market
+hcm,26898,Phường Thông Tây Hội,53,0.9479,121.31,106.654378,10.84174,Quận Gò Vấp,listings,Townhouse mid-market
+hcm,26905,Phường Bình Lợi Trung,30,1.1825,97.22,106.70279,10.82229,Quận Bình Thạnh,listings,Apartment mid-market
+hcm,26911,Phường Bình Quới,0,,,106.738416,10.821905,Quận Bình Thạnh,gadm,Apartment mid-market
+hcm,26929,Phường Bình Thạnh,20,0.9944,126.35,106.704912,10.81165,Quận Bình Thạnh,listings,Apartment mid-market
+hcm,26944,Phường Gia Định,25,1.54,167.66,106.701704,10.801405,Quận Bình Thạnh,listings,Apartment mid-market
+hcm,26956,Phường Thạnh Mỹ Tây,31,1.5761,152.73,106.71913,10.799715,Quận Bình Thạnh,listings,Apartment mid-market
+hcm,26968,Phường Tân Sơn Nhất,11,1.5829,192.03,106.657597,10.796765,Quận Tân Bình,listings,Townhouse mid-market
+hcm,26977,Phường Tân Sơn Hoà,22,1.3152,181.37,106.666876,10.80533,Quận Tân Bình,listings,Townhouse mid-market
+hcm,26983,Phường Bảy Hiền,12,1.2238,129.64,106.648573,10.79225,Quận Tân Bình,listings,Townhouse mid-market
+hcm,26995,Phường Tân Hoà,3,,141.15,106.653675,10.779245,Quận Tân Bình,listings,Townhouse mid-market
+hcm,27004,Phường Tân Bình,27,1.1491,100.02,106.642387,10.79796,Quận Tân Bình,listings,Townhouse mid-market
+hcm,27007,Phường Tân Sơn,26,0.85,80.0,106.647916,10.818975,Quận Tân Bình,listings,Townhouse mid-market
+hcm,27013,Phường Tây Thạnh,7,0.8589,105.0,106.620723,10.81369,Quận Tân Phú,listings,Apartment mid-market
+hcm,27019,Phường Tân Sơn Nhì,11,0.9704,69.91,106.623934,10.801225,Quận Tân Phú,listings,Apartment mid-market
+hcm,27022,Phường Phú Thọ Hoà,13,0.8234,100.97,106.627254,10.787505,Quận Tân Phú,listings,Apartment mid-market
+hcm,27028,Phường Phú Thạnh,7,0.7633,54.35,106.627001,10.771575,Quận Tân Phú,listings,Apartment mid-market
+hcm,27031,Phường Tân Phú,4,,52.88,106.640303,10.77782,Quận Tân Phú,listings,Apartment mid-market
+hcm,27043,Phường Đức Nhuận,6,1.5715,181.22,106.676878,10.80656,Quận Phú Nhuận,listings,Townhouse mid-market
+hcm,27058,Phường Cầu Kiệu,23,1.5279,196.67,106.68472,10.798185,Quận Phú Nhuận,listings,Townhouse mid-market
+hcm,27073,Phường Phú Nhuận,28,1.5834,264.05,106.67331,10.79399,Quận Phú Nhuận,listings,Townhouse mid-market
+hcm,27094,Phường An Khánh,131,1.8738,245.4,106.730919,10.78985,Quận 2 (TP. Thủ Đức),listings,Apartment mid-market
+hcm,27097,Phường Bình Trưng,121,1.4736,203.7,106.759495,10.79408,Quận 2 (TP. Thủ Đức),listings,Apartment mid-market
+hcm,27112,Phường Cát Lái,62,1.6613,214.29,106.777826,10.76237,Quận 2 (TP. Thủ Đức),listings,Apartment mid-market
+hcm,27139,Phường Xuân Hoà,34,2.5606,387.5,106.689573,10.78481,Quận 3,listings,Prime core
+hcm,27142,Phường Nhiêu Lộc,18,1.6441,214.29,106.676352,10.784635,Quận 3,listings,Prime core
+hcm,27154,Phường Bàn Cờ,23,2.0713,266.67,106.681587,10.77053,Quận 3,listings,Prime core
+hcm,27163,Phường Hoà Hưng,33,1.6419,79.1,106.671908,10.77702,Quận 10,listings,Apartment mid-market
+hcm,27169,Phường Diên Hồng,6,1.708,219.82,106.662348,10.769485,Quận 10,listings,Apartment mid-market
+hcm,27190,Phường Vườn Lài,5,1.7477,222.81,106.672639,10.76916,Quận 10,listings,Apartment mid-market
+hcm,27211,Phường Hoà Bình,3,,173.04,106.645015,10.770285,Quận 11,listings,
+hcm,27226,Phường Phú Thọ,2,,64.39,106.654925,10.768385,Quận 11,listings,
+hcm,27232,Phường Bình Thới,3,,71.92,106.64244,10.763835,Quận 11,listings,
+hcm,27238,Phường Minh Phụng,2,,171.74,106.655909,10.758625,Quận 11,listings,
+hcm,27259,Phường Xóm Chiếu,4,,68.85,106.713336,10.76061,Quận 4,listings,Apartment mid-market
+hcm,27265,Phường Khánh Hội,2,,86.68,106.704656,10.75921,Quận 4,listings,Apartment mid-market
+hcm,27286,Phường Vĩnh Hội,6,0.96,81.52,106.695662,10.75675,Quận 4,listings,Apartment mid-market
+hcm,27301,Phường Chợ Quán,5,2.1242,304.35,106.680294,10.75765,Quận 5,listings,
+hcm,27316,Phường An Đông,5,2.3256,397.0,106.671604,10.754675,Quận 5,listings,
+hcm,27343,Phường Chợ Lớn,3,,253.62,106.658681,10.75256,Quận 5,listings,
+hcm,27349,Phường Phú Lâm,5,0.6562,108.7,106.631007,10.75296,Quận 6,listings,Townhouse mid-market
+hcm,27364,Phường Bình Phú,12,1.3059,89.67,106.628044,10.73779,Quận 6,listings,Townhouse mid-market
+hcm,27367,Phường Bình Tây,2,,69.33,106.646304,10.750405,Quận 6,listings,Townhouse mid-market
+hcm,27373,Phường Bình Tiên,2,,164.29,106.640707,10.741305,Quận 6,listings,Townhouse mid-market
+hcm,27418,Phường Chánh Hưng,2,,51.11,106.676713,10.74218,Quận 8,listings,
+hcm,27424,Phường Bình Đông,0,,19.85,106.633851,10.71657,Quận 8,listings,
+hcm,27427,Phường Phú Định,2,,41.7,106.629862,10.727925,Quận 8,listings,
+hcm,27439,Phường Bình Hưng Hoà,11,0.772,80.96,106.604494,10.80117,Quận Bình Tân,listings,Townhouse mid-market
+hcm,27442,Phường Bình Tân,11,0.4762,76.47,106.590224,10.792085,Quận Bình Tân,listings,Townhouse mid-market
+hcm,27448,Phường Bình Trị Đông,20,0.676,68.75,106.606897,10.767865,Quận Bình Tân,listings,Townhouse mid-market
+hcm,27457,Phường Tân Tạo,1,,43.9,106.578736,10.743965,Quận Bình Tân,listings,Townhouse mid-market
+hcm,27460,Phường An Lạc,39,0.8847,111.6,106.611939,10.73435,Quận Bình Tân,listings,Townhouse mid-market
+hcm,27475,Phường Tân Hưng,87,0.9003,96.72,106.704129,10.735515,Quận 7,listings,Apartment mid-market
+hcm,27478,Phường Tân Thuận,55,0.909,114.99,106.735821,10.757825,Quận 7,listings,Apartment mid-market
+hcm,27484,Phường Phú Thuận,59,0.9826,112.78,106.745167,10.724655,Quận 7,listings,Apartment mid-market
+hcm,27487,Phường Tân Mỹ,17,1.005,92.61,106.730415,10.717405,Quận 7,listings,Apartment mid-market
+hcm,27496,Xã Tân An Hội,3,,3.53,106.465124,10.970355,Huyện Củ Chi,listings,
+hcm,27508,Xã An Nhơn Tây,1,,4.55,106.481445,11.101875,Huyện Củ Chi,listings,
+hcm,27511,Xã Nhuận Đức,2,,3.41,106.498586,11.03084,Huyện Củ Chi,listings,
+hcm,27526,Xã Thái Mỹ,1,,3.1,106.434617,11.036515,Huyện Củ Chi,listings,
+hcm,27541,Xã Phú Hoà Đông,1,,3.96,106.556266,10.9887,Huyện Củ Chi,listings,
+hcm,27544,Xã Bình Mỹ,3,,4.67,106.610121,10.980075,Huyện Củ Chi,listings,
+hcm,27553,Xã Củ Chi,5,0.0417,3.67,106.533526,10.961805,Huyện Củ Chi,listings,
+hcm,27559,Xã Hóc Môn,4,,4.86,106.591616,10.89592,Huyện Hóc Môn,listings,
+hcm,27568,Xã Đông Thạnh,7,0.0521,4.7,106.635553,10.89678,Huyện Hóc Môn,listings,
+hcm,27577,Xã Xuân Thới Sơn,6,0.1009,7.56,106.55694,10.887955,Huyện Hóc Môn,listings,
+hcm,27592,Xã Bà Điểm,6,0.0777,7.27,106.569421,10.852855,Huyện Hóc Môn,listings,
+hcm,27595,Xã Tân Nhựt,0,,34.5,106.567665,10.7076,Huyện Bình Chánh,listings,
+hcm,27601,Xã Vĩnh Lộc,0,,,106.546943,10.83795,Huyện Bình Chánh,gadm,
+hcm,27604,Xã Tân Vĩnh Lộc,1,,95.24,106.545067,10.79912,Huyện Bình Chánh,listings,
+hcm,27610,Xã Bình Lợi,0,,,106.515326,10.75228,Huyện Bình Chánh,gadm,
+hcm,27619,Xã Bình Hưng,3,,45.0,106.652565,10.705335,Huyện Bình Chánh,listings,
+hcm,27628,Xã Hưng Long,2,,83.94,106.645612,10.659735,Huyện Bình Chánh,listings,
+hcm,27637,Xã Bình Chánh,2,,17.62,106.596256,10.67297,Huyện Bình Chánh,listings,
+hcm,27655,Xã Nhà Bè,59,0.9009,79.81,106.714929,10.69521,Huyện Nhà Bè,listings,Apartment mid-market
+hcm,27658,Xã Hiệp Phước,3,,33.5,106.751201,10.634895,Huyện Nhà Bè,listings,Apartment mid-market
+hcm,27664,Xã Cần Giờ,2,,114.98,106.9006,10.45436,Huyện Cần Giờ,listings,
+hcm,27667,Xã Bình Khánh,0,,,106.879145,10.59555,Huyện Cần Giờ,gadm,
+hcm,27673,Xã An Thới Đông,1,,8.42,106.806589,10.507255,Huyện Cần Giờ,listings,
+hcm,27676,Xã Thạnh An,0,,,106.976506,10.53827,Huyện Cần Giờ,gadm,

@@ -1,0 +1,17 @@
+attr,group,n_sample,n_kept,n_treated_sample,n_control_sample,n_treated,n_control,premium,prem_lo,prem_hi,gate
+legal,Biệt thự/liền kề,583,,558,25,,,,,,INSUFFICIENT
+legal,Căn hộ chung cư,1277,568.0,1072,205,455.0,113.0,,,,FAIL
+legal,Nhà hẻm/ngõ,1499,,1472,27,,,,,,INSUFFICIENT
+legal,Nhà mặt tiền/phố,903,322.0,758,145,205.0,117.0,,,,FAIL
+legal,Đất,870,,854,16,,,,,,INSUFFICIENT
+street,house,2402,1546.0,903,1499,657.0,889.0,0.3801781103577808,0.273476905392376,0.4958195223209413,PASS
+road4,Nhà hẻm/ngõ,320,159.0,248,72,100.0,59.0,,,,FAIL
+road4,Đất,201,,185,16,,,,,,INSUFFICIENT
+corner,Biệt thự/liền kề,583,410.0,119,464,95.0,315.0,,,,FAIL
+corner,Căn hộ chung cư,1277,986.0,259,1018,216.0,770.0,,,,FAIL
+corner,Nhà hẻm/ngõ,1499,481.0,131,1368,50.0,431.0,,,,FAIL
+corner,Nhà mặt tiền/phố,903,675.0,184,719,159.0,516.0,,,,FAIL
+corner,Đất,870,439.0,129,741,76.0,363.0,,,,FAIL
+metro,Căn hộ chung cư,733,265.0,100,633,59.0,206.0,,,,FAIL
+metro,Nhà hẻm/ngõ,169,119.0,32,137,32.0,87.0,,,,FAIL
+metro,Đất,199,,10,189,,,,,,INSUFFICIENT

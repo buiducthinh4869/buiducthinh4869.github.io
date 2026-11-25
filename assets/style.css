@@ -826,3 +826,244 @@ html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :n
 /* 2D map night lights */
 .ao-ntl { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); max-width: none; margin: 0.4rem 0 0; }
 .ao-ntl[hidden] { display: none; }
+
+/* ---------- Housing atlas teaser (research.html): the live map of housing_map.js, no controls ---------- */
+
+.housing-teaser { margin: 0 0 3.5rem; }
+.housing-teaser .hs-plot { position: relative; width: 100%; aspect-ratio: 1 / 1; } /* reserved, so the page does not jump while the data load */
+@media (min-width: 600px) { .housing-teaser .hs-plot { aspect-ratio: 2 / 1; } }
+html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-teaser > :not(figcaption) { display: none; }
+.housing-teaser figcaption { margin-top: 0.8rem; max-width: 40rem; }
+.housing-teaser .se-cap strong { font-weight: 500; }
+.housing-teaser .hs-fail, .housing-teaser .hs-src, .housing-teaser .hs-note { display: none; }
+
+/* ---------- Housing atlas (housing.html) ---------- */
+
+.housing .at-top { margin-bottom: 1rem; }
+@media (min-width: 1000px) { .housing .at-top { margin-bottom: 1.2rem; } }
+.hs-meta { margin: 0 0 3rem; }
+.hs-facts, .hs-version { max-width: 40rem; margin: 0.15rem 0 0; font-family: var(--sans); font-size: 0.8125rem; line-height: 1.5; color: var(--muted); }
+.hs-take { max-width: 40rem; margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.55; }
+.hs-take:empty { display: none; }
+.hs-take strong { font-weight: 500; }
+
+.hs-fig { margin: 0 0 2.5rem; width: 100%; }
+.atlas .hs-fig { transform: none; }
+.hs-plot { position: relative; width: 100%; }
+.hs-plot svg { display: block; width: 100%; font-family: var(--sans); font-size: 12px; overflow: visible; }
+.hs-plot svg text { font-family: var(--sans); }
+@media (max-width: 599px) { .hs-plot svg { font-size: 11px; } }
+.hs-map .hs-plot { aspect-ratio: 1 / 1; }
+.hs-map .hs-plot canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+[data-hs="gradient"] .hs-plot { aspect-ratio: 1 / 1; }
+[data-hs="bubbles"] .hs-plot { aspect-ratio: 1 / 1; }
+[data-hs="stale"] .hs-plot { min-height: 22rem; }
+[data-hs="bill"] .hs-plot { min-height: 20rem; }
+[data-hs="legalmap"] .hs-plot { aspect-ratio: 1 / 1; }
+[data-hs="tool"] .hs-plot { min-height: 18rem; }
+@media (min-width: 600px) {
+  .hs-map .hs-plot { aspect-ratio: 4 / 3; }
+  [data-hs="gradient"] .hs-plot { aspect-ratio: 16 / 9; }
+  [data-hs="bubbles"] .hs-plot { aspect-ratio: 4 / 3; }
+  [data-hs="stale"] .hs-plot { min-height: 18rem; }
+  [data-hs="legalmap"] .hs-plot { aspect-ratio: 4 / 3; }
+}
+@media (prefers-reduced-motion: reduce) { .hs-fig * { transition: none !important; } }
+
+.hs-fig figcaption { margin-top: 0.8rem; max-width: 40rem; font-family: var(--serif); }
+.hs-src, .hs-note { margin: 0.15rem 0 0; font-family: var(--sans); font-size: 0.75rem; line-height: 1.5; color: var(--muted); }
+.hs-src:empty, .hs-note:empty { display: none; }
+.hs-fail { display: none; margin: 0.4rem 0 0; font-family: var(--sans); font-size: 0.8125rem; color: var(--ink); }
+.hs-failed .hs-fail { display: block; }
+.hs-failed .hs-plot, .hs-failed .hs-bar, .hs-failed .hs-take { display: none; }
+
+/* controls: the storm atlas look (.se-btn, .se-seg, .se-link) plus a pill for legend and filter entries */
+.hs-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1rem; margin: 0 0 0.6rem; max-width: none; }
+.hs-pill {
+  font: inherit; font-family: var(--sans); font-size: 0.8125rem; color: var(--muted); background: none;
+  border: 1px solid var(--rule); border-radius: 999px; min-height: 32px; padding: 0 0.7rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.hs-pill:hover { border-color: var(--muted); }
+.hs-pill[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+.hs-sw { display: inline-block; flex: none; width: 0.7rem; height: 0.7rem; border-radius: 50%; }
+.hs-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-family: var(--sans); font-size: 0.75rem; color: var(--muted); }
+.hs-fig button:focus-visible, .hs-fig select:focus-visible, .hs-fig input:focus-visible, .hs-fig [tabindex]:focus-visible,
+.hs-fig summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.housing .at-about-body ul { margin: 0.2rem 0 0.8rem; padding-left: 1.1rem; font-size: 0.85rem; line-height: 1.6; }
+.housing .at-about-body li { margin: 0.1rem 0; }
+.housing .at-about-body h3 { font-family: var(--sans); font-size: 0.8125rem; font-weight: 500; margin: 1rem 0 0.2rem; }
+
+/* hs: map (housing_map.js) */
+.hs-map .hs-plot, .housing-teaser .hs-plot { position: relative; overflow: hidden; }
+.hs-cv { position: absolute; left: 0; top: 0; display: block; }
+.hs-cv-over { cursor: crosshair; touch-action: pan-y; }
+.hs-status { position: absolute; left: 0.75rem; top: 0.5rem; margin: 0; font-family: var(--sans); font-size: 0.8125rem; color: var(--muted); }
+.hs-status[hidden] { display: none; }
+.hs-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; margin-bottom: 0.6rem; font-family: var(--sans); font-size: 0.8125rem; }
+.hs-group { display: inline-flex; gap: 0.25rem; }
+.hs-btn {
+  min-height: 32px; padding: 0 0.75rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent;
+  font: inherit; color: var(--muted); cursor: pointer;
+}
+.hs-btn:hover { color: var(--ink); border-color: var(--muted); }
+.hs-btn[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+.hs-btn:focus-visible, .hs-chk input:focus-visible, .hs-angle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hs-angle { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+.hs-angle[hidden] { display: none; }
+.hs-angle input { width: 7rem; accent-color: var(--accent); }
+.hs-layers { display: flex; flex-wrap: wrap; gap: 0.1rem 0.9rem; flex-basis: 100%; }
+.hs-chk { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 32px; color: var(--ink); cursor: pointer; }
+.hs-chk input { accent-color: var(--accent); margin: 0; }
+.hs-chk.is-off { color: var(--muted); cursor: default; }
+.hs-mlegend {
+  position: absolute; left: 0.5rem; top: 0.5rem; width: min(19rem, 72%); padding: 0.35rem 0.5rem 0.4rem;
+  background: rgba(250, 249, 245, 0.88); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); pointer-events: none;
+}
+.hs-mlegend[hidden] { display: none; }
+.hs-mlg-t { margin: 0 0 0.3rem; line-height: 1.3; color: var(--muted); }
+.hs-mlg-t + .hs-mlg-seg { margin-top: 0; }
+.hs-mlg-row { display: flex; }
+.hs-mlg-sw { flex: 1 1 0; height: 0.7rem; }
+.hs-mlg-lab { display: flex; justify-content: space-around; padding: 0 calc(100% / 14); font-variant-numeric: tabular-nums; }
+.hs-mlg-lab span { flex: 1 1 0; text-align: center; font-size: 0.6875rem; line-height: 1.6; }
+.hs-mlegend.is-out { position: static; width: auto; max-width: none; margin: 0 0 0.4rem; padding: 0; background: none; }
+.hs-mlegend.is-out .hs-mlg-row, .hs-mlegend.is-out .hs-mlg-lab { max-width: 17rem; }
+.hs-mlg-faded { opacity: 0.43; }
+.hs-mlg-n { margin: 0.25rem 0 0; line-height: 1.35; color: var(--muted); }
+.hs-mlg-dots { display: flex; align-items: center; gap: 0.7rem; }
+.hs-mlg-di { display: inline-flex; align-items: center; gap: 0.25rem; }
+.hs-mlg-dot { display: inline-block; border-radius: 50%; background: rgba(35, 39, 43, 0.35); border: 0.8px solid var(--paper, #faf9f5); }
+.hs-mlg-seg { display: flex; align-items: center; gap: 0.35rem; line-height: 1.45; }
+.hs-mlg-box { width: 0.7rem; height: 0.7rem; border-radius: 2px; flex: none; }
+.hs-mlg-row + .hs-mlg-lab + .hs-mlg-t { margin-top: 0.4rem; }
+@media (max-width: 599px) {
+  .hs-mlegend { max-width: 12.5rem; font-size: 0.6875rem; }
+  .hs-mlg-lab span { font-size: 0.625rem; }
+}
+
+/* hs: charts (coder B) -- sub-block, add rules below this line */
+/* ---------- Housing atlas, charts (housing_charts.js): gradient, bill, stale, bubbles. Merge into the block
+   "Housing atlas (housing.html)" of assets/style.css. All rules scoped under .housing. ---------- */
+
+.housing .hs-svg text { fill: var(--muted); font-family: var(--sans); }
+.housing .hs-svg text.k { fill: var(--ink); }
+.housing .hs-svg text.hs-inv { fill: var(--paper); }
+.housing .hs-svg text.hs-off { fill: var(--muted); opacity: 0.55; }
+.housing .hs-svg text.hs-pt { font-weight: 500; }
+/* label halo: the paper colour behind text that crosses lines or bars */
+.housing .hs-svg text.hs-halo { paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.housing .hs-svg .hs-leg [role="button"] { outline: none; }
+.housing .hs-svg .hs-leg [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.housing .hs-svg circle, .housing .hs-svg rect { transition: none; }
+
+/* plot boxes reserve their shape while the data load (JS then sets the exact height) */
+.housing [data-hs="gradient"] .hs-plot { aspect-ratio: 1 / 1; }
+.housing [data-hs="bubbles"] .hs-plot { aspect-ratio: 4 / 5; }
+.housing [data-hs="bill"] .hs-plot { min-height: 196px; } /* the default group as drawn (measured): 196 px under 600 px, 186 px above */
+.housing [data-hs="stale"] .hs-plot { min-height: 35rem; } /* two stacked panels, 560 px, as drawn */
+@media (min-width: 600px) {
+  .housing [data-hs="gradient"] .hs-plot { aspect-ratio: 16 / 9; }
+  .housing [data-hs="bubbles"] .hs-plot { aspect-ratio: 4 / 3; }
+  .housing [data-hs="bill"] .hs-plot { min-height: 186px; }
+}
+@media (min-width: 1000px) { .housing [data-hs="stale"] .hs-plot { min-height: 18.5rem; } } /* panels side by side, 296 px */
+.housing .hs-fig[hidden] { display: none; }
+.housing .hs-svg { touch-action: pan-y; }
+.housing .hs-failed .hs-bar { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .housing .hs-svg * { transition: none !important; animation: none !important; } }
+
+/* hs: valuation tool (coder C) -- sub-block, add rules below this line */
+/* Housing atlas, section 6 (valuation tool, assets/housing_tool.js).
+   Paste inside the block "Housing atlas (housing.html)" of assets/style.css, as the sub-block "Valuation tool".
+   Scoped under .housing; uses only the site variables. */
+
+/* ---- Valuation tool ---- */
+.housing .hs-fig[data-hs="tool"] .hs-plot { aspect-ratio: auto; min-height: 134rem; } /* the form and a first result, so nothing jumps when the model loads (measured 2140-2350 px at 375) */
+@media (min-width: 600px) { .housing .hs-fig[data-hs="tool"] .hs-plot { min-height: 94rem; } } /* measured 1470-1600 px */
+.housing .ht-loading { margin: 0; color: var(--muted); font-family: var(--sans); font-size: 0.875rem; }
+.housing .hs-tool { font-family: var(--sans); font-size: 0.875rem; max-width: none; }
+
+.housing .ht-form {
+  display: grid; grid-template-columns: 1fr; gap: 0.7rem 1rem; margin: 0 0 1.6rem; max-width: 40rem;
+}
+.housing .ht-f { min-width: 0; }
+.housing .ht-f label { display: block; margin: 0 0 0.25rem; color: var(--muted); font-size: 0.8125rem; }
+.housing .ht-f select,
+.housing .ht-f input {
+  display: block; width: 100%; min-height: 44px; padding: 0 0.6rem; font: inherit; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--muted); border-radius: 3px;
+}
+.housing .ht-f select:focus-visible,
+.housing .ht-f input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.housing .ht-err { margin: 0.3rem 0 0; color: var(--ink); font-weight: 500; font-size: 0.8125rem; }
+.housing .ht-err[hidden] { display: none; }
+.housing .ht-f input[aria-invalid="true"] { border-color: var(--ink); border-width: 2px; }
+.housing .ht-hint { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.8125rem; line-height: 1.45; }
+@media (min-width: 560px) {
+  .housing .ht-form { grid-template-columns: 1fr 1fr; }
+  .housing .ht-wide { grid-column: 1 / -1; }
+}
+
+.housing .ht-out { max-width: 40rem; }
+.housing .ht-out.is-invalid > :not(.ht-inv) { display: none; }
+.housing .ht-inv { margin: 0; color: var(--ink); font-weight: 500; }
+.housing .ht-inv[hidden] { display: none; }
+.housing .hs-fig[data-hs="tool"].ht-invalid .hs-plot { min-height: 0; }
+.housing .ht-h { margin: 1.6rem 0 0.35rem; font-size: 0.8125rem; color: var(--muted); }
+.housing .ht-out > .ht-h:first-child { margin-top: 0; }
+.housing .ht-fv { margin: 0; font-family: var(--serif); font-size: 2rem; line-height: 1.15; color: var(--ink); }
+.housing .ht-sub, .housing .ht-askline, .housing .ht-acc, .housing .ht-stale-t { margin: 0.3rem 0 0; color: var(--ink); }
+.housing .ht-sub { color: var(--muted); }
+.housing .ht-m { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.8125rem; line-height: 1.45; }
+.housing .ht-askline[hidden], .housing .ht-acc[hidden] { display: none; }
+
+.housing .ht-bar { margin: 0.8rem 0 0.2rem; min-height: 152px; }
+.housing .ht-bar svg { display: block; overflow: visible; touch-action: manipulation; }
+.housing .ht-bar text { font-family: var(--sans); font-size: 12px; }
+@media (max-width: 600px) { .housing .ht-bar text { font-size: 11px; } }
+
+/* stale-risk indicator: three steps, the active one filled (ramp colours, label always written) */
+.housing .ht-lights { display: flex; max-width: 22rem; margin-top: 0.2rem; }
+.housing .ht-lv {
+  flex: 1 1 0; text-align: center; padding: 0.45rem 0.3rem; font-size: 0.8125rem; color: var(--muted);
+  border: 1px solid var(--rule); border-left-width: 0;
+}
+.housing .ht-lv:first-child { border-left-width: 1px; border-radius: 3px 0 0 3px; }
+.housing .ht-lv:last-child { border-radius: 0 3px 3px 0; }
+.housing .ht-lights.is-off .ht-lv.is-on { background: var(--rule); color: var(--muted); border-color: var(--rule); font-weight: 400; }
+.housing .ht-lv.is-on { color: var(--ink); font-weight: 500; border-color: var(--ink); }
+.housing .ht-lv-low.is-on { background: #d3bb8f; }
+.housing .ht-lv-medium.is-on { background: #ad7a45; }
+.housing .ht-lv-high.is-on { background: #6b3c26; color: var(--paper); }
+
+/* comparables */
+.housing .ht-tw { overflow-x: auto; max-width: 40rem; }
+.housing .ht-comp { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.housing .ht-comp th { text-align: left; font-weight: 500; color: var(--muted); padding: 0.35rem 0.5rem 0.35rem 0; border-bottom: 1px solid var(--ink); vertical-align: bottom; }
+.housing .ht-comp td { padding: 0.45rem 0.5rem 0.45rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.housing .ht-comp th.n, .housing .ht-comp td.n { text-align: right; font-variant-numeric: tabular-nums; padding-left: 0.8rem; }
+.housing .ht-comp th:last-child, .housing .ht-comp td:last-child { padding-left: 0.8rem; padding-right: 0; }
+.housing .ht-comp tbody tr:hover { background: rgba(228, 225, 216, 0.4); }
+.housing .ht-u { display: none; }
+@media (max-width: 600px) {
+  .housing .ht-comp thead { display: none; }
+  .housing .ht-comp, .housing .ht-comp tbody { display: block; }
+  .housing .ht-comp tr { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); }
+  .housing .ht-comp td, .housing .ht-comp td.n, .housing .ht-comp td:last-child { border: 0; padding: 0.05rem 0; }
+  .housing .ht-comp td.d { grid-column: 1 / 3; font-weight: 500; }
+  .housing .ht-comp td.w { grid-column: 3 / 5; }
+  .housing .ht-comp td.t { grid-column: 1 / 3; color: var(--muted); }
+  .housing .ht-comp td.a, .housing .ht-comp td.p { text-align: left; }
+  .housing .ht-comp td.o { grid-column: 1 / 5; color: var(--muted); }
+  .housing .ht-u { display: inline; }
+}
+
+/* touch screens: controls at least 44 px, legend text at least 11 px */
+@media (pointer: coarse) {
+  .housing .hs-btn, .housing .hs-pill, .housing .hs-chk, .housing-teaser .hs-btn { min-height: 44px; }
+  .hs-angle input { height: 36px; }
+}
+.hs-mlg-lab span, .hs-mlegend { font-size: max(0.6875rem, 11px); }

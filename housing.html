@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en" data-lang="en" data-title-en="Housing atlas | Bui Duc Thinh" data-title-vi="Bản đồ nhà đất | Bùi Đức Thịnh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housing atlas | Bui Duc Thinh</title>
+<meta name="description" content="Where land is expensive in Hanoi and Ho Chi Minh City, how fast prices fall away from the centre, what buyers pay for, and a tool to check whether an asking price is fair. Built from mogi.vn listings and OpenStreetMap.">
+<script>(function(){var l="en";try{l=localStorage.getItem("lang")||l}catch(e){}if(l!=="vi")l="en";var r=document.documentElement;r.setAttribute("data-lang",l);r.lang=l;r.classList.add("js");})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="atlas-page housing-page">
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-name" href="index.html"><span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html"><span data-l="en">Home</span><span data-l="vi" lang="vi">Trang chủ</span></a><a href="research.html"><span data-l="en">Research</span><span data-l="vi" lang="vi">Nghiên cứu</span></a><a href="storms.html"><span data-l="en">Storm atlas</span><span data-l="vi" lang="vi">Bản đồ bão</span></a><a href="housing.html" aria-current="page"><span data-l="en">Housing atlas</span><span data-l="vi" lang="vi">Bản đồ nhà đất</span></a><a href="writing.html"><span data-l="en">Writing</span><span data-l="vi" lang="vi">Bài viết</span></a><a href="cv.html"><span data-l="en">CV</span><span data-l="vi" lang="vi">CV</span></a>
+      <span class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="vi" aria-pressed="false">VI</button>
+      </span>
+    </nav>
+  </div>
+</header>
+<main><div class="wrap atlas housing">
+  <div class="at-head at-top">
+  <h1 class="page-title"><span data-l="en">Housing atlas</span><span data-l="vi" lang="vi">Bản đồ nhà đất</span></h1>
+  <p class="page-lede"><span data-l="en">Where land is expensive in Hanoi and Ho Chi Minh City, how fast prices fall away from the centre, what buyers pay for, and a tool to check whether an asking price is fair. Built from listings on mogi.vn and OpenStreetMap.</span><span data-l="vi" lang="vi">Đất đắt ở đâu tại Hà Nội và TP.HCM, rời trung tâm thì giá giảm nhanh đến đâu, người mua trả tiền cho những gì, và một công cụ kiểm tra giá rao có hợp lý không. Dựng từ tin rao trên mogi.vn và dữ liệu OpenStreetMap.</span></p>
+  </div>
+  <div class="hs-meta">
+  <p class="hs-facts"><span data-l="en">5,268 listings · 2 cities · 51 former districts · scraped 15 Oct 2026</span><span data-l="vi" lang="vi">5.268 tin · 2 thành phố · 51 quận/huyện cũ · cào 15/10/2026</span></p>
+  <p class="hs-version"><span data-l="en">Version 1 · data of 15 Oct 2026</span><span data-l="vi" lang="vi">Phiên bản 1 · dữ liệu 15/10/2026</span></p>
+  </div>
+
+  <section class="at-sec" id="hs-where" aria-labelledby="h-hs-where">
+    <div class="at-head">
+    <h2 id="h-hs-where"><span data-l="en">1. Where is land expensive?</span><span data-l="vi" lang="vi">1. Đất đắt ở đâu?</span></h2>
+    <p class="at-how"><span data-l="en">Each small square is coloured by the asking price per square metre of houses and land nearby, after allowing for the type of home and plot size, relative to the city average (1 = average, 2 = twice the average). Apartments are left out because their listed area is floor area. Switch to 3D to see price as height. Hover or tap a square for the numbers; click one to value a home in that district.</span><span data-l="vi" lang="vi">Mỗi ô vuông nhỏ được tô theo giá rao mỗi mét vuông của nhà và đất quanh đó, đã tính đến loại nhà và diện tích lô, so với mức trung bình của thành phố (1 = trung bình, 2 = gấp đôi). Căn hộ chung cư không tính vì diện tích ghi trên tin là diện tích sử dụng. Chuyển sang 3D để thấy giá thành độ cao. Rê chuột hoặc chạm vào một ô để xem số; bấm vào ô để định giá một căn trong quận đó.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig hs-map" data-hs="map">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"><span data-l="en">Source: mogi.vn listings, 15 Oct 2026; OpenStreetMap contributors; ward boundaries from vietnamese-provinces-database; author's calculations.</span><span data-l="vi" lang="vi">Nguồn: tin rao mogi.vn, 15/10/2026; những người đóng góp OpenStreetMap; ranh giới phường từ vietnamese-provinces-database; tác giả tính toán.</span></p>
+        <p class="hs-note"><span data-l="en">Smoothed asking prices of houses and land, not sale prices. A listing placed only at its ward centre counts half, so detail finer than a few hundred metres is not meaningful.</span><span data-l="vi" lang="vi">Giá rao đã làm mượt của nhà và đất, không phải giá bán. Tin chỉ có tọa độ tâm phường được tính một nửa, nên chi tiết nhỏ hơn vài trăm mét không có ý nghĩa.</span></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="hs-gradient" aria-labelledby="h-hs-gradient">
+    <div class="at-head">
+    <h2 id="h-hs-gradient"><span data-l="en">2. How fast do prices fall away from the centre?</span><span data-l="vi" lang="vi">2. Rời trung tâm, giá giảm nhanh đến đâu?</span></h2>
+    <p class="at-how"><span data-l="en">Listings grouped into 1 km rings by distance from the city centre (Hoàn Kiếm Lake in Hanoi, Bến Thành Market in Ho Chi Minh City), adjusted as in the map. Each dot is a ring; the shaded band shows how uncertain the ring average is.</span><span data-l="vi" lang="vi">Tin rao được gộp theo các vòng 1 km tính từ trung tâm (hồ Hoàn Kiếm ở Hà Nội, chợ Bến Thành ở TP.HCM), điều chỉnh như bản đồ trên. Mỗi chấm là một vòng; dải mờ cho biết mức bất định của giá trung bình trong vòng đó.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig" data-hs="gradient">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="hs-pay" aria-labelledby="h-hs-pay">
+    <div class="at-head">
+    <h2 id="h-hs-pay"><span data-l="en">3. What do buyers pay for?</span><span data-l="vi" lang="vi">3. Người mua trả tiền cho những gì?</span></h2>
+    <p class="at-how"><span data-l="en">Start from the median asking price of one type of home. Each step shows how much more, or less, listings with one feature usually ask than similar listings in the same former district without it. Grey steps: no clear difference in this data yet.</span><span data-l="vi" lang="vi">Bắt đầu từ giá rao trung vị của một loại nhà. Mỗi bậc cho biết tin có một đặc điểm thường được rao cao hơn, hay thấp hơn, bao nhiêu so với những căn tương tự trong cùng quận cũ mà không có đặc điểm đó. Bậc màu xám: dữ liệu chưa thấy khác biệt rõ.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig" data-hs="bill">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+    <figure class="hs-fig" data-hs="legalmap" hidden>
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="hs-stale" aria-labelledby="h-hs-stale">
+    <div class="at-head">
+    <h2 id="h-hs-stale"><span data-l="en">4. Why do some listings sit unsold?</span><span data-l="vi" lang="vi">4. Vì sao có tin nằm mãi không bán?</span></h2>
+    <p class="at-how"><span data-l="en">A listing counts as stale if it is still online 180 days after it was first posted. This is a stand-in: the data cannot tell a sale from a withdrawal. Left: listings grouped by how far the asking price sits above or below the model's value. Right: listings grouped by how long listings in their district usually stay online.</span><span data-l="vi" lang="vi">Một tin được coi là ế nếu 180 ngày sau lần đăng đầu vẫn còn trên mạng. Đây là đại lượng thay thế: dữ liệu không phân biệt được tin đã bán hay đã gỡ. Trái: tin rao chia theo mức giá rao cao hay thấp hơn giá trị mô hình ước tính. Phải: tin rao chia theo thời gian tin ở quận đó thường nằm trên mạng.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig" data-hs="stale">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="hs-markets" aria-labelledby="h-hs-markets">
+    <div class="at-head">
+    <h2 id="h-hs-markets"><span data-l="en">5. Four kinds of market</span><span data-l="vi" lang="vi">5. Bốn kiểu thị trường</span></h2>
+    <p class="at-how"><span data-l="en">Each bubble is a former district with at least 30 listings. Further right: listings stay online longer. Higher: dearer per square metre. Size: number of listings. Colour: one of four market types, found by grouping districts that are alike in price, listing age, access and housing mix. Hover a bubble to find the district on the map above.</span><span data-l="vi" lang="vi">Mỗi bong bóng là một quận cũ có từ 30 tin trở lên. Càng sang phải, tin nằm trên mạng càng lâu. Càng lên cao, giá mỗi mét vuông càng đắt. Cỡ bong bóng: số tin. Màu: một trong bốn kiểu thị trường, tìm ra bằng cách gộp các quận giống nhau về giá, tuổi tin, khả năng tiếp cận và loại nhà. Rê vào bong bóng để thấy quận đó trên bản đồ phía trên.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig" data-hs="bubbles">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec" id="hs-value" aria-labelledby="h-hs-value">
+    <div class="at-head">
+    <h2 id="h-hs-value"><span data-l="en">6. Value a home</span><span data-l="vi" lang="vi">6. Định giá một ngôi nhà</span></h2>
+    <p class="at-how"><span data-l="en">Describe a home. The model gives a fair value and a range that holds the asking price of nine in ten similar listings; if you also enter an asking price, it shows where that price sits and how likely such a listing is to sit unsold. Districts are the former ones (before July 2025), as the listings name them.</span><span data-l="vi" lang="vi">Mô tả căn nhà. Mô hình cho giá trị hợp lý và một khoảng mà chín trên mười tin tương tự có giá rao nằm trong đó; nếu nhập thêm giá rao, công cụ cho biết giá đó nằm ở đâu và khả năng tin như vậy nằm lâu không bán. Quận/huyện là đơn vị cũ (trước tháng 7/2025), theo cách tin rao ghi.</span></p>
+    </div>
+    <p class="hs-take" aria-live="polite"></p>
+    <figure class="hs-fig" data-hs="tool">
+      <div class="hs-plot"></div>
+      <figcaption>
+        <p class="hs-src"></p>
+        <p class="hs-note"></p>
+        <p class="hs-fail"><span data-l="en">The data for this figure could not be loaded.</span><span data-l="vi" lang="vi">Không tải được dữ liệu cho hình này.</span></p>
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="at-sec at-about" id="hs-about" aria-labelledby="h-hs-about">
+    <div class="at-head">
+    <h2 id="h-hs-about"><span data-l="en">About the data</span><span data-l="vi" lang="vi">Về dữ liệu</span></h2>
+    <div><details class="se-key se-text">
+      <summary><span data-l="en">About the data and methods</span><span data-l="vi" lang="vi">Về dữ liệu và phương pháp</span></summary>
+      <div class="at-about-body">
+        <h3><span data-l="en">Sources</span><span data-l="vi" lang="vi">Nguồn</span></h3>
+        <p><span data-l="en"><strong>Listings.</strong> mogi.vn, scraped on 15 Oct 2026 for a non-commercial research project, respecting robots.txt. We collected 6,000 listings; 5,268 remain after cleaning:</span><span data-l="vi" lang="vi"><strong>Tin rao.</strong> mogi.vn, cào ngày 15/10/2026 cho một dự án nghiên cứu phi thương mại, tuân thủ robots.txt. Thu được 6.000 tin; còn 5.268 tin sau khi làm sạch:</span></p>
+        <ul class="hs-clean"></ul>
+        <p><span data-l="en"><strong>Map data.</strong> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL): metro lines and stations, bus stops, schools, parks, markets and water.</span><span data-l="vi" lang="vi"><strong>Dữ liệu bản đồ.</strong> © những người đóng góp <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL): tuyến và ga metro, trạm xe buýt, trường học, công viên, chợ và mặt nước.</span></p>
+        <p><span data-l="en"><strong>Ward boundaries</strong> (after 1 July 2025): the <a href="https://github.com/thanglequoc/vietnamese-provinces-database">vietnamese-provinces-database</a> project by Thang Le Quoc (MIT licence), with polygons from the Vietnam Administrative Units Reference Map (<a href="https://sapnhap.bando.com.vn">sapnhap.bando.com.vn</a>).</span><span data-l="vi" lang="vi"><strong>Ranh giới phường</strong> (sau ngày 1/7/2025): dự án <a href="https://github.com/thanglequoc/vietnamese-provinces-database">vietnamese-provinces-database</a> của Thang Le Quoc (giấy phép MIT), với đa giác lấy từ Bản đồ tham chiếu đơn vị hành chính Việt Nam (<a href="https://sapnhap.bando.com.vn">sapnhap.bando.com.vn</a>).</span></p>
+        <h3><span data-l="en">Main limits</span><span data-l="vi" lang="vi">Giới hạn chính</span></h3>
+        <ul>
+          <li><span data-l="en">Asking prices are not sale prices.</span><span data-l="vi" lang="vi">Giá rao không phải giá bán.</span></li>
+          <li><span data-l="en">About 71% of listings are placed at a ward centre, not at their own location, so the map is smoothed and close-up detail is not meaningful.</span><span data-l="vi" lang="vi">Khoảng 71% tin được đặt tại tâm phường chứ không phải vị trí thật, nên bản đồ được làm mượt và chi tiết cận cảnh không có ý nghĩa.</span></li>
+          <li><span data-l="en">Listings were collected by quota per type of home, so the mix of types does not reflect the market.</span><span data-l="vi" lang="vi">Tin được thu thập theo hạn mức cho từng loại nhà, nên cơ cấu loại nhà không phản ánh thị trường.</span></li>
+          <li><span data-l="en">"Stale" is a stand-in: a listing still online after 180 days. The data cannot tell a sale from a withdrawal.</span><span data-l="vi" lang="vi">"Ế" là đại lượng thay thế: tin vẫn còn trên mạng sau 180 ngày. Dữ liệu không phân biệt được tin đã bán hay đã gỡ.</span></li>
+          <li><span data-l="en">Districts are the former ones; the base map shows the new wards.</span><span data-l="vi" lang="vi">Quận/huyện là đơn vị cũ; bản đồ nền hiện các phường mới.</span></li>
+        </ul>
+        <h3><span data-l="en">Methods in plain words</span><span data-l="vi" lang="vi">Phương pháp bằng lời thường</span></h3>
+        <ul>
+          <li><span data-l="en"><strong>Map.</strong> The adjusted price per m² is smoothed over nearby listings; a listing at a ward centre counts half.</span><span data-l="vi" lang="vi"><strong>Bản đồ.</strong> Giá mỗi m² đã điều chỉnh được làm mượt trên các tin ở gần; tin ở tâm phường được tính một nửa.</span></li>
+          <li><span data-l="en"><strong>Price gradient.</strong> Listings are grouped into 1 km rings from the centre and compared with the city average.</span><span data-l="vi" lang="vi"><strong>Giá theo khoảng cách.</strong> Tin được gộp theo các vòng 1 km từ trung tâm và so với mức trung bình của thành phố.</span></li>
+          <li><span data-l="en"><strong>What buyers pay for.</strong> Each feature is compared with similar listings in the same former district, by a method that lets a flexible model account for the other features. A step is shown only when the difference is clear and holds under a simpler comparison too.</span><span data-l="vi" lang="vi"><strong>Người mua trả tiền cho gì.</strong> Mỗi đặc điểm được so với những tin tương tự trong cùng quận cũ, bằng một phương pháp để mô hình linh hoạt tính đến các đặc điểm còn lại. Một bậc chỉ hiện khi chênh lệch rõ và vẫn đứng vững với cách so sánh đơn giản hơn.</span></li>
+          <li><span data-l="en"><strong>Market types.</strong> A grouping of the 34 districts with at least 30 listings; they form loose groups rather than sharp clusters.</span><span data-l="vi" lang="vi"><strong>Kiểu thị trường.</strong> Gộp 34 quận có từ 30 tin trở lên; chúng tạo thành các nhóm lỏng chứ không phải cụm tách bạch.</span></li>
+          <li><span data-l="en"><strong>Valuation tool.</strong> Gradient-boosted trees; the range is calibrated on listings held out from training.</span><span data-l="vi" lang="vi"><strong>Công cụ định giá.</strong> Cây tăng cường (gradient boosting); khoảng giá được hiệu chỉnh trên các tin giữ lại, không dùng để huấn luyện.</span></li>
+        </ul>
+        <p><span data-l="en">Accuracy by type of home, on listings the model had not seen:</span><span data-l="vi" lang="vi">Độ chính xác theo loại nhà, trên các tin mô hình chưa thấy:</span></p>
+        <ul class="hs-acc"></ul>
+        <p id="hs-nocate" hidden><span data-l="en">We do not yet see a clear regional difference in the premium for a red or pink book.</span><span data-l="vi" lang="vi">Chưa thấy mức chênh giá của nhà có sổ đỏ, sổ hồng khác nhau rõ giữa các vùng.</span></p>
+        <h3><span data-l="en">Version and changelog</span><span data-l="vi" lang="vi">Phiên bản và nhật ký thay đổi</span></h3>
+        <ul class="hs-chlog"></ul>
+        <h3><span data-l="en">Downloads</span><span data-l="vi" lang="vi">Tải dữ liệu</span></h3>
+        <ul>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_surface_cells.csv">housing_surface_cells.csv</a>: price map cells</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_surface_cells.csv">housing_surface_cells.csv</a>: các ô của bản đồ giá</span></li>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_wards.csv">housing_wards.csv</a>: new wards</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_wards.csv">housing_wards.csv</a>: các phường mới</span></li>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_gradient.csv">housing_gradient.csv</a>: price by distance from the centre</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_gradient.csv">housing_gradient.csv</a>: giá theo khoảng cách từ trung tâm</span></li>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_premiums.csv">housing_premiums.csv</a>: what buyers pay for</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_premiums.csv">housing_premiums.csv</a>: người mua trả tiền cho gì</span></li>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_stale_bins.csv">housing_stale_bins.csv</a>: unsold listings</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_stale_bins.csv">housing_stale_bins.csv</a>: tin nằm lâu không bán</span></li>
+          <li><span data-l="en"><a href="assets/data/housing/downloads/housing_districts.csv">housing_districts.csv</a>: former districts and market types</span><span data-l="vi" lang="vi"><a href="assets/data/housing/downloads/housing_districts.csv">housing_districts.csv</a>: quận cũ và kiểu thị trường</span></li>
+        </ul>
+      </div>
+    </details></div>
+    </div>
+  </section>
+</div></main>
+<footer class="site-footer">
+  <div class="wrap"><p class="small">© 2026 <span data-l="en">Bui Duc Thinh</span><span data-l="vi" lang="vi">Bùi Đức Thịnh</span></p></div>
+</footer>
+<script src="assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="assets/housing_core.js" defer></script>
+<script src="assets/housing_mapdata.js" defer></script>
+<script src="assets/housing_map.js" defer></script>
+<script src="assets/housing_charts.js" defer></script>
+<script src="assets/housing_tool.js" defer></script>
+</body>
+</html>

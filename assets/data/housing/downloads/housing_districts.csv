@@ -1,0 +1,52 @@
+city,old_district,district_key,lon,lat,n_listings,ppm2_median_mil,age_median_days,segment,stale_rate
+hn,Huyện Ba Vì,HN | Huyện Ba Vì,105.35371,21.12568,5,9.0,299.0,,0.6
+hn,Huyện Chương Mỹ,HN | Huyện Chương Mỹ,105.61744,20.89612,4,21.0,184.0,,0.5
+hn,Huyện Gia Lâm,HN | Huyện Gia Lâm,105.93814,21.00767,80,86.8,395.0,Townhouse mid-market,0.9625
+hn,Huyện Hoài Đức,HN | Huyện Hoài Đức,105.71676,21.03329,35,146.7,687.0,Peripheral growth,0.7714
+hn,Huyện Mê Linh,HN | Huyện Mê Linh,105.78218,21.19641,4,92.9,215.5,,0.75
+hn,Huyện Mỹ Đức,HN | Huyện Mỹ Đức,105.71577,20.72249,2,24.5,188.5,,0.5
+hn,Huyện Phúc Thọ,HN | Huyện Phúc Thọ,105.55156,21.1377,8,21.5,706.0,,1.0
+hn,Huyện Quốc Oai,HN | Huyện Quốc Oai,105.56233,20.97309,23,31.2,272.0,,0.6957
+hn,Huyện Sóc Sơn,HN | Huyện Sóc Sơn,105.7728,21.27851,1,20.0,299.0,,1.0
+hn,Huyện Thanh Trì,HN | Huyện Thanh Trì,105.83191,20.94452,43,184.2,284.0,Peripheral growth,0.7907
+hn,Huyện Thường Tín,HN | Huyện Thường Tín,105.8618,20.89751,1,59.6,395.0,,1.0
+hn,Huyện Thạch Thất,HN | Huyện Thạch Thất,105.54013,21.01767,41,28.9,273.0,Peripheral growth,0.9512
+hn,Huyện Đan Phượng,HN | Huyện Đan Phượng,105.70284,21.08548,13,133.3,364.0,,1.0
+hn,Huyện Đông Anh,HN | Huyện Đông Anh,105.86955,21.12077,30,89.6,261.0,Peripheral growth,0.8667
+hn,Quận Ba Đình,HN | Quận Ba Đình,105.81802,21.03527,177,258.4,299.0,Townhouse mid-market,0.6836
+hn,Quận Bắc Từ Liêm,HN | Quận Bắc Từ Liêm,105.78419,21.07397,94,174.8,395.0,Apartment mid-market,0.6809
+hn,Quận Cầu Giấy,HN | Quận Cầu Giấy,105.79319,21.02288,353,111.2,564.0,Apartment mid-market,0.8159
+hn,Quận Hai Bà Trưng,HN | Quận Hai Bà Trưng,105.85212,21.00029,284,300.0,192.0,Townhouse mid-market,0.5951
+hn,Quận Hoàn Kiếm,HN | Quận Hoàn Kiếm,105.84916,21.03255,35,452.4,328.0,Prime core,0.7429
+hn,Quận Hoàng Mai,HN | Quận Hoàng Mai,105.84505,20.97545,217,222.4,283.0,Apartment mid-market,0.7281
+hn,Quận Hà Đông,HN | Quận Hà Đông,105.77195,20.97471,133,200.0,364.0,Apartment mid-market,0.7594
+hn,Quận Long Biên,HN | Quận Long Biên,105.89817,21.04166,329,190.0,395.0,Townhouse mid-market,0.6505
+hn,Quận Nam Từ Liêm,HN | Quận Nam Từ Liêm,105.77464,21.01937,186,106.7,436.5,Apartment mid-market,0.9194
+hn,Quận Thanh Xuân,HN | Quận Thanh Xuân,105.80577,20.99785,187,133.5,424.0,Apartment mid-market,0.7059
+hn,Quận Tây Hồ,HN | Quận Tây Hồ,105.81382,21.06073,105,224.8,364.0,Townhouse mid-market,0.7238
+hn,Quận Đống Đa,HN | Quận Đống Đa,105.82794,21.01793,238,268.6,259.0,Townhouse mid-market,0.6176
+hn,Thị Xã Sơn Tây,HN | Thị Xã Sơn Tây,105.50207,21.12591,10,31.5,299.0,,0.8
+hcm,Huyện Bình Chánh,HCM | Huyện Bình Chánh,106.62547,10.69871,13,42.2,122.0,,0.3846
+hcm,Huyện Cần Giờ,HCM | Huyện Cần Giờ,106.9059,10.44573,3,58.7,19.0,,0.0
+hcm,Huyện Củ Chi,HCM | Huyện Củ Chi,106.51088,10.95752,16,3.7,739.0,,0.9375
+hcm,Huyện Hóc Môn,HCM | Huyện Hóc Môn,106.59602,10.88407,22,5.1,746.0,,0.9545
+hcm,Huyện Nhà Bè,HCM | Huyện Nhà Bè,106.74153,10.6934,104,75.9,640.0,Apartment mid-market,0.7596
+hcm,Quận 1,HCM | Quận 1,106.68898,10.78788,137,415.3,450.0,Prime core,0.6715
+hcm,Quận 10,HCM | Quận 10,106.6727,10.77397,166,76.6,1481.0,Apartment mid-market,0.8855
+hcm,Quận 11,HCM | Quận 11,106.64334,10.7637,19,106.7,90.0,,0.2632
+hcm,Quận 12,HCM | Quận 12,106.63723,10.86201,195,86.1,182.0,Townhouse mid-market,0.5077
+hcm,Quận 2 (TP. Thủ Đức),HCM | Quận 2 (TP. Thủ Đức),106.748,10.7977,342,224.8,271.5,Apartment mid-market,0.5789
+hcm,Quận 3,HCM | Quận 3,106.68578,10.78075,77,302.0,207.0,Prime core,0.5195
+hcm,Quận 4,HCM | Quận 4,106.69095,10.7558,54,75.2,96.0,Apartment mid-market,0.4259
+hcm,Quận 5,HCM | Quận 5,106.67128,10.75668,19,381.8,470.0,,0.9474
+hcm,Quận 6,HCM | Quận 6,106.62918,10.74507,30,110.5,271.5,Townhouse mid-market,0.5667
+hcm,Quận 7,HCM | Quận 7,106.72072,10.73657,375,100.0,284.0,Apartment mid-market,0.5707
+hcm,Quận 8,HCM | Quận 8,106.64797,10.73466,19,31.1,723.0,,0.7368
+hcm,Quận 9 (TP. Thủ Đức),HCM | Quận 9 (TP. Thủ Đức),106.79618,10.81926,204,82.4,181.5,Townhouse mid-market,0.5049
+hcm,Quận Bình Thạnh,HCM | Quận Bình Thạnh,106.70515,10.80612,146,139.6,299.0,Apartment mid-market,0.5479
+hcm,Quận Bình Tân,HCM | Quận Bình Tân,106.60916,10.76526,105,82.5,249.0,Townhouse mid-market,0.619
+hcm,Quận Gò Vấp,HCM | Quận Gò Vấp,106.66476,10.83919,178,118.0,82.5,Townhouse mid-market,0.2022
+hcm,Quận Phú Nhuận,HCM | Quận Phú Nhuận,106.68039,10.79789,82,200.0,299.0,Townhouse mid-market,0.5976
+hcm,Quận Thủ Đức (TP. Thủ Đức),HCM | Quận Thủ Đức (TP. Thủ Đức),106.74602,10.84442,39,107.8,182.0,Townhouse mid-market,0.5128
+hcm,Quận Tân Bình,HCM | Quận Tân Bình,106.65324,10.80356,155,100.0,190.0,Townhouse mid-market,0.5677
+hcm,Quận Tân Phú,HCM | Quận Tân Phú,106.62949,10.78717,130,57.8,335.0,Apartment mid-market,0.6538

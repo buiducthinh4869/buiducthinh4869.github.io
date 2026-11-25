@@ -3,3 +3,6 @@ _update/
 assets/photo.png
 *.zip
 notes/
+
+# Claude Code conversation exports
+/*-local-command-*.txt

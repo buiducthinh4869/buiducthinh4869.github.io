@@ -47,8 +47,9 @@
       sNote: "A ranking among past listings, not a chance of sale. In this data, how slowly the district moves tells more than the price gap.",
       acc: "For {t}, about {k} in 10 model values fall within 20% of the asking price.",
       accPct: "For {t}, about {k} of model values fall within 20% of the asking price.",
-      th: ["District", "Ward", "Type", "Area (m²)", "Price (billion VND)", "Posted"],
-      thU: ["", "", "", " m²", " billion VND", ""],
+      th: ["District", "Ward", "Type", "Area (m²)", "Price (billion VND)", "Posted", "Distance (km)"],
+      thU: ["", "", "", " m²", " billion VND", "", " km away"],
+      gLoc: "Where", gHome: "The home", gAcc: "Street access", gAsk: "Asking price", hYou: "The home you described", tKm: "Distance from the chosen place",
       tType: "Type", tArea: "Area", tPrice: "Asking price", tPpm: "Per m²", tPosted: "Posted",
       tM: "A listing near this home in size, rooms and location.",
       src: "Model: gradient-boosted trees trained on the 5,268 listings; range calibrated on held-out listings.",
@@ -88,8 +89,9 @@
       sNote: "Đây là thứ hạng so với các tin đã đăng trước đó, không phải khả năng bán được. Trong dữ liệu này, tốc độ chậm của quận cho biết nhiều hơn mức chênh giá.",
       acc: "Với {t}, khoảng {k} trên 10 giá trị mô hình nằm trong khoảng ±20% so với giá rao.",
       accPct: "Với {t}, khoảng {k} giá trị mô hình nằm trong khoảng ±20% so với giá rao.",
-      th: ["Quận/huyện", "Phường/xã", "Loại", "Diện tích (m²)", "Giá (tỷ đồng)", "Đăng"],
-      thU: ["", "", "", " m²", " tỷ đồng", ""],
+      th: ["Quận/huyện", "Phường/xã", "Loại", "Diện tích (m²)", "Giá (tỷ đồng)", "Đăng", "Cách (km)"],
+      thU: ["", "", "", " m²", " tỷ đồng", "", " km"],
+      gLoc: "Vị trí", gHome: "Ngôi nhà", gAcc: "Đường vào", gAsk: "Giá rao", hYou: "Căn nhà bạn mô tả", tKm: "Khoảng cách tới nơi đã chọn",
       tType: "Loại", tArea: "Diện tích", tPrice: "Giá rao", tPpm: "Mỗi m²", tPosted: "Đăng",
       tM: "Một tin gần với căn này về diện tích, số phòng và vị trí.",
       src: "Mô hình: cây tăng cường (gradient boosting) huấn luyện trên 5.268 tin; khoảng được hiệu chỉnh trên các tin giữ lại.",
@@ -183,8 +185,8 @@
     city: function (v) { return H.city(H.cityOf(v)); },
     type: function (v) { return H.type(v); },
     legal: function (v) { return H.lang() === "en" ? S.D.legalEN[v] : (LEGAL_VI[v] || v); },
-    district: function (v) { return v; },
-    ward: function (v) { return v === "" ? tx("anyWard") : v; }
+    district: function (v) { return H.pn(v); },
+    ward: function (v) { return v === "" ? tx("anyWard") : H.pn(v); }
   };
   function districtsOf(city) {
     var T = S.T, cnt = {};
@@ -238,19 +240,24 @@
     var f = S.f, T = S.D;
     var cities = Object.keys(T.cbd).sort();
     var sel = function () { return $("select"); };
+    function grp(k) { var g = $("p", "ht-grp ht-wide", ""); g.setAttribute("data-k", k); form.appendChild(g); }
+    grp("gLoc");
     form.appendChild(field("city", "city", sel(), "ht-wide"));
     var dw = field("district", "district", sel(), "ht-wide");
     dw.appendChild($("p", "ht-hint", "")).setAttribute("data-k", "hintDist");
     form.appendChild(dw);
     form.appendChild(field("ward", "ward", sel(), "ht-wide"));
+    grp("gHome");
     form.appendChild(field("type", "type", sel(), "ht-wide"));
     form.appendChild(field("legal", "legal", sel(), "ht-wide"));
     form.appendChild(field("area", "area", numIn(10, 5000, 1)));
     form.appendChild(field("beds", "beds", numIn(0, 15, 1)));
     form.appendChild(field("baths", "baths", numIn(0, 15, 1)));
     form.appendChild(field("floors", "floors", numIn(0, 15, 1)));
+    grp("gAcc");
     form.appendChild(field("front", "front", numIn(0, 100, 0.5)));
     form.appendChild(field("road", "road", numIn(0, 60, 0.5)));
+    grp("gAsk");
     var aw = field("ask", "ask", numIn(0, "", 0.1), "ht-wide");
     f.ask.min = "0"; f.ask.removeAttribute("max");
     form.appendChild(aw);
@@ -272,7 +279,7 @@
     S.staleEl = $("div", "ht-stale"); out.appendChild(S.staleEl);
     out.appendChild($("p", "ht-h", "")).setAttribute("data-k", "hSim");
     var tw = $("div", "ht-tw"), tb = $("table", "ht-comp"), th = $("thead"), tr = $("tr");
-    for (var i = 0; i < 6; i++) { var h = $("th", i === 3 || i === 4 ? "n" : ""); h.scope = "col"; tr.appendChild(h); }
+    for (var i = 0; i < 7; i++) { var h = $("th", i === 3 || i === 4 || i === 6 ? "n" : ""); h.scope = "col"; tr.appendChild(h); }
     th.appendChild(tr); tb.appendChild(th); S.tbody = $("tbody"); tb.appendChild(S.tbody); tw.appendChild(tb);
     out.appendChild(tw);
     root.appendChild(out);
@@ -322,7 +329,7 @@
     validate();
     ["city", "type", "legal", "district", "ward"].forEach(function (id) { relabelSel(S.f[id], LABELS[id]); });
     var hs = S.thead.children, T = TX[H.lang()];
-    for (k = 0; k < 6; k++) hs[k].textContent = T.th[k];
+    for (k = 0; k < 7; k++) hs[k].textContent = T.th[k];
   }
 
   /* ---------- result ---------- */
@@ -398,11 +405,17 @@
     if (a) return H.month(a[2] + "-" + (a[1].length < 2 ? "0" : "") + a[1]);
     return /^\d{4}-\d{2}/.test(m || "") ? H.month(m.slice(0, 7)) : "–";
   }
+  function kmFrom(i) { // listing coordinates are rounded to 0.01 degree, so this is about ±1 km
+    var L = S.last && S.last.res && S.last.res.loc, T = S.T;
+    if (!L || T.lat[i] == null) return null;
+    var r = Math.PI / 180, dy = (T.lat[i] - L.lat) * 110.57, dx = (T.lon[i] - L.lon) * 111.32 * Math.cos(L.lat * r);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
   function rowData(i) {
     var T = S.T;
     return {
-      d: T.districts[T.district[i]], w: T.wardsDict[T.ward[i]] || "–", t: H.type(T.types[T.type[i]]),
-      a: T.area[i], p: T.price_bn[i], m2: T.price_bn[i] * 1000 / T.area[i], mo: monthOf(T.month[i])
+      d: H.pn(T.districts[T.district[i]]), w: H.pn(T.wardsDict[T.ward[i]]) || "–", t: H.type(T.types[T.type[i]]),
+      a: T.area[i], p: T.price_bn[i], m2: T.price_bn[i] * 1000 / T.area[i], mo: monthOf(T.month[i]), km: kmFrom(i)
     };
   }
   function drawComps() {
@@ -410,7 +423,7 @@
     tb.textContent = "";
     S.last.comps.forEach(function (i, n) {
       var d = rowData(i), tr = $("tr"); tr.setAttribute("data-r", n);
-      var cells = [[d.d, "d"], [d.w, "w"], [d.t, "t"], [H.nf(d.a, 1), "a n"], [H.nf(d.p, 2), "p n"], [d.mo, "o"]];
+      var cells = [[d.d, "d"], [d.w, "w"], [d.t, "t"], [H.nf(d.a, 1), "a n"], [H.nf(d.p, 2), "p n"], [d.mo, "o"], [d.km == null ? "–" : H.nf(d.km, d.km < 10 ? 1 : 0), "k n"]];
       cells.forEach(function (c, j) {
         var td = $("td", c[1], c[0]);
         if (U[j]) td.appendChild($("span", "ht-u", U[j]));
@@ -426,9 +439,9 @@
     if (i === undefined) return null;
     var d = rowData(i);
     return { key: "r" + n, node: H.card({
-      h: d.d + " · " + d.w,
+      h: d.w + " · " + d.d,
       rows: [[tx("tType"), d.t], [tx("tArea"), H.nf(d.a, 1) + " m²"], [tx("tPrice"), H.nf(d.p, 2) + " " + tx("bn")],
-             [tx("tPpm"), H.nf(d.m2, 0) + " " + tx("ppm")], [tx("tPosted"), d.mo]],
+             [tx("tPpm"), H.nf(d.m2, 0) + " " + tx("ppm")], [tx("tPosted"), d.mo]].concat(d.km == null ? [] : [[tx("tKm"), H.km(d.km)]]),
       m: [tx("tM")] }) };
   }
 

@@ -1,85 +1,180 @@
-/* Housing atlas, section 1: where is land expensive?
-   Housing.map(fig, opts) mounts a price map in <figure data-hs="map"> (needs housing_core.js and D3).
-   2D: one canvas image of the price surface (cells coloured by class), overlays drawn on a second canvas.
-   3D: the same surface as columns in an oblique view (painter's order, far to near), heights = price index.
-   opts.teaser: city switch and hover only (no layers, no 3D); a click opens opts.href#c=<city>.
-   Data: surface_<c>.json (run-length v, n1km), wards_<c>.json, metro.json, districts.json (web_spec.md, Export). */
+/* Housing atlas, section 1: Housing.map(fig, opts). MapLibre GL over OpenFreeMap vector tiles (recoloured, no country
+   borders); new wards coloured by price under roads, water and names; facilities, metro, names; 3D columns.
+   opts.teaser: city switch and hover only. Data: wards_<c>, metro, districts, meta. See CLAUDE.md, "Housing atlas". */
 (function () {
   "use strict";
   var H = window.Housing;
-  if (!H || !window.d3 || !H.mapData) return;
+  if (!H || !H.mapBase) return;
+
+  var ML = "4.7.1", CDN = ["https://cdn.jsdelivr.net/npm/maplibre-gl@" + ML + "/dist/", "https://unpkg.com/maplibre-gl@" + ML + "/dist/"];
+  var STYLE = "https://tiles.openfreemap.org/styles/positron";
+  var INK = "#23272b", PAPER = "#faf9f5", MUTED = "#6b6f72";
+  var MIN_N = 5, K = 8, SHRINK = 0.55, H3D = 2200; // a ward needs 5 listings; pull toward the former district with weight 8
+  var BRK = { idx: [0.7, 0.85, 1, 1.15, 1.35, 1.7], ppm: [60, 100, 150, 200, 300, 450] };
+  function sub(list) { return ["in", ["get", "subclass"], ["literal", list]]; }
+  var POI = { // what a buyer looks for nearby; from the base tiles' poi layer (OpenStreetMap tags)
+    edu: { col: "#2a6fc0", z: 12.5, f: ["any", ["in", ["get", "class"], ["literal", ["school", "college"]]], sub(["kindergarten", "school", "university", "college"])] },
+    health: { col: "#c95f8c", z: 12.5, f: ["any", ["==", ["get", "class"], "hospital"], sub(["hospital", "clinic", "doctors", "pharmacy"])] },
+    shop: { col: "#5a4ac4", z: 12.5, f: ["any", ["==", ["get", "class"], "grocery"], sub(["mall", "department_store", "supermarket", "marketplace", "convenience"])] },
+    park: { col: "#179a6c", z: 13, f: sub(["park", "garden", "playground", "sports_centre", "pitch"]) },
+    bus: { col: "#6b6f72", z: 14.5, f: sub(["bus_stop", "bus_station"]) }
+  };
+  var LAYERS = ["price", "wards", "metro", "edu", "health", "shop", "park", "bus", "cbd"];
 
   var TX = {
     en: {
-      price: "Price surface", wards: "New wards", metro: "Metro", cbd: "City centre", seg: "Market type", dots: "Listings by ward",
-      view: "View", angle: "Turn", layers: "Layers", only2d: "2D only",
-      lg: "Asking price per m², relative to the city average", lgs: "Market type of the former district",
-      x: "×", avg: "the city average", newWard: " (new)", oldBy: "former {d}, as the listings name it", oldGadm: "former {d}, by the old boundary",
-      rIdx: "Price vs city average", rMed: "Median asking price in this ward", rN: "Listings within 1 km", rNw: "Listings in this ward",
-      allTypes: "all types, {n}", one: "1 listing", many: "{n} listings", few: "Few listings nearby: this value is extrapolated.", fewLg: "Faded: fewer than 3 listings within 1 km", h3d: "In 3D, height also shows the price.", dotsLg: "Listings in the ward", off: "{w} (off the map)", above: "Asking prices here are about {p} above the city average for a similar home.",
-      below: "Asking prices here are about {p} below the city average for a similar home.", near: "Asking prices here are close to the city average.",
-      st: "Metro station", line: "Metro line", centre: "City centre", centreM: "Distances in section 2 are measured from here.",
-      seg0: "Market type", clickT: "Click to open the housing atlas.", clickF: "Click to value a home in this district.", tapT: "Tap again to open the housing atlas.", tapF: "Tap again to value a home in this district.",
-      N: "N", load: "Loading the map…",
-      src: "Source: mogi.vn listings, 15 Oct 2026; OpenStreetMap (metro, © OpenStreetMap contributors); ward boundaries after July 2025 (vietnamese-provinces-database, MIT); author's calculations.",
-      note: "Houses and land only, adjusted for type and plot size, smoothed over the 20 nearest listings (at least 380 m); listings placed at a ward centre count half. About 71% of listings give only a ward-centre location, so detail finer than about 1 km means little."
+      price: "Ward prices", wards: "Ward borders", metro: "Metro", edu: "Schools", health: "Hospitals and clinics", shop: "Markets and shopping", park: "Parks", bus: "Bus stops", cbd: "City centre",
+      view: "View", angle: "Turn", layers: "Layers", metric: "Show",
+      idx: "Price index", ppm: "Price per m²",
+      lgIdx: "Asking price per m² of houses and land in the ward, relative to the city average (×1 = average)",
+      lgPpm: "Median asking price per m², all homes in the ward (million VND)",
+      lgIdxS: "Price vs city average, houses and land", lgPpmS: "Median price per m², million VND",
+      few: "Fewer than 5 listings", h3d: "In 3D, the height of each column is the same figure.", poiLg: "Zoom in to see schools, hospitals, markets, parks and bus stops.",
+      newWard: " (new)", oldBy: "Former {d}, as the listings name it", oldGadm: "Former {d}, by the old boundary",
+      rIdx: "Price vs city average", rPpm: "Median asking price, all homes", rN: "Listings in this ward", rSeg: "Market type",
+      above: "Houses and land here are asked about {p} above the city average for a similar home.",
+      below: "Houses and land here are asked about {p} below the city average for a similar home.",
+      near: "Houses and land here are asked close to the city average.",
+      thin: "Only {n} listings: read this ward with care.", none: "Too few listings for a price here.",
+      st: "Metro station", line: "Line", centre: "City centre", centreM: "Distances in section 2 are measured from here.",
+      poiK: { edu: "School, kindergarten or university", health: "Hospital, clinic or pharmacy", shop: "Market, supermarket or shopping centre", park: "Park or sports ground", bus: "Bus stop" },
+      clickT: "Click to open the housing atlas.", clickF: "Click to value a home in this former district.",
+      tapT: "Tap again to open the housing atlas.", tapF: "Tap again to value a home in this former district.",
+      load: "Loading the map…", nogl: "This map needs WebGL, which this browser does not offer.",
+      gWin: "Use Ctrl + scroll to zoom the map", gMac: "Use ⌘ + scroll to zoom the map", gMob: "Use two fingers to move the map"
     },
     vi: {
-      price: "Bề mặt giá", wards: "Phường mới", metro: "Metro", cbd: "Trung tâm", seg: "Kiểu thị trường", dots: "Số tin theo phường",
-      view: "Kiểu xem", angle: "Xoay", layers: "Lớp", only2d: "chỉ ở 2D",
-      lg: "Giá rao mỗi m², so với mức trung bình thành phố", lgs: "Kiểu thị trường của quận cũ",
-      x: "×", avg: "mức trung bình thành phố", newWard: " (mới)", oldBy: "{d} cũ, theo tin rao", oldGadm: "{d} cũ, theo ranh giới cũ",
-      rIdx: "Giá so với trung bình thành phố", rMed: "Giá rao trung vị trong phường", rN: "Số tin trong bán kính 1 km", rNw: "Số tin trong phường",
-      allTypes: "mọi loại nhà, {n}", one: "1 tin", many: "{n} tin", few: "Ít tin quanh đây: giá trị này là ngoại suy.", fewLg: "Màu nhạt: dưới 3 tin trong bán kính 1 km", h3d: "Ở bản 3D, độ cao cũng thể hiện giá.", dotsLg: "Số tin trong phường", off: "{w} (ngoài khung)", above: "Giá rao ở đây cao hơn mức trung bình thành phố khoảng {p}, với nhà tương tự.",
-      below: "Giá rao ở đây thấp hơn mức trung bình thành phố khoảng {p}, với nhà tương tự.", near: "Giá rao ở đây gần mức trung bình thành phố.",
-      st: "Ga metro", line: "Tuyến metro", centre: "Trung tâm thành phố", centreM: "Khoảng cách ở mục 2 tính từ điểm này.",
-      seg0: "Kiểu thị trường", clickT: "Bấm để mở bản đồ nhà đất.", clickF: "Bấm để định giá một căn trong quận này.", tapT: "Chạm lần nữa để mở bản đồ nhà đất.", tapF: "Chạm lần nữa để định giá một căn trong quận này.",
-      N: "B", load: "Đang tải bản đồ…",
-      src: "Nguồn: tin rao mogi.vn, 15/10/2026; OpenStreetMap (metro, © những người đóng góp OpenStreetMap); ranh giới phường sau tháng 7/2025 (vietnamese-provinces-database, giấy phép MIT); tác giả tính toán.",
-      note: "Chỉ gồm nhà và đất, đã điều chỉnh theo loại nhà và diện tích lô, làm trơn theo 20 tin gần nhất (tối thiểu 380 m); tin chỉ có tọa độ tâm phường được tính một nửa. Khoảng 71% tin chỉ có vị trí tâm phường, nên chi tiết nhỏ hơn khoảng 1 km không có nhiều ý nghĩa."
+      price: "Giá theo phường", wards: "Ranh giới phường", metro: "Metro", edu: "Trường học", health: "Bệnh viện, phòng khám", shop: "Chợ và mua sắm", park: "Công viên", bus: "Điểm dừng xe buýt", cbd: "Trung tâm",
+      view: "Kiểu xem", angle: "Xoay", layers: "Lớp", metric: "Hiển thị",
+      idx: "Chỉ số giá", ppm: "Giá mỗi m²",
+      lgIdx: "Giá rao mỗi m² của nhà và đất trong phường, so với trung bình thành phố (×1 = trung bình)",
+      lgPpm: "Giá rao trung vị mỗi m², mọi loại nhà trong phường (triệu đồng)",
+      lgIdxS: "Giá so với trung bình TP, nhà và đất", lgPpmS: "Giá trung vị mỗi m², triệu đồng",
+      few: "Dưới 5 tin", h3d: "Ở bản 3D, chiều cao mỗi cột cũng là con số này.", poiLg: "Phóng to để thấy trường học, bệnh viện, chợ, công viên và điểm dừng xe buýt.",
+      newWard: " (phường mới)", oldBy: "{d} cũ, theo tin rao", oldGadm: "{d} cũ, theo ranh giới cũ",
+      rIdx: "Giá so với trung bình thành phố", rPpm: "Giá rao trung vị, mọi loại nhà", rN: "Số tin trong phường", rSeg: "Kiểu thị trường",
+      above: "Nhà và đất ở đây được rao cao hơn trung bình thành phố khoảng {p}, với nhà tương tự.",
+      below: "Nhà và đất ở đây được rao thấp hơn trung bình thành phố khoảng {p}, với nhà tương tự.",
+      near: "Nhà và đất ở đây được rao gần mức trung bình thành phố.",
+      thin: "Chỉ có {n} tin: nên đọc phường này thận trọng.", none: "Quá ít tin để tính giá ở đây.",
+      st: "Ga metro", line: "Tuyến", centre: "Trung tâm thành phố", centreM: "Khoảng cách ở mục 2 tính từ điểm này.",
+      poiK: { edu: "Trường học, mầm non hoặc đại học", health: "Bệnh viện, phòng khám hoặc nhà thuốc", shop: "Chợ, siêu thị hoặc trung tâm thương mại", park: "Công viên hoặc sân thể thao", bus: "Điểm dừng xe buýt" },
+      clickT: "Bấm để mở bản đồ nhà đất.", clickF: "Bấm để định giá một căn trong quận cũ này.",
+      tapT: "Chạm lần nữa để mở bản đồ nhà đất.", tapF: "Chạm lần nữa để định giá một căn trong quận cũ này.",
+      load: "Đang tải bản đồ…", nogl: "Bản đồ này cần WebGL, trình duyệt này chưa hỗ trợ.",
+      gWin: "Giữ Ctrl và cuộn để phóng to bản đồ", gMac: "Giữ ⌘ và cuộn để phóng to bản đồ", gMob: "Dùng hai ngón tay để di chuyển bản đồ"
     }
   };
   function tx(k) { return TX[H.lang()][k]; }
   function fill(s, o) { return s.replace(/\{(\w+)\}/g, function (m, k) { return o[k]; }); }
-  var LAYERS = ["price", "wards", "metro", "cbd", "seg", "dots"];
-  var TILT = 0.55, DUR = 600, SANS = '"Be Vietnam Pro", system-ui, sans-serif';
-  var INK = "#23272b", MUTED = "#6b6f72", PAPER = "#faf9f5", ACC = "#1f5f7a";
 
-  var MD = H.mapData, cls = MD.cls, toM = MD.toM, columns = MD.columns, getCity = MD.getCity, getShared = MD.getShared, wardAt = MD.wardAt;
+  // ------------------------------------------------------------------ MapLibre, loaded once on demand
+  var mlP = null;
+  function addTag(tag, attrs) {
+    return new Promise(function (ok, bad) {
+      var e = document.createElement(tag);
+      Object.keys(attrs).forEach(function (k) { e[k] = attrs[k]; });
+      e.onload = ok; e.onerror = function () { e.remove(); bad(new Error(attrs.src || attrs.href)); };
+      document.head.appendChild(e);
+    });
+  }
+  function loadML() {
+    if (window.maplibregl) return Promise.resolve(window.maplibregl);
+    if (mlP) return mlP;
+    function from(i) {
+      if (i >= CDN.length) return Promise.reject(new Error("maplibre-gl"));
+      return Promise.all([addTag("script", { src: CDN[i] + "maplibre-gl.js" }), addTag("link", { rel: "stylesheet", href: CDN[i] + "maplibre-gl.css" })])
+        .then(function () { return window.maplibregl; }, function () { return from(i + 1); });
+    }
+    mlP = from(0);
+    mlP.catch(function () { mlP = null; });
+    return mlP;
+  }
+  function glOK() {
+    try { var c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; }
+  }
+
+  // ------------------------------------------------------------------ ward figures (computed here from the exported fields)
+  var cityData = {};
+  function prepCity(c) {
+    if (cityData[c]) return cityData[c];
+    cityData[c] = H.load("wards_" + c).then(function (g) {
+      var F = g.features, byD = {};
+      F.forEach(function (f) {
+        var p = f.properties;
+        if (p.n >= MIN_N && p.v_med > 0) { var d = byD[p.d_old] = byD[p.d_old] || [0, 0]; d[0] += p.n * Math.log(p.v_med); d[1] += p.n; }
+      });
+      var towers = [], minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
+      F.forEach(function (f, i) {
+        var p = f.properties, ok = p.n >= MIN_N && p.v_med > 0, d = byD[p.d_old];
+        var tgt = d && d[1] > p.n ? (d[0] - p.n * Math.log(p.v_med || 1)) / (d[1] - p.n) : 0; // other wards of the same former district
+        p.vi = ok ? Math.exp((p.n * Math.log(p.v_med) + K * tgt) / (p.n + K)) : null;
+        p.pm = ok && p.ppm2_med != null ? p.ppm2_med : null;
+        p.k = i;
+        f.id = i;
+        if (p.vi != null && near(p.c, c)) eachXY(f.geometry, function (x, y) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); miny = Math.min(miny, y); maxy = Math.max(maxy, y); });
+        if (p.vi != null) towers.push({ type: "Feature", id: i, properties: p, geometry: shrink(f.geometry, p.c, SHRINK) });
+      });
+      return { wards: g, towers: { type: "FeatureCollection", features: towers }, box: [[minx, miny], [maxx, maxy]] };
+    });
+    cityData[c].catch(function () { delete cityData[c]; });
+    return cityData[c];
+  }
+  var CB = { hn: [105.8522, 21.0285], hcm: [106.698, 10.7725] }, FIT_KM = 16; // the first view frames priced wards within 16 km of the centre
+  function near(q, c) { var o = CB[c], dx = (q[0] - o[0]) * 111.32 * Math.cos(o[1] * Math.PI / 180), dy = (q[1] - o[1]) * 110.57; return Math.sqrt(dx * dx + dy * dy) <= FIT_KM; }
+  function eachXY(geom, fn) {
+    (geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates).forEach(function (poly) {
+      poly.forEach(function (ring) { ring.forEach(function (q) { fn(q[0], q[1]); }); });
+    });
+  }
+  function shrink(geom, c, s) {
+    var f = function (ring) { return ring.map(function (q) { return [c[0] + (q[0] - c[0]) * s, c[1] + (q[1] - c[1]) * s]; }); };
+    var polys = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+    var big = polys.reduce(function (a, b) { return b[0].length > a[0].length ? b : a; }); // the main part only
+    return { type: "Polygon", coordinates: big.map(f) };
+  }
+  function cls(v, b) { if (v == null) return -1; var i = 0; while (i < b.length && v >= b[i]) i++; return i; }
+  function colorExpr(prop, b) {
+    var e = ["step", ["coalesce", ["get", prop], -1], "rgba(0,0,0,0)", 0, H.RAMP[0]];
+    b.forEach(function (t, i) { e.push(t, H.RAMP[i + 1]); });
+    return e;
+  }
+
+  var MB = H.mapBase, tune = MB.tune, baseNames = MB.baseNames, firstOf = MB.firstOf, firstSymbol = MB.firstSymbol, hatch = MB.hatch;
 
   // ------------------------------------------------------------------ the map
   H.map = function (fig, opts) {
     opts = opts || {};
     var teaser = !!opts.teaser, plot = fig.querySelector(".hs-plot");
     if (!plot) { plot = H.el("div", "hs-plot"); fig.insertBefore(plot, fig.firstChild); }
-    var st = { c: H.st.c || "hn", v: teaser ? "2d" : (H.st.v || "2d"), l: teaser ? ["price"] : (H.st.l || ["price", "metro", "cbd"]).slice(), th: -25 };
-    var S = null, M = null, D = null, CBD = null, hl = "", hov = null, a = st.v === "3d" ? 1 : 0, anim = 0, order = null, boxes = null, T = null, tapKey = null;
-    var reduced = H.reduced();
-
-    var base = document.createElement("canvas"), over = document.createElement("canvas");
-    base.className = "hs-cv"; over.className = "hs-cv hs-cv-over";
-    over.setAttribute("role", "img");
-    plot.appendChild(base); plot.appendChild(over);
+    var st = {
+      c: H.st.c || "hn", v: teaser ? "2d" : (H.st.v || "2d"), m: "idx",
+      l: teaser ? ["price"] : (H.st.l && H.st.l.length ? H.st.l : ["price", "wards", "metro", "cbd"]).filter(function (k) { return LAYERS.indexOf(k) >= 0; }),
+      th: -20
+    };
+    var map = null, cur = null, D = null, M = null, CBD = null, hovId = null, hlKey = "", tapKey = null, lastEmit = "", self = false;
+    var box = H.el("div", "hs-mapbox"); plot.appendChild(box);
     var legend = H.el("div", "hs-mlegend"); plot.appendChild(legend);
     var status = H.el("p", "hs-status"); plot.appendChild(status);
 
     // controls
     var bar = H.el("div", "hs-bar"); fig.insertBefore(bar, plot);
-    function btnGroup(key, vals, label) {
+    function btnGroup(key, vals) {
       var g = H.el("span", "hs-group"); g.setAttribute("role", "group");
       vals.forEach(function (v) {
         var b = H.el("button", "hs-btn"); b.type = "button"; b.dataset[key] = v;
         b.addEventListener("click", function () { choose(key, v); });
         g.appendChild(b);
       });
-      g.dataset.label = label; bar.appendChild(g); return g;
+      bar.appendChild(g); return g;
     }
-    var gCity = btnGroup("c", ["hn", "hcm"], "city"), gView = null, angle = null, gLay = null;
+    var gCity = btnGroup("c", ["hn", "hcm"]), gView = null, gMet = null, angle = null, rng = null, gLay = null;
     if (!teaser) {
-      gView = btnGroup("v", ["2d", "3d"], "view");
+      gMet = btnGroup("m", ["idx", "ppm"]);
+      gView = btnGroup("v", ["2d", "3d"]);
       angle = H.el("label", "hs-angle"); angle.appendChild(H.el("span"));
-      var rng = document.createElement("input"); rng.type = "range"; rng.min = -180; rng.max = 180; rng.step = 5; rng.value = st.th;
-      rng.addEventListener("input", function () { st.th = +rng.value; draw(); });
+      rng = document.createElement("input"); rng.type = "range"; rng.min = -180; rng.max = 180; rng.step = 5; rng.value = st.th;
+      rng.addEventListener("input", function () { st.th = +rng.value; if (map) map.setBearing(st.th); });
       angle.appendChild(rng); bar.appendChild(angle);
       gLay = H.el("span", "hs-layers");
       LAYERS.forEach(function (k) {
@@ -88,465 +183,337 @@
         cb.addEventListener("change", function () {
           var l = st.l.filter(function (x) { return x !== k; }); if (cb.checked) l.push(k);
           st.l = LAYERS.filter(function (x) { return l.indexOf(x) >= 0; });
-          H.set({ l: st.l }); paint(); draw();
+          H.set({ l: st.l }); vis(); paint();
         });
-        lb.appendChild(cb); lb.appendChild(H.el("span")); gLay.appendChild(lb);
+        lb.appendChild(cb);
+        if (POI[k]) { var dot = H.el("span", "hs-poidot"); dot.style.background = POI[k].col; lb.appendChild(dot); }
+        lb.appendChild(H.el("span", "hs-chk-t")); gLay.appendChild(lb);
       });
       bar.appendChild(gLay);
     }
     function on(k) { return st.l.indexOf(k) >= 0; }
     function paint() {
-      gCity.querySelectorAll("button").forEach(function (b) { b.textContent = H.city(b.dataset.c); b.setAttribute("aria-pressed", String(b.dataset.c === st.c)); });
       gCity.setAttribute("aria-label", H.lang() === "vi" ? "Thành phố" : "City");
+      gCity.querySelectorAll("button").forEach(function (b) { b.textContent = H.city(b.dataset.c); b.setAttribute("aria-pressed", String(b.dataset.c === st.c)); });
       if (gView) {
+        gMet.setAttribute("aria-label", tx("metric"));
+        gMet.querySelectorAll("button").forEach(function (b) { b.textContent = tx(b.dataset.m); b.setAttribute("aria-pressed", String(b.dataset.m === st.m)); });
         gView.setAttribute("aria-label", tx("view"));
         gView.querySelectorAll("button").forEach(function (b) { b.textContent = b.dataset.v.toUpperCase(); b.setAttribute("aria-pressed", String(b.dataset.v === st.v)); });
         angle.firstChild.textContent = tx("angle"); angle.hidden = st.v !== "3d";
         gLay.setAttribute("aria-label", tx("layers"));
         gLay.querySelectorAll("label").forEach(function (lb) {
-          var cb = lb.firstChild, k = cb.dataset.layer, two = k === "seg" || k === "dots" || k === "wards";
-          cb.checked = on(k); cb.disabled = two && st.v === "3d";
-          lb.lastChild.textContent = tx(k) + (cb.disabled ? " (" + tx("only2d") + ")" : "");
-          lb.classList.toggle("is-off", cb.disabled);
+          var cb = lb.firstChild; cb.checked = on(cb.dataset.layer); lb.lastChild.textContent = tx(cb.dataset.layer);
         });
       }
-      over.setAttribute("aria-label", tx("lg") + " · " + H.city(st.c) + " · " + st.v.toUpperCase());
-      cap();
+      box.setAttribute("aria-label", (st.m === "idx" ? tx("lgIdx") : tx("lgPpm")) + " · " + H.city(st.c));
       drawLegend();
     }
-    function cap() {
-      var s = fig.querySelector(".hs-src"), n = fig.querySelector(".hs-note");
-      if (s && !teaser) s.textContent = tx("src");
-      if (n && !teaser) n.textContent = tx("note");
+    function drawLegend() {
+      legend.textContent = "";
+      var b = BRK[st.m], idx = st.m === "idx", nar = plot.clientWidth < 600;
+      legend.appendChild(H.el("div", "hs-lg-t", nar ? tx(idx ? "lgIdxS" : "lgPpmS") : tx(idx ? "lgIdx" : "lgPpm")));
+      var row = H.el("div", "hs-lg-ramp");
+      H.RAMP.forEach(function (c) { var s = H.el("span", "hs-lg-sw"); s.style.background = c; row.appendChild(s); });
+      legend.appendChild(row);
+      var ticks = H.el("div", "hs-lg-ticks");
+      b.forEach(function (t, i) {
+        if (nar && i % 2) return; // every other boundary on a narrow screen
+        var s = H.el("span", null, idx ? "×" + H.nf(t, 2) : H.nf(t, 0));
+        s.style.left = ((i + 1) / H.RAMP.length * 100) + "%"; ticks.appendChild(s);
+      });
+      legend.appendChild(ticks);
+      var fw = H.el("div", "hs-lg-few"); fw.appendChild(H.el("span", "hs-lg-hatch")); fw.appendChild(H.el("span", null, tx("few"))); legend.appendChild(fw);
+      if (!teaser && st.v === "3d") legend.appendChild(H.el("div", "hs-lg-n", tx("h3d")));
+      if (!teaser && !nar && (on("edu") || on("health") || on("shop") || on("park") || on("bus")) && map && map.getZoom() < 12.5) legend.appendChild(H.el("div", "hs-lg-n", tx("poiLg")));
     }
+
     function choose(key, v) {
-      if (key === "c") { if (v === st.c) return; st.c = v; if (!teaser) H.set({ c: v }); load(); }
-      if (key === "v") {
-        if (v === st.v) return; st.v = v; H.set({ v: v });
-        animate(v === "3d" ? 1 : 0);
-      }
+      if (st[key] === v) return;
+      st[key] = v;
+      if (key === "c") { if (!teaser) H.set({ c: v }); setCity(); }
+      if (key === "v") { if (!teaser) H.set({ v: v }); view(true); vis(); }
+      if (key === "m") recolor();
       paint();
     }
 
-    // legend inside the plot: classes with thresholds, plus market types when that layer is on
-    function drawLegend() {
-      legend.textContent = "";
-      var narrow = (plot.clientWidth || fig.clientWidth) < 600;
-      if (narrow && legend.parentNode !== fig) fig.insertBefore(legend, plot);
-      if (!narrow && legend.parentNode !== plot) plot.appendChild(legend);
-      legend.classList.toggle("is-out", narrow);
-      if (!S || !on("price")) { legend.hidden = !(S && on("seg") && st.v === "2d"); }
-      else legend.hidden = false;
-      if (!S) return;
-      if (on("price")) {
-        legend.appendChild(H.el("p", "hs-mlg-t", tx("lg")));
-        var row = H.el("div", "hs-mlg-row"), lab = H.el("div", "hs-mlg-lab");
-        H.RAMP.forEach(function (c, i) {
-          var sw = H.el("span", "hs-mlg-sw"); sw.style.background = c;
-          sw.title = (i === 0 ? "< " + H.nf(S.breaks[0], 2) : i === H.RAMP.length - 1 ? "≥ " + H.nf(S.breaks[i - 1], 2) : H.nf(S.breaks[i - 1], 2) + "–" + H.nf(S.breaks[i], 2));
-          row.appendChild(sw);
-        });
-        S.breaks.forEach(function (b, i) { lab.appendChild(H.el("span", null, narrow && i % 2 ? "" : "×" + H.nf(b, 2))); });
-        legend.appendChild(row); legend.appendChild(lab);
-        if (st.v === "2d" || teaser) {
-          var fr = H.el("div", "hs-mlg-seg"), fs = H.el("span", "hs-mlg-box hs-mlg-faded"); fs.style.background = H.RAMP[4];
-          fr.appendChild(fs); fr.appendChild(H.el("span", null, tx("fewLg"))); legend.appendChild(fr);
-        } else legend.appendChild(H.el("p", "hs-mlg-n", tx("h3d")));
-      }
-      if (on("dots") && st.v === "2d" && !teaser) {
-        legend.appendChild(H.el("p", "hs-mlg-t", tx("dotsLg")));
-        var dr = H.el("div", "hs-mlg-dots");
-        [10, 50, 150].forEach(function (n) {
-          var d = H.el("span", "hs-mlg-dot"), r = dotR(n);
-          d.style.width = d.style.height = 2 * r + "px";
-          var it = H.el("span", "hs-mlg-di"); it.appendChild(d); it.appendChild(H.el("span", null, H.nf(n, 0))); dr.appendChild(it);
-        });
-        legend.appendChild(dr);
-      }
-      if (on("seg") && st.v === "2d" && !teaser) {
-        legend.appendChild(H.el("p", "hs-mlg-t", tx("lgs")));
-        H.SEG.forEach(function (k) {
-          var r = H.el("div", "hs-mlg-seg"), sw = H.el("span", "hs-mlg-box"); sw.style.background = H.SEGC[k];
-          r.appendChild(sw); r.appendChild(H.el("span", null, H.seg(k).name)); legend.appendChild(r);
-        });
-      }
-    }
-
-    // ---------------------------------------------------------------- geometry
-    var W = 0, Hh = 0, dpr = 1;
-    function size() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = plot.clientWidth; Hh = plot.clientHeight || Math.round(W * 0.75);
-      [base, over].forEach(function (cv) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); cv.style.width = W + "px"; cv.style.height = Hh + "px"; });
-    }
-    // transform for blend a (0 = flat top view, 1 = oblique 3D): rotation, tilt and column height grow with a
-    function fit(t) {
-      var th = (st.th * Math.PI / 180) * t, c = 1 - (1 - TILT) * t, cos = Math.cos(th), sin = Math.sin(th);
-      var F = S.fit, mx = (F[0] + F[2]) / 2, my = (F[1] + F[3]) / 2, hx = (F[2] - F[0]) / 2, hy = (F[3] - F[1]) / 2;
-      var rx = [], ry = [];
-      [[-hx, -hy], [hx, -hy], [hx, hy], [-hx, hy]].forEach(function (p) { rx.push(p[0] * cos - p[1] * sin); ry.push(p[0] * sin + p[1] * cos); });
-      var x0 = Math.min.apply(null, rx), x1 = Math.max.apply(null, rx), y0 = Math.min.apply(null, ry), y1 = Math.max.apply(null, ry);
-      var pad = W < 600 ? 6 : 12, top = legend.hidden || legend.parentNode !== plot ? pad : legend.offsetTop + legend.offsetHeight + 6, hmax = 0.3 * Hh * t;
-      // when the width limits the scale, let the columns use the spare height (up to 45% of the box)
-      var sw = (W - 2 * pad) / (x1 - x0), spare = Hh - top - pad - sw * (y1 - y0) * c;
-      if (t > 0 && spare > hmax) hmax = Math.min(0.45 * Hh, spare) * t;
-      var s = Math.min(sw, (Hh - top - pad - hmax) / ((y1 - y0) * c));
-      var used = (y1 - y0) * s * c + hmax;
-      var ox = W / 2 - s * (x0 + x1) / 2, oy = top + hmax + (Hh - top - pad - used) / 2 + y1 * s * c;
-      var R = { s: s, ox: ox, oy: oy, mx: mx, my: my, cos: cos, sin: sin, c: c, hk: hmax / S.vmax, t: t };
-      if (t > 0) { // measure the real top of the columns with this transform, then centre the content in the free height
-        var C = columns(S, W < 600 ? 3 : 2), ytop = Infinity, ybot = -Infinity;
-        for (var i = 0; i < C.x.length; i++) {
-          var dx = C.x[i] - mx, dy = C.y[i] - my, Y = oy - (dx * sin + dy * cos) * s * c;
-          if (Y - C.v[i] * R.hk < ytop) ytop = Y - C.v[i] * R.hk; if (Y > ybot) ybot = Y;
-        }
-        if (isFinite(ytop)) R.oy += (top + (Hh - pad - top - (ybot - ytop)) / 2) - ytop;
-      }
-      return R;
-    }
-    function zAt(x, y) { // column height (px) of the surface at a point, 0 off the surface or in 2D
-      if (!a || !on("price")) return 0;
-      var ix = Math.floor((x - S.x0) / S.cell_m), iy = Math.floor((y - S.y0) / S.cell_m);
-      if (ix < 0 || iy < 0 || ix >= S.nx || iy >= S.ny) return 0;
-      var C = columns(S, W < 600 ? 3 : 2);
-      return (C.bv[Math.floor(iy / C.g) * C.bw + Math.floor(ix / C.g)] || 0) * T.hk;
-    }
-    function Pz(x, y) { var p = P(x, y); p[1] -= zAt(x, y); return p; }
-    function P(x, y) { var dx = x - T.mx, dy = y - T.my; return [T.ox + (dx * T.cos - dy * T.sin) * T.s, T.oy - (dx * T.sin + dy * T.cos) * T.s * T.c]; }
-    function inv(X, Y) { // screen to metres (ground)
-      var u = (X - T.ox) / T.s, w = -(Y - T.oy) / (T.s * T.c);
-      return [T.mx + u * T.cos + w * T.sin, T.my - u * T.sin + w * T.cos];
-    }
-
-    // ---------------------------------------------------------------- drawing
-    function ringsPath(ctx, rings, lift) {
-      var f = lift ? Pz : P;
-      rings.forEach(function (a) {
-        for (var i = 0; i < a.length; i += 2) { var p = f(a[i], a[i + 1]); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }
-        ctx.closePath();
+    // -------------------------------------------------------------- layers
+    function addLayers() {
+      var below = firstOf(map, ["water"]) , roads = firstOf(map, ["tunnel_motorway_casing", "highway_path", "highway_minor"]), top = firstSymbol(map);
+      map.addSource("hs-wards", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-towers", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-metro", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-cbd", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-wlbl", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-dlbl", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      hatch(map);
+      map.addLayer({ id: "hs-few", type: "fill", source: "hs-wards", filter: ["<", ["get", "n"], MIN_N], paint: { "fill-pattern": "hs-hatch", "fill-opacity": 0.9, "fill-opacity-transition": { duration: 300 } } }, below);
+      map.addLayer({ id: "hs-hit", type: "fill", source: "hs-wards", paint: { "fill-color": "#000", "fill-opacity": 0 } }, below);
+      map.addLayer({ id: "hs-fill", type: "fill", source: "hs-wards", filter: [">=", ["get", "n"], MIN_N],
+        paint: { "fill-color": colorExpr("vi", BRK.idx), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 10, 0.88, 15, 0.7] } }, below);
+      map.addLayer({ id: "hs-line", type: "line", source: "hs-wards",
+        paint: { "line-color": "#ffffff", "line-opacity": 0.85, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 14, 1.6] } }, roads);
+      map.addLayer({ id: "hs-line2", type: "line", source: "hs-wards", layout: { visibility: "none" },
+        paint: { "line-color": INK, "line-opacity": 0.55, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.5, 14, 1.2] } }, top);
+      map.addLayer({ id: "hs-3d", type: "fill-extrusion", source: "hs-towers", layout: { visibility: "none" },
+        paint: { "fill-extrusion-color": colorExpr("vi", BRK.idx), "fill-extrusion-height": 0,
+          "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 13.5, 0.92, 15.5, 0.12],
+          "fill-extrusion-vertical-gradient": true } }, top);
+      if (map.getSource("openmaptiles")) map.addLayer({ id: "hs-bld", type: "fill-extrusion", source: "openmaptiles", "source-layer": "building", minzoom: 14, layout: { visibility: "none" },
+        paint: { "fill-extrusion-color": "#e6e1d6", "fill-extrusion-height": ["coalesce", ["get", "render_height"], 9], "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+          "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 0.85] } }, top);
+      map.setLight({ anchor: "viewport", position: [1.4, 200, 35], color: "#ffffff", intensity: 0.38 });
+      map.addLayer({ id: "hs-metro-case", type: "line", source: "hs-metro", filter: ["==", ["geometry-type"], "LineString"],
+        layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": PAPER, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 4, 15, 8] } }, top);
+      map.addLayer({ id: "hs-metro-line", type: "line", source: "hs-metro", filter: ["==", ["geometry-type"], "LineString"],
+        layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": INK, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 2, 15, 4] } }, top);
+      map.addLayer({ id: "hs-metro-st", type: "circle", source: "hs-metro", filter: ["==", ["geometry-type"], "Point"],
+        paint: { "circle-color": PAPER, "circle-stroke-color": INK, "circle-stroke-width": 1.6, "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.6, 15, 5] } });
+      map.addLayer({ id: "hs-metro-lbl", type: "symbol", source: "hs-metro", minzoom: 12.5, filter: ["==", ["geometry-type"], "Point"],
+        layout: { "text-field": ["get", "t"], "text-font": ["Noto Sans Regular"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-optional": true },
+        paint: { "text-color": INK, "text-halo-color": PAPER, "text-halo-width": 1.4 } });
+      Object.keys(POI).forEach(function (k) {
+        if (!map.getSource("openmaptiles")) return;
+        map.addLayer({ id: "hs-poi-" + k, type: "circle", source: "openmaptiles", "source-layer": "poi", minzoom: POI[k].z, filter: POI[k].f, layout: { visibility: "none" },
+          paint: { "circle-color": POI[k].col, "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2, "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, k === "bus" ? 2 : 3, 16, k === "bus" ? 4 : 6] } });
+        map.addLayer({ id: "hs-poil-" + k, type: "symbol", source: "openmaptiles", "source-layer": "poi", minzoom: k === "bus" ? 16 : 14.5, filter: POI[k].f, layout: { visibility: "none",
+          "text-field": ["coalesce", ["get", "name"], ""], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 0.9], "text-anchor": "top", "text-optional": true, "text-max-width": 9 },
+          paint: { "text-color": POI[k].col, "text-halo-color": "#ffffff", "text-halo-width": 1.3 } });
       });
+      map.addLayer({ id: "hs-wlbl", type: "symbol", source: "hs-wlbl", minzoom: 10.6,
+        layout: { "text-field": ["get", "t"], "text-font": ["Noto Sans Regular"], "text-size": ["interpolate", ["linear"], ["zoom"], 10.6, 9.5, 12, 11, 15, 13.5],
+          "symbol-sort-key": ["-", 0, ["get", "n"]], "text-padding": 3, "text-max-width": 7 },
+        paint: { "text-color": "#2b2f33", "text-halo-color": "rgba(250,249,245,0.92)", "text-halo-width": 1.5 } });
+      map.addLayer({ id: "hs-dlbl", type: "symbol", source: "hs-dlbl", maxzoom: 11.8,
+        layout: { "text-field": ["get", "t"], "text-font": ["Noto Sans Bold"], "text-size": ["interpolate", ["linear"], ["zoom"], 9, 10, 11.5, 12.5],
+          "text-transform": "none", "text-letter-spacing": 0.02, "symbol-sort-key": ["-", 0, ["get", "n"]], "text-padding": 4, "text-max-width": 7 },
+        paint: { "text-color": "#3b3f43", "text-halo-color": "rgba(250,249,245,0.92)", "text-halo-width": 1.6 } });
+      map.addLayer({ id: "hs-cbd-pt", type: "circle", source: "hs-cbd", paint: { "circle-color": PAPER, "circle-radius": 6, "circle-stroke-color": INK, "circle-stroke-width": 2 } });
+      map.addLayer({ id: "hs-cbd-in", type: "circle", source: "hs-cbd", paint: { "circle-color": INK, "circle-radius": 1.8 } });
+      map.addLayer({ id: "hs-cbd-lbl", type: "symbol", source: "hs-cbd", layout: { "text-field": ["get", "t"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-anchor": "left", "text-offset": [0.9, 0] },
+        paint: { "text-color": INK, "text-halo-color": PAPER, "text-halo-width": 1.6 } });
+      map.addLayer({ id: "hs-hl", type: "line", source: "hs-wards",
+        paint: { "line-color": ["case", ["boolean", ["feature-state", "hov"], false], INK, "#1f5f7a"], "line-width": 2.2,
+          "line-opacity": ["case", ["boolean", ["feature-state", "hov"], false], 1, ["boolean", ["feature-state", "hl"], false], 0.95, 0] } });
     }
-    function draw() {
-      if (!S) return;
-      metroFor(); T = fit(a);
-      var ctx = base.getContext("2d");
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
-      if (on("seg") && a === 0 && !teaser) {
-        if (!on("price")) S.wards.forEach(function (w) { if (!w.p.seg) return; ctx.beginPath(); ringsPath(ctx, w.rings); ctx.fillStyle = H.SEGC[w.p.seg]; ctx.globalAlpha = 0.55; ctx.fill(); });
-        ctx.globalAlpha = 1;
-      }
-      if (a === 0) {
-        if (on("price")) { ctx.imageSmoothingEnabled = false; var p0 = P(S.x0, S.y1), p1 = P(S.x1, S.y0); ctx.drawImage(S.img, p0[0], p0[1], p1[0] - p0[0], p1[1] - p0[1]); edge(ctx); }
-        order = null;
-      } else if (on("price")) cols3d(ctx);
-      if (on("seg") && on("price") && a === 0 && !teaser) {
-        S.wards.forEach(function (w) { if (!w.p.seg) return; ctx.beginPath(); ringsPath(ctx, w.rings); ctx.strokeStyle = H.SEGC[w.p.seg]; ctx.lineWidth = 2.2; ctx.stroke(); });
-      }
-      if (a === 0) ground(ctx);
-      drawOver();
+    function recolor() {
+      if (!map || !map.getLayer("hs-fill")) return;
+      var p = st.m === "idx" ? "vi" : "pm", b = BRK[st.m];
+      map.setPaintProperty("hs-fill", "fill-color", colorExpr(p, b));
+      map.setPaintProperty("hs-3d", "fill-extrusion-color", colorExpr(p, b));
+      if (st.v === "3d") map.setPaintProperty("hs-3d", "fill-extrusion-height", hExpr());
     }
-    // outline of the area with a surface, so the lightest class stays visible against the paper
-    function edge(ctx) {
-      if (!S.edge) {
-        var e = [], nx = S.nx, ny = S.ny, v = new Uint8Array(nx * ny), c = S.cell_m;
-        for (var q = 0; q < nx * ny; q++) v[q] = S.val[q] && S.keep[q] ? 1 : 0;
-        for (var iy = 0; iy < ny; iy++) for (var ix = 0; ix < nx; ix++) {
-          if (!v[iy * nx + ix]) continue;
-          var x = S.x0 + ix * c, y = S.y0 + iy * c;
-          if (ix === 0 || !v[iy * nx + ix - 1]) e.push(x, y, x, y + c);
-          if (ix === nx - 1 || !v[iy * nx + ix + 1]) e.push(x + c, y, x + c, y + c);
-          if (iy === 0 || !v[(iy - 1) * nx + ix]) e.push(x, y, x + c, y);
-          if (iy === ny - 1 || !v[(iy + 1) * nx + ix]) e.push(x, y + c, x + c, y + c);
-        }
-        S.edge = e;
-      }
-      ctx.beginPath();
-      for (var i = 0; i < S.edge.length; i += 4) { var a0 = P(S.edge[i], S.edge[i + 1]), a1 = P(S.edge[i + 2], S.edge[i + 3]); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); }
-      ctx.strokeStyle = "#b9b5aa"; ctx.lineWidth = 0.7; ctx.stroke();
+    function hExpr() { return st.m === "idx" ? ["*", ["get", "vi"], H3D] : ["*", ["coalesce", ["get", "pm"], 0], H3D / 160]; }
+    var grown = false;
+    function grow() { // columns rise from the ground each time 3D is switched on
+      if (!map.getLayer("hs-3d")) return;
+      if (st.v !== "3d") { grown = false; map.setPaintProperty("hs-3d", "fill-extrusion-height", 0); return; }
+      if (grown) return; grown = true;
+      if (H.reduced()) { map.setPaintProperty("hs-3d", "fill-extrusion-height", hExpr()); return; }
+      var t0 = 0;
+      (function step(ts) {
+        t0 = t0 || ts; var k = Math.min(1, (ts - t0) / 900), e = 1 - Math.pow(1 - k, 3);
+        if (st.v !== "3d") return;
+        map.setPaintProperty("hs-3d", "fill-extrusion-height", ["*", hExpr(), e]);
+        if (k < 1) requestAnimationFrame(step);
+      })(0);
     }
-    function ground(ctx) { // ward lines and metro lines; in 3D drawn on the overlay, draped over the columns
-      var lift = a > 0;
-      if (on("wards") && !teaser) {
-        ctx.beginPath(); S.wards.forEach(function (w) { ringsPath(ctx, w.rings, lift); });
-        ctx.strokeStyle = on("price") ? "rgba(250,249,245,0.75)" : "#b9b5aa"; ctx.lineWidth = 0.6; ctx.stroke();
-      }
-      if (on("metro") && M && !teaser) {
-        (M[st.c] || { lines: [] }).lines.forEach(function (ln) {
-          ctx.beginPath();
-          var pen = false, z = ln.m.map(function (q) { return lift ? zAt(q[0], q[1]) : 0; }), zs = z;
-          if (lift) { // ride the block tops: running max then running mean over +-3 points, so the line does not saw up and down
-            var mxz = z.map(function (v, i) { var m = 0; for (var j = Math.max(0, i - 3); j <= Math.min(z.length - 1, i + 3); j++) m = Math.max(m, z[j]); return v ? m : 0; });
-            zs = mxz.map(function (v, i) { if (!v) return 0; var t = 0, k = 0; for (var j = Math.max(0, i - 3); j <= Math.min(z.length - 1, i + 3); j++) if (mxz[j]) { t += mxz[j]; k++; } return t / k; });
-          }
-          ln.m.forEach(function (q, j) {
-            if (lift && !zs[j]) { pen = false; return; } // leaves the surface: lift the pen
-            var p = P(q[0], q[1]), i = pen; p[1] -= zs[j]; pen = true; if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
-          ctx.strokeStyle = PAPER; ctx.lineWidth = 4; ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
-        });
-      }
+    function vis() {
+      if (!map || !map.getLayer("hs-fill")) return;
+      var d3v = st.v === "3d";
+      function set(id, v) { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v ? "visible" : "none"); }
+      set("hs-fill", on("price")); set("hs-few", on("price"));
+      map.setPaintProperty("hs-fill", "fill-opacity", d3v ? 0.45 : ["interpolate", ["linear"], ["zoom"], 10, 0.88, 15, 0.7]);
+      set("hs-3d", d3v && on("price")); set("hs-bld", d3v); grow();
+      map.setPaintProperty("hs-few", "fill-opacity", d3v ? 0.35 : 0.9);
+      set("hs-line", on("price") || teaser); set("hs-line2", on("wards") && !teaser);
+      ["hs-metro-case", "hs-metro-line", "hs-metro-st", "hs-metro-lbl"].forEach(function (id) { set(id, on("metro")); });
+      Object.keys(POI).forEach(function (k) { set("hs-poi-" + k, on(k)); set("hs-poil-" + k, on(k)); });
+      ["hs-cbd-pt", "hs-cbd-in", "hs-cbd-lbl"].forEach(function (id) { set(id, on("cbd")); });
     }
-    function cols3d(ctx) {
-      var C = columns(S, W < 600 ? 3 : 2), n = C.x.length, h = C.half, ry = new Float64Array(n), i;
-      for (i = 0; i < n; i++) { var dx = C.x[i] - T.mx, dy = C.y[i] - T.my; ry[i] = dx * T.sin + dy * T.cos; }
-      if (!order || order.length !== n || order.th !== st.th) { order = Array.from({ length: n }, function (_, k) { return k; }); order.sort(function (p, q) { return ry[q] - ry[p]; }); order.th = st.th; }
-      // corner offsets of one column in screen units (same for every column)
-      var cx = [-h, h, h, -h], cy = [-h, -h, h, h], dX = [], dY = [];
-      for (i = 0; i < 4; i++) { dX.push((cx[i] * T.cos - cy[i] * T.sin) * T.s); dY.push(-(cx[i] * T.sin + cy[i] * T.cos) * T.s * T.c); }
-      var faces = [];
-      for (i = 0; i < 4; i++) { // a side faces the viewer when its outward normal points down the screen
-        var j = (i + 1) % 4, nx = cy[j] - cy[i], ny = -(cx[j] - cx[i]), nry = nx * T.sin + ny * T.cos, nrx = nx * T.cos - ny * T.sin;
-        if (nry < 0) faces.push([i, j, nrx < 0 ? 1 : 2]);
-      }
-      var shade = H.RAMP.map(function (c) { var o = d3.color(c); return [c, o.darker(0.45).toString(), o.darker(0.9).toString()]; });
-      boxes = new Float32Array(n * 4);
-      var mnX = Math.min.apply(null, dX), mxX = Math.max.apply(null, dX), mnY = Math.min.apply(null, dY), mxY = Math.max.apply(null, dY);
-      ctx.lineJoin = "round";
-      for (var k = 0; k < n; k++) {
-        i = order[k];
-        var p = P(C.x[i], C.y[i]), X = p[0], Y = p[1], z = C.v[i] * T.hk, col = shade[C.c[i]];
-        faces.forEach(function (f) {
-          ctx.beginPath(); ctx.moveTo(X + dX[f[0]], Y + dY[f[0]]); ctx.lineTo(X + dX[f[1]], Y + dY[f[1]]);
-          ctx.lineTo(X + dX[f[1]], Y + dY[f[1]] - z); ctx.lineTo(X + dX[f[0]], Y + dY[f[0]] - z); ctx.closePath();
-          ctx.fillStyle = col[f[2]]; ctx.fill();
-        });
-        ctx.beginPath(); ctx.moveTo(X + dX[0], Y + dY[0] - z);
-        for (var q = 1; q < 4; q++) ctx.lineTo(X + dX[q], Y + dY[q] - z);
-        ctx.closePath(); ctx.fillStyle = col[0]; ctx.fill();
-        boxes[k * 4] = X + mnX; boxes[k * 4 + 1] = Y + mnY - z; boxes[k * 4 + 2] = X + mxX; boxes[k * 4 + 3] = Y + mxY;
-      }
+    function view(anim) {
+      if (!map) return;
+      var o = st.v === "3d" ? { pitch: 55, bearing: st.th } : { pitch: 0, bearing: 0 };
+      if (anim && !H.reduced()) map.easeTo(Object.assign({ duration: 700 }, o)); else map.jumpTo(o);
     }
-    function label(ctx, s, x, y, align, weight) {
-      ctx.font = (weight || 400) + " " + (W < 600 ? 11 : 12) + "px " + SANS; ctx.textAlign = align || "left"; ctx.textBaseline = "middle";
-      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(250,249,245,0.9)"; ctx.strokeText(s, x, y); ctx.fillStyle = INK; ctx.fillText(s, x, y);
-    }
-    function drawOver() {
-      var ctx = over.getContext("2d"), cbd = CBD && CBD[st.c];
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
-      if (on("dots") && a === 0 && !teaser) S.wards.forEach(function (w) {
-        if (!w.p.n) return; var p = P(w.cx, w.cy);
-        ctx.beginPath(); ctx.arc(p[0], p[1], dotR(w.p.n), 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(35,39,43,0.35)"; ctx.fill(); ctx.strokeStyle = PAPER; ctx.lineWidth = 0.8; ctx.stroke();
-      });
-      if (a > 0) ground(ctx);
-      if (on("metro") && M && !teaser) (M[st.c] || { stations: [] }).stations.forEach(function (s) {
-        var p = Pz(s.m[0], s.m[1]); ctx.beginPath(); ctx.arc(p[0], p[1], W < 600 ? 2.5 : 3.2, 0, 2 * Math.PI);
-        ctx.fillStyle = PAPER; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
-      });
-      // highlighted former district (from the bubbles or a hover here): its new wards outlined in the accent
-      if (hl) {
-        var ws = S.wards.filter(function (w) { return w.p.d_old && key(w.p.d_old) === hl; });
-        if (ws.length) {
-          ctx.beginPath(); ws.forEach(function (w) { ringsPath(ctx, w.rings, a > 0); });
-          ctx.strokeStyle = ACC; ctx.lineWidth = 2; ctx.stroke();
-          var sx = 0, sy = 0; ws.forEach(function (w) { var p = Pz(w.cx, w.cy); sx += p[0]; sy += p[1]; });
-          label(ctx, ws[0].p.d_old, sx / ws.length, sy / ws.length, "center", 500);
-        }
-      }
-      if (hov && hov.ring) { ctx.beginPath(); ctx.arc(hov.ring[0], hov.ring[1], hov.ring[2], 0, 2 * Math.PI); ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.stroke(); }
-      if (on("cbd") && cbd && !teaser) {
-        var m = toM(S, cbd[0], cbd[1]), p = Pz(m[0], m[1]), z = a ? 18 * a : 0;
-        if (z) { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0], p[1] - z); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.stroke(); }
-        ctx.beginPath(); ctx.arc(p[0], p[1] - z, 4.5, 0, 2 * Math.PI); ctx.fillStyle = PAPER; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.6; ctx.stroke();
-        ctx.beginPath(); ctx.arc(p[0], p[1] - z, 1.6, 0, 2 * Math.PI); ctx.fillStyle = INK; ctx.fill();
-        var cw = H.textW(tx("centre"), W < 600 ? 11 : 12), right = p[0] + 8 + cw < W - 4;
-        label(ctx, tx("centre"), right ? p[0] + 8 : p[0] - 8, p[1] - z, right ? "left" : "right", 500);
-      }
-      offMap(ctx); north(ctx); if (a === 0) scale(ctx);
-    }
-    function offMap(ctx) { // arrow at the frame edge toward a distant part of the surface, with its ward name
-      (S.away || []).forEach(function (A) {
-        if (A.name == null) { var w = wardAt(S, A.x, A.y); A.name = w ? w.p.name : ""; }
-        var p = Pz(A.x, A.y), cx = W / 2, cy = Hh / 2;
-        var dx = p[0] - cx, dy = p[1] - cy, k = Math.min((W / 2 - 16) / Math.abs(dx || 1e-9), (Hh / 2 - 16) / Math.abs(dy || 1e-9));
-        var ex = cx + dx * k, ey = cy + dy * k, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l;
-        ctx.beginPath(); ctx.moveTo(ex - ux * 14, ey - uy * 14); ctx.lineTo(ex, ey); ctx.strokeStyle = MUTED; ctx.lineWidth = 1.3; ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(ex + ux * 2, ey + uy * 2); ctx.lineTo(ex - ux * 5 - uy * 4, ey - uy * 5 + ux * 4); ctx.lineTo(ex - ux * 5 + uy * 4, ey - uy * 5 - ux * 4); ctx.closePath(); ctx.fillStyle = MUTED; ctx.fill();
-        if (A.name) {
-          var s2 = fill(tx("off"), { w: A.name }), al = ux > 0.5 ? "right" : ux < -0.5 ? "left" : "center";
-          var lx = ex - ux * 20, ly = ey - uy * 20 + (Math.abs(uy) < 0.5 ? 14 : 0);
-          label(ctx, s2, lx, ly, al);
-        }
-      });
-    }
-    function dotR(n) { return Math.max(1.5, Math.sqrt(n) * (W < 600 ? 0.8 : 1.1)); }
-    function north(ctx) { // arrow pointing to map north (rotates with the 3D view)
-      var x = W - 22, y = 30, ux = -T.sin, uy = -T.cos * T.c, l = Math.hypot(ux, uy) || 1; ux /= l; uy /= l;
-      ctx.beginPath(); ctx.moveTo(x - ux * 11, y - uy * 11); ctx.lineTo(x + ux * 11, y + uy * 11); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x + ux * 13, y + uy * 13); ctx.lineTo(x + ux * 5 - uy * 4, y + uy * 5 + ux * 4); ctx.lineTo(x + ux * 5 + uy * 4, y + uy * 5 - ux * 4); ctx.closePath(); ctx.fillStyle = INK; ctx.fill();
-      label(ctx, tx("N"), x - ux * 20, y - uy * 20, "center", 500);
-    }
-    function scale(ctx) {
-      var L = [1, 2, 5, 10, 20].filter(function (k) { return k * 1000 * T.s <= (W < 600 ? 90 : 130); }).pop() || 1, px = L * 1000 * T.s, x = W - 14 - px, y = Hh - 14;
-      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x, y); ctx.lineTo(x + px, y); ctx.lineTo(x + px, y - 4);
-      ctx.strokeStyle = PAPER; ctx.lineWidth = 3.5; ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.stroke();
-      label(ctx, H.nf(L, 0) + " km", x + px / 2, y - 11, "center");
-    }
-    function key(name) { return (st.c === "hn" ? "HN" : "HCM") + " | " + name; }
-
-    // ---------------------------------------------------------------- 2D <-> 3D
-    function animate(to) {
-      cancelAnimationFrame(anim);
-      if (reduced) { a = to; order = null; paint(); draw(); return; }
-      var from = a, t0 = performance.now();
-      (function step(now) {
-        var u = Math.min(1, (now - t0) / DUR), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-        a = from + (to - from) * e; draw();
-        if (u < 1) anim = requestAnimationFrame(step); else { a = to; draw(); }
-      })(t0);
-    }
-
-    // ---------------------------------------------------------------- hover and click
-    function find(X, Y) {
-      if (!S || !T) return null;
-      var hit = null, i, m;
-      if (!teaser && on("metro") && M) (M[st.c] || { stations: [] }).stations.forEach(function (s) {
-        var p = Pz(s.m[0], s.m[1]); if (!hit && Math.hypot(p[0] - X, p[1] - Y) < 7) hit = { kind: "st", s: s, ring: [p[0], p[1], 6], k: "st:" + s.name };
-      });
-      if (hit) return hit;
-      if (!teaser && on("cbd") && CBD && CBD[st.c]) {
-        m = toM(S, CBD[st.c][0], CBD[st.c][1]); var pc = Pz(m[0], m[1]), z = a ? 18 * a : 0;
-        if (Math.hypot(pc[0] - X, pc[1] - z - Y) < 8) return { kind: "cbd", k: "cbd", ring: [pc[0], pc[1] - z, 7] };
-      }
-      if (!teaser && on("dots") && a === 0) for (i = 0; i < S.wards.length; i++) {
-        var w = S.wards[i]; if (!w.p.n) continue; var pw = P(w.cx, w.cy), r = dotR(w.p.n);
-        if (Math.hypot(pw[0] - X, pw[1] - Y) <= r + 1) return { kind: "ward", w: w, k: "w:" + w.p.code, ring: [pw[0], pw[1], r + 2] };
-      }
-      if (a === 0) {
-        m = inv(X, Y);
-        var ix = Math.floor((m[0] - S.x0) / S.cell_m), iy = Math.floor((m[1] - S.y0) / S.cell_m);
-        if (ix < 0 || iy < 0 || ix >= S.nx || iy >= S.ny) return null;
-        var j = iy * S.nx + ix, vv = S.keep[j] ? S.val[j] : 0;
-        if (!vv && !on("seg") && !on("wards")) return null;
-        var cx = S.x0 + (ix + 0.5) * S.cell_m, cy = S.y0 + (iy + 0.5) * S.cell_m;
-        return cell(vv, S.n1[j], cx, cy, "c:" + j);
-      }
-      if (!boxes || !on("price")) return null;
-      var C = columns(S, W < 600 ? 3 : 2);
-      for (var k = order.length - 1; k >= 0; k--) {
-        var b = k * 4; if (X < boxes[b] || X > boxes[b + 2] || Y < boxes[b + 1] || Y > boxes[b + 3]) continue;
-        i = order[k]; return cell(C.v[i], C.n[i], C.x[i], C.y[i], "b:" + i, [ (boxes[b] + boxes[b + 2]) / 2, boxes[b + 1] ]);
-      }
-      return null;
-    }
-    function cell(v, n, x, y, k, top) {
-      var w = wardAt(S, x, y), p = P(x, y);
-      if (!v && !w) return null;
-      return { kind: "cell", v: v, n: n, w: w, k: k, ring: top ? [top[0], top[1], 4] : [p[0], p[1], Math.max(3, S.cell_m * T.s)] };
-    }
-    function card(h) {
-      var o = { rows: [], m: [] };
-      if (h.kind === "st") {
-        o.h = h.s.name; o.rows.push([tx("st"), H.city(st.c)]);
-        if (h.s.lines && h.s.lines.length) o.m.push(tx("line") + ": " + h.s.lines.join(", "));
-        return H.card(o);
-      }
-      if (h.kind === "cbd") { o.h = tx("centre"); o.m.push(tx("centreM")); return H.card(o); }
-      var w = h.w, wp = w && w.p;
-      o.h = wp ? wp.name + tx("newWard") : H.city(st.c);
-      if (wp && wp.d_old) o.m.push(fill(tx(wp.d_old_src === "gadm" ? "oldGadm" : "oldBy"), { d: wp.d_old }));
-      if (h.kind === "cell" && h.v) {
-        o.rows.push([tx("rIdx"), tx("x") + H.nf(h.v, 2)]);
-        o.rows.push([tx("rN"), H.nf(h.n, 0)]);
-      }
-      if (wp && wp.ppm2_med != null && wp.n) o.rows.push([tx("rMed"), H.ppm2(wp.ppm2_med) + " (" + fill(tx("allTypes"), { n: wp.n === 1 ? tx("one") : fill(tx("many"), { n: H.nf(wp.n, 0) }) }) + ")"]);
-      else if (wp && h.kind === "ward") o.rows.push([tx("rNw"), H.nf(wp.n || 0, 0)]);
-      if (on("seg") && wp && wp.seg && !teaser) { o.sw = H.SEGC[wp.seg]; o.rows.push([tx("seg0"), H.seg(wp.seg).name]); }
-      if (h.kind === "cell" && h.v) {
-        var d = h.v - 1;
-        o.m.push(Math.abs(d) < 0.05 ? tx("near") : fill(tx(d > 0 ? "above" : "below"), { p: H.pct(Math.abs(d), 0) }));
-        if (h.n < 3) o.m.push(tx("few"));
-      }
-      if (teaser) o.m.push(tx(H.touch ? "tapT" : "clickT"));
-      else if (wp && wp.d_old && dk(wp.d_old)) o.m.push(tx(H.touch ? "tapF" : "clickF"));
-      return H.card(o);
-    }
-    function dk(name) { // key of a former district known to the tool, else ""
-      if (!D) return "";
-      var k = key(name);
-      return D.some(function (d) { return d.key === k; }) ? k : "";
-    }
-    function show(h, ev) {
-      hov = h; drawOver();
-      if (!h) { H.tip.hide(); emitHover(""); return; }
-      if (H.touch && W < 600) { var r = plot.getBoundingClientRect(); H.tip.show(r.left + 4, r.top - 6, card(h)); }
-      else H.tip.show(ev.clientX, ev.clientY, card(h));
-      emitHover(h.w && h.w.p.d_old ? dk(h.w.p.d_old) : "");
-    }
-    var lastEmit = "", self = false;
-    function emitHover(k) { if (teaser || k === lastEmit) return; lastEmit = k; self = true; H.emit("hover-district", k ? { key: k } : null); self = false; }
-    function xy(ev) { var r = over.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
-    over.addEventListener("pointermove", function (ev) {
-      if (ev.pointerType !== "mouse") return;
-      var q = xy(ev); show(find(q[0], q[1]), ev);
-    });
-    over.addEventListener("pointerleave", function (ev) { if (ev.pointerType === "mouse") show(null, ev); });
-    over.addEventListener("click", function (ev) {
-      var q = xy(ev), h = find(q[0], q[1]), touch = H.touch = ev.pointerType ? ev.pointerType !== "mouse" : !!H.touchLast;
-      if (!h) { tapKey = null; show(null, ev); return; }
-      if (touch && tapKey !== h.k) { tapKey = h.k; show(h, ev); return; } // first tap shows the card, the second acts
-      tapKey = null; act(h);
-    });
-    over.addEventListener("pointerdown", function (ev) { H.touchLast = ev.pointerType !== "mouse"; H.touch = H.touchLast; });
-    document.addEventListener("pointerdown", function (ev) { if (ev.target !== over && hov) { tapKey = null; show(null, ev); } });
-    function act(h) {
-      if (teaser) { location.href = (opts.href || "housing.html") + "#c=" + st.c; return; }
-      var k = h.w && h.w.p.d_old ? dk(h.w.p.d_old) : "";
-      if (k) { H.tip.hide(); H.set({ d: k }); H.emit("pick-district", { key: k }); }
-    }
-
-    // ---------------------------------------------------------------- lifecycle
-    var token = 0;
-    function load() {
-      var my = ++token; status.textContent = tx("load"); status.hidden = false;
-      var jobs = [getCity(st.c)];
-      if (!teaser) jobs.push(getShared());
-      Promise.all(jobs).then(function (r) {
-        if (my !== token) return;
-        S = r[0];
-        if (r[1]) {
-          var mt = r[1][0]; D = r[1][1]; CBD = (r[1][2] || {}).cbd || null;
-          M = M || prepMetro(mt);
-        }
-        status.hidden = true; order = null; hl = teaser ? "" : (H.st.d || ""); size(); paint(); draw();
+    function setCity() {
+      if (!map) return;
+      var my = st.c;
+      status.textContent = tx("load"); status.hidden = false;
+      prepCity(my).then(function (C) {
+        if (my !== st.c) return;
+        setHov(null); map.removeFeatureState({ source: "hs-wards" });
+        cur = C;
+        map.getSource("hs-wards").setData(C.wards);
+        map.getSource("hs-towers").setData(C.towers);
+        var mt = M && M[my] ? M[my] : { lines: [], stations: [] }, fs = [];
+        mt.lines.forEach(function (l) { fs.push({ type: "Feature", properties: { name: l.name }, geometry: { type: "LineString", coordinates: l.coords } }); });
+        mt.stations.forEach(function (s) { fs.push({ type: "Feature", properties: { name: s.name, line: nearLine(mt, s) }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } }); });
+        metroFC = { type: "FeatureCollection", features: fs };
+        labels();
+        var pad = teaser ? 8 : 24;
+        map.setMaxBounds(null); map.setMinZoom(0);
+        map.fitBounds(C.box, { padding: pad, duration: 0, pitch: st.v === "3d" ? 55 : 0, bearing: st.v === "3d" ? st.th : 0 });
+        var b = C.box, dx = (b[1][0] - b[0][0]) * 0.6, dy = (b[1][1] - b[0][1]) * 0.6;
+        map.setMaxBounds([[b[0][0] - dx, b[0][1] - dy], [b[1][0] + dx, b[1][1] + dy]]);
+        map.setMinZoom(Math.max(8, map.getZoom() - 1));
+        status.hidden = true; setHl(teaser ? "" : (H.st.d || ""));
       }).catch(function (e) { status.hidden = true; H.fail(fig, e); });
     }
-    function prepMetro(mt) {
-      var out = {};
-      ["hn", "hcm"].forEach(function (c) {
-        var g = mt[c]; if (!g) return;
-        // metres need the city's own projection constants: taken from the surface once it is loaded
-        out[c] = { raw: g, lines: [], stations: [] };
-      });
-      return out;
+    var metroFC = { type: "FeatureCollection", features: [] };
+    function nearLine(mt, st0) { // the line whose vertices pass closest to the station
+      var best = "", bd = 1e9;
+      mt.lines.forEach(function (l) { l.coords.forEach(function (q) { var d = Math.abs(q[0] - st0.lon) + Math.abs(q[1] - st0.lat); if (d < bd) { bd = d; best = l.name; } }); });
+      return best;
     }
-    function metroFor() { // project the raw lon/lat of the current city with its surface constants (lazily)
-      if (!M || !M[st.c] || M[st.c].ready) return;
-      var g = M[st.c].raw, o = M[st.c];
-      o.lines = (g.lines || []).map(function (l) {
-        var m = [];
-        l.coords.forEach(function (q, i) {
-          var b = toM(S, q[0], q[1]);
-          if (i) { var a0 = m[m.length - 1], k = Math.ceil(Math.hypot(b[0] - a0[0], b[1] - a0[1]) / (S.cell_m / 2)); for (var j = 1; j < k; j++) m.push([a0[0] + (b[0] - a0[0]) * j / k, a0[1] + (b[1] - a0[1]) * j / k]); }
-          m.push(b);
-        });
-        return { name: l.name, m: m };
-      });
-      o.stations = (g.stations || []).map(function (s) { return { name: s.name, lines: s.lines, m: toM(S, s.lon, s.lat) }; });
-      o.ready = true;
+    function labels() { // every name on the map, in the reader's language
+      if (!map || !cur) return;
+      cbdData();
+      map.getSource("hs-metro").setData({ type: "FeatureCollection", features: metroFC.features.map(function (f) {
+        if (f.geometry.type !== "Point") return f;
+        return { type: "Feature", properties: { name: f.properties.name, line: f.properties.line, t: H.pn(f.properties.name) }, geometry: f.geometry };
+      }) });
+      map.getSource("hs-wlbl").setData({ type: "FeatureCollection", features: cur.wards.features.map(function (f) {
+        return { type: "Feature", properties: { t: H.pn(f.properties.name, true), n: f.properties.n || 0 }, geometry: { type: "Point", coordinates: f.properties.c } };
+      }) });
+      map.getSource("hs-dlbl").setData({ type: "FeatureCollection", features: (D || []).filter(function (d) { return d.city === st.c; }).map(function (d) {
+        return { type: "Feature", properties: { t: H.pn(d.name, true), n: d.n || 0 }, geometry: { type: "Point", coordinates: [d.lon, d.lat] } };
+      }) });
+    }
+    function cbdData() {
+      if (!map || !map.getSource("hs-cbd")) return;
+      var p = CBD && CBD[st.c];
+      map.getSource("hs-cbd").setData({ type: "FeatureCollection", features: p ? [{ type: "Feature", properties: { t: tx("centre") }, geometry: { type: "Point", coordinates: p } }] : [] });
+    }
+    function setHl(k) {
+      if (!map || !cur) return;
+      hlKey = k;
+      cur.wards.features.forEach(function (f) { map.setFeatureState({ source: "hs-wards", id: f.id }, { hl: !!k && dk(f.properties.d_old) === k }); });
     }
 
-    H.on("hover-district", function (e) { if (self || teaser) return; hl = e && e.key ? e.key : ""; if (S) drawOver(); });
+    // -------------------------------------------------------------- hover and click
+    function dk(name) {
+      if (!D || !name) return "";
+      var k = (st.c === "hn" ? "HN" : "HCM") + " | " + name;
+      return D.some(function (d) { return d.key === k; }) ? k : "";
+    }
+    function seg(name) {
+      var k = dk(name), d = k && D.filter(function (x) { return x.key === k; })[0];
+      return d && d.seg ? d.seg : null;
+    }
+    function pick(pt) {
+      if (!map || !map.getLayer("hs-fill")) return null;
+      var ids = ["hs-metro-st", "hs-cbd-pt"].concat(Object.keys(POI).map(function (k) { return "hs-poi-" + k; }))
+        .filter(function (id) { return map.getLayer(id) && map.getLayoutProperty(id, "visibility") !== "none"; });
+      var r = 6, P = [pt.x, pt.y], q = ids.length ? map.queryRenderedFeatures([[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]], { layers: ids }) : [];
+      if (q.length) return { f: q[0], kind: q[0].layer.id };
+      var wl = ["hs-3d", "hs-fill", "hs-few"].filter(function (id) { return map.getLayoutProperty(id, "visibility") !== "none"; });
+      if (!wl.length) wl = ["hs-hit"];
+      q = map.queryRenderedFeatures(P, { layers: wl });
+      if (!q.length && st.v === "2d") return null;
+      return q.length ? { f: q[0], kind: "ward", id: q[0].id } : null;
+    }
+    function card(h) {
+      var o = { rows: [], m: [] }, p = h.f.properties;
+      if (h.kind === "hs-metro-st") { o.h = H.pn(p.name); o.rows.push([tx("st"), H.city(st.c)]); if (p.line) o.m.push(H.line(p.line)); return H.card(o); }
+      if (h.kind === "hs-cbd-pt") { o.h = tx("centre"); o.m.push(tx("centreM")); return H.card(o); }
+      if (h.kind.indexOf("hs-poi-") === 0) { var k = h.kind.slice(7); o.h = p.name ? (H.lang() === "en" ? H.ascii(p["name:en"] || p["name:latin"] || p.name) : p.name) : TX[H.lang()].poiK[k]; o.sw = POI[k].col; o.m.push(TX[H.lang()].poiK[k]); return H.card(o); }
+      var w = cur.wards.features[h.id].properties;
+      o.h = H.pn(w.name) + tx("newWard");
+      if (w.d_old) o.m.push(fill(tx(w.d_old_src === "gadm" ? "oldGadm" : "oldBy"), { d: H.pn(w.d_old) }));
+      if (w.vi != null) {
+        o.rows.push([tx("rIdx"), "×" + H.nf(w.vi, 2)]);
+        if (w.pm != null) o.rows.push([tx("rPpm"), H.ppm2(w.pm)]);
+      }
+      o.rows.push([tx("rN"), H.nf(w.n || 0, 0)]);
+      var sg = seg(w.d_old);
+      if (sg) { o.rows.push([tx("rSeg"), H.seg(sg).name]); o.sw = H.SEGC[sg]; }
+      if (w.vi != null) {
+        var d = w.vi - 1;
+        o.m.push(Math.abs(d) < 0.05 ? tx("near") : fill(tx(d > 0 ? "above" : "below"), { p: H.pct(Math.abs(d), 0) }));
+        if (w.n < 10) o.m.push(fill(tx("thin"), { n: H.nf(w.n, 0) }));
+      } else o.m.push(tx("none"));
+      if (teaser) o.m.push(tx(H.touch ? "tapT" : "clickT"));
+      else if (dk(w.d_old)) o.m.push(tx(H.touch ? "tapF" : "clickF"));
+      return H.card(o);
+    }
+    function setHov(id) {
+      if (hovId === id) return;
+      if (hovId != null) map.setFeatureState({ source: "hs-wards", id: hovId }, { hov: false });
+      hovId = id;
+      if (id != null) map.setFeatureState({ source: "hs-wards", id: id }, { hov: true });
+    }
+    function show(h, ev) {
+      if (!h) { setHov(null); H.tip.hide(); emitHover(""); box.style.cursor = ""; return; }
+      setHov(h.kind === "ward" ? h.id : null);
+      box.style.cursor = h.kind === "ward" || teaser ? "pointer" : "default";
+      H.tip.show(ev.clientX, ev.clientY, card(h));
+      emitHover(h.kind === "ward" ? dk(cur.wards.features[h.id].properties.d_old) : "");
+    }
+    function emitHover(k) { if (teaser || k === lastEmit) return; lastEmit = k; self = true; H.emit("hover-district", k ? { key: k } : null); self = false; }
+    function act(h) {
+      if (teaser) { location.href = (opts.href || "housing.html") + "#c=" + st.c; return; }
+      if (h.kind !== "ward") return;
+      var k = dk(cur.wards.features[h.id].properties.d_old);
+      if (k) { H.tip.hide(); H.set({ d: k }); H.emit("pick-district", { key: k }); }
+    }
+    function wire() {
+      var cv = map.getCanvasContainer();
+      cv.addEventListener("pointermove", function (ev) {
+        if (ev.pointerType !== "mouse" || ev.buttons) return;
+        var r = cv.getBoundingClientRect(); show(pick({ x: ev.clientX - r.left, y: ev.clientY - r.top }), ev);
+      });
+      cv.addEventListener("pointerleave", function (ev) { if (ev.pointerType === "mouse") show(null, ev); });
+      cv.addEventListener("pointerdown", function (ev) { H.touchLast = ev.pointerType !== "mouse"; H.touch = H.touchLast; });
+      map.on("click", function (e) {
+        var ev = e.originalEvent, h = pick(e.point), touch = H.touch;
+        if (!h) { tapKey = null; show(null, ev); return; }
+        var key = h.kind + (h.id != null ? h.id : h.f.properties.name);
+        if (touch && tapKey !== key) { tapKey = key; show(h, ev); return; } // first tap shows the card, the second acts
+        tapKey = null; act(h);
+      });
+      map.on("movestart", function () { if (H.touch) return; H.tip.hide(); });
+      map.on("zoomend", drawLegend);
+      map.on("rotate", function () { if (rng && st.v === "3d") { st.th = Math.round(map.getBearing()); rng.value = st.th; } });
+    }
+
+    // -------------------------------------------------------------- lifecycle
+    function start() {
+      if (!glOK()) { status.textContent = tx("nogl"); status.hidden = false; fig.classList.add("hs-nogl"); return; }
+      status.textContent = tx("load"); status.hidden = false;
+      var shared = teaser ? Promise.resolve([null, null]) : Promise.all([H.load("metro"), H.load("districts")]);
+      Promise.all([loadML(), shared, H.load("meta").catch(function () { return null; })]).then(function (r) {
+        var ml = r[0]; M = r[1][0]; D = r[1][1]; CBD = r[2] && r[2].cbd || null;
+        map = new ml.Map({
+          container: box, style: STYLE, attributionControl: { compact: true }, dragRotate: !teaser, pitchWithRotate: !teaser,
+          interactive: true, cooperativeGestures: !teaser, maxPitch: 65, fadeDuration: 0,
+          locale: { "CooperativeGesturesHandler.WindowsHelpText": tx("gWin"), "CooperativeGesturesHandler.MacHelpText": tx("gMac"), "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }
+        });
+        fig.hsMap = map;
+        if (teaser) { map.scrollZoom.disable(); map.dragPan.disable(); map.touchZoomRotate.disable(); map.doubleClickZoom.disable(); map.keyboard.disable(); }
+        else map.addControl(new ml.NavigationControl({ visualizePitch: true }), "top-right");
+        map.on("load", function () {
+          try { tune(map); baseNames(map); } catch (e) { if (window.console) console.warn("housing atlas: base style", e); }
+          addLayers(); recolor(); vis(); view(false); wire(); setCity(); paint();
+        });
+        map.on("error", function (e) { if (window.console) console.warn("housing atlas map:", e && e.error ? e.error.message : e); });
+      }).catch(function (e) { status.hidden = true; H.fail(fig, e); });
+    }
+    H.on("hover-district", function (e) { if (self || teaser) return; setHl(e && e.key ? e.key : ""); });
     H.on("state", function (ch) {
       if (teaser || !ch) return;
-      if (H.st.c !== st.c) { st.c = H.st.c; load(); paint(); }
-      else if (S && (H.st.d || "") !== hl && !hov) { hl = H.st.d || ""; drawOver(); }
+      if (H.st.c !== st.c) { st.c = H.st.c; paint(); setCity(); }
+      else if ((H.st.d || "") !== hlKey && hovId == null) setHl(H.st.d || "");
     });
-    H.onLang(function () { paint(); if (S) draw(); if (hov) H.tip.hide(); });
-    var lastW = 0;
-    var ro = window.ResizeObserver ? new ResizeObserver(function () { if (!S || plot.clientWidth === lastW) return; lastW = plot.clientWidth; size(); order = null; draw(); }) : null;
-    if (ro) ro.observe(plot); else window.addEventListener("resize", function () { if (S) { size(); draw(); } });
-    paint(); load();
-    return { city: function (c) { choose("c", c); }, redraw: function () { if (S) { size(); draw(); } } };
+    H.onLang(function () {
+      paint(); labels(); H.tip.hide();
+      if (map) { baseNames(map); if (map._locale) { map._locale["CooperativeGesturesHandler.WindowsHelpText"] = tx("gWin"); map._locale["CooperativeGesturesHandler.MacHelpText"] = tx("gMac"); map._locale["CooperativeGesturesHandler.MobileHelpText"] = tx("gMob"); } }
+    });
+    var lw = 0;
+    if (window.ResizeObserver) new ResizeObserver(function () { var w = plot.clientWidth; if ((w < 600) !== (lw < 600)) { lw = w; drawLegend(); } lw = w; }).observe(plot);
+    paint();
+    H.lazy(fig, start, "600px");
+    return { city: function (c) { choose("c", c); }, redraw: function () { if (map) map.resize(); } };
   };
 
   function mountAll() {

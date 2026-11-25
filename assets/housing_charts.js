@@ -105,7 +105,7 @@
   };
 
   function gradient(fig) {
-    var S = make(fig, function () { return H.load("gradient"); }, drawGradient, ["Rings with fewer than 10 listings are left out. Listings placed at a ward centre count half.", "Bỏ các vòng có dưới 10 tin. Tin chỉ có tọa độ tâm phường được tính một nửa."]);
+    var S = make(fig, function () { return H.load("gradient"); }, drawGradient, ["Rings with fewer than 25 listings are left out. Listings placed at a ward centre count half.", "Bỏ các vòng có dưới 25 tin. Tin chỉ có tọa độ tâm phường được tính một nửa."]);
     H.on("state", function () { if (S.d && S.cur !== H.st.c) S.render(); });
   }
 
@@ -114,7 +114,7 @@
     S.cur = cur;
     var ser = ["hn", "hcm"].filter(function (c) { return d[c] && d[c].rings; }).map(function (c) {
       return {
-        c: c, col: H.CITYC[c], pts: d[c].rings.filter(function (r) { return r.n >= 10 && r.km < 25; }).map(function (r) {
+        c: c, col: H.CITYC[c], pts: d[c].rings.filter(function (r) { return r.n >= 25 && r.km < 25; }).map(function (r) {
           return { c: c, km: r.km, x: r.km + 0.5, rel: r.rel, lo: r.lo, hi: r.hi, n: r.n, d: r.d || [] };
         })
       };
@@ -138,8 +138,8 @@
     var area = d3.area().x(function (p) { return x(p.x); }).y0(function (p) { return y(p.lo); }).y1(function (p) { return y(p.hi); }),
       line = d3.line().x(function (p) { return x(p.x); }).y(function (p) { return y(p.rel); });
     ser.forEach(function (s) {
-      var on = s.c === cur, sg = g.append("g").attr("opacity", on ? 1 : 0.45);
-      sg.append("path").attr("d", area(s.pts)).attr("fill", s.col).attr("fill-opacity", 0.15);
+      var on = s.c === cur, sg = g.append("g").attr("opacity", on ? 1 : 0.8);
+      sg.append("path").attr("d", area(s.pts)).attr("fill", s.col).attr("fill-opacity", on ? 0.14 : 0.08);
       sg.append("path").attr("d", line(s.pts)).attr("fill", "none").attr("stroke", s.col).attr("stroke-width", on ? 2 : 1.5);
       sg.selectAll("circle").data(s.pts).enter().append("circle").attr("cx", function (p) { return x(p.x); }).attr("cy", function (p) { return y(p.rel); })
         .attr("r", nar ? 3 : 3.5).attr("fill", s.col).attr("stroke", PAPER).attr("stroke-width", 1);
@@ -164,7 +164,7 @@
       if (!best) { S.clear(); return null; }
       guide.attr("x1", x(best.x)).attr("x2", x(best.x)).style("display", null);
       var rows = [[X.price, times(best.rel)], [L("rng"), times(best.lo) + "–" + times(best.hi)], [L("n"), nf(best.n)]];
-      var mostly = best.d.slice(0, 3).map(function (q) { return q[0] + " (" + nf(q[1]) + ")"; }).join(", ");
+      var mostly = best.d.slice(0, 3).map(function (q) { return H.pn(q[0]) + " (" + nf(q[1]) + ")"; }).join(", ");
       var ms = [tr("The ring average, after allowing for type and plot size.", "Giá trung bình của vòng, đã tính đến loại nhà và diện tích lô.")];
       if (mostly) ms.push(X.mostly + mostly);
       return { key: best.c + best.km, node: H.card({ h: X.ring.replace("{c}", H.city(best.c)).replace("{a}", nf(best.km)).replace("{b}", nf(best.km + 1)), sw: H.CITYC[best.c], rows: rows, m: ms }) };
@@ -178,139 +178,6 @@
       take(S.fig, tr(en, vi));
     }
   }
-
-  // 3. bill (waterfall)
-  var ORD = ["legal", "street", "road4", "corner", "metro"];
-  var BL = {
-    legal: ["Red or pink book (vs other papers)", "Có sổ đỏ, sổ hồng (so với giấy tờ khác)"],
-    street: ["On the street front (vs in an alley)", "Mặt tiền (so với trong hẻm, ngõ)"],
-    road4: ["Access road 4 m or wider", "Đường vào rộng từ 4 m"],
-    corner: ["Corner lot", "Lô góc"],
-    metro: ["Within 1 km of a metro station", "Cách ga metro không quá 1 km"]
-  };
-
-  function bill(fig) {
-    var S = make(fig, function () { return H.load("premiums"); }, drawBill, ["Each feature is estimated on its own; where steps are stacked it is an illustration, not a price forecast. Cross-section of asking prices: these are differences in asking prices, not effects.", "Mỗi đặc điểm được ước lượng riêng; khi các bậc cộng dồn thì chỉ để minh họa, không phải dự báo giá. Dữ liệu cắt ngang về giá rao: đây là chênh lệch giá rao, không phải tác động."]);
-    S.ctl = ctl(fig);
-    H.on("state", function () { if (S.d && S.t0 !== H.st.t) S.render(); });
-  }
-
-  function pctPhrase(r) {
-    var a = H.pct(Math.abs(r.prem), 0), lo = H.spct(r.lo, 0), hi = H.spct(r.hi, 0);
-    return tr("usually asked about " + H.spct(r.prem, 0) + " (roughly " + lo + " to " + hi + ")",
-      "thường được rao " + (r.prem >= 0 ? "cao" : "thấp") + " hơn khoảng " + a + " (khoảng " + lo + " đến " + hi + ")");
-  }
-
-  function ntc(r) { return nf(r.nt != null ? r.nt : r.nt_sample) + " / " + nf(r.nc != null ? r.nc : r.nc_sample); }
-  function verdict(r) { return r.gate === "INSUFFICIENT" ? H.t("few") : H.t("nodiff"); }
-  // one sentence per passing row: [subject, comparison] in EN, then in VI
-  var TK = {
-    legal: ["Homes with a red or pink book are", "similar homes with other papers", "Nhà có sổ đỏ, sổ hồng thường được rao", "nhà tương tự có giấy tờ khác"],
-    street: ["Street-front houses are", "similar alley houses", "Nhà mặt tiền thường được rao", "nhà hẻm, ngõ tương tự"],
-    road4: ["Homes on an access road 4 m or wider are", "similar homes on narrower roads", "Nhà có đường vào rộng từ 4 m thường được rao", "nhà tương tự có đường vào hẹp hơn"],
-    corner: ["Corner lots are", "similar lots not on a corner", "Lô góc thường được rao", "lô tương tự không ở góc"],
-    metro: ["Homes within 1 km of a metro station are", "similar homes farther away", "Nhà cách ga metro không quá 1 km thường được rao", "nhà tương tự ở xa hơn"]
-  };
-  function sentence(r) {
-    var t = TK[r.attr], up = r.prem >= 0, a = H.pct(Math.abs(r.prem), 0), lo = H.pct(Math.min(Math.abs(r.lo), Math.abs(r.hi)), 0), hi = H.pct(Math.max(Math.abs(r.lo), Math.abs(r.hi)), 0);
-    return tr(t[0] + " usually asked about " + a + (up ? " more" : " less") + " than " + t[1] + " in the same former district (roughly " + lo + " to " + hi + ").",
-      t[2] + (up ? " cao hơn" : " thấp hơn") + " khoảng " + a + " so với " + t[3] + " trong cùng quận cũ (khoảng " + lo + " đến " + hi + ").");
-  }
-
-  function drawBill(S) {
-    var d = S.d, w = S.w, nar = w < 600, gs = d.groups || [];
-    if (!gs.length) throw new Error("premiums: no groups");
-    var g = gs.filter(function (q) { return q.group === H.st.t; })[0] || gs[0];
-    S.t0 = H.st.t;
-    pills(S.ctl, gs.map(function (q) { return [q.group, H.type(q.group)]; }), g.group, function (v) { H.set({ t: v }); }, tr("Type of home", "Loại nhà"));
-    var rows = ORD.map(function (a) { return d.rows.filter(function (r) { return r.group === g.group && r.attr === a; })[0]; }).filter(Boolean);
-    var list = !rows.some(function (r) { return r.gate === "PASS" && r.prem != null && r.lo != null && r.hi != null; });
-    var lev = g.med_price_bn, its = [{ base: true, to: lev }];
-    rows.forEach(function (r) {
-      var it = { r: r, lab: BL[r.attr] ? tr(BL[r.attr][0], BL[r.attr][1]) : r.attr };
-      if (!list && r.gate === "PASS" && r.prem != null && r.lo != null && r.hi != null) {
-        it.pass = true; it.from = lev; it.to = lev * (1 + r.prem); it.lo = lev * (1 + r.lo); it.hi = lev * (1 + r.hi); lev = it.to;
-      } else it.at = lev;
-      its.push(it);
-    });
-    var anyUp = its.some(function (i) { return i.pass && i.r.prem >= 0; }), anyDn = its.some(function (i) { return i.pass && i.r.prem < 0; }),
-      anyGrey = its.some(function (i) { return i.r && !i.pass; });
-    var litems = [{ kind: "box", col: INK, txt: L("med") }];
-    if (anyUp) litems.push({ kind: "box", col: BROWN, txt: tr("Usually asked more", "Thường được rao cao hơn") });
-    if (anyDn) litems.push({ kind: "box", col: BROWN2, txt: tr("Usually asked less", "Thường được rao thấp hơn") });
-    if (anyGrey) litems.push({ kind: "box", col: GREY, txt: tr("No clear difference yet", "Chưa thấy khác biệt rõ") });
-    if (its.some(function (i) { return i.pass; })) litems.push({ kind: "whisker", col: INK, txt: tr("Likely range", "Khoảng có thể") });
-    var rowH = nar ? 48 : 52, lr = 46, m = { l: 10, r: 10 };
-    var svg = mk(S, w, 200, tr("Median asking price and differences by feature", "Giá rao trung vị và chênh lệch theo đặc điểm")), top = 4;
-    m.t = top + legend(svg, litems, m.l, top, w - m.l - m.r) + 8;
-    // list mode (no row passes): the median bar and its axis, then one compact block per feature
-    var ay = list ? m.t + 44 : m.t + its.length * rowH, ls = ay + 54;
-    var ry = function (i) { return list ? (i ? ls + (i - 1) * lr : m.t) : m.t + i * rowH; }, rh = function (i) { return list ? (i ? lr : 44) : rowH; };
-    var h = Math.round(list ? ls + (its.length - 1) * lr + 6 : ay + 52);
-    svg.attr("height", h).attr("viewBox", "0 0 " + w + " " + h);
-    S.plot.style.height = h + "px";
-    var mx = d3.max(its, function (i) { return Math.max(i.to, i.from || 0, i.hi || 0); }) * 1.12;
-    var x = d3.scaleLinear().domain([0, mx]).range([m.l, w - m.r]), g0 = svg.append("g"), tk = x.ticks(nar ? 4 : 6);
-    tk.forEach(function (t) { ln(g0, x(t), m.t, x(t), ay, RULE); });
-    axX(g0, x, tk, ay, function (t) { return Number.isInteger(t) ? nf(t) : nf(t, 1); });
-    txt(g0, (m.l + w - m.r) / 2, ay + 36, tr("Asking price, billion VND", "Giá rao, tỷ đồng"), "middle");
-    var hl = g0.append("rect").attr("x", 0).attr("width", w).attr("fill", RULE).attr("opacity", 0.45).style("display", "none");
-    var f = fs(S);
-    its.forEach(function (it, i) {
-      var y0 = ry(i), by = y0 + 20, bh = 16, mid = by + bh / 2;
-      if (it.base) {
-        txt(g0, m.l, y0 + 14, L("med") + " · " + H.type(g.group), "start", "k");
-        g0.append("rect").attr("x", x(0)).attr("y", by).attr("width", x(it.to) - x(0)).attr("height", bh).attr("fill", INK);
-        var bt = H.bn(it.to), tw = H.textW(bt, f);
-        if (x(it.to) - x(0) > tw + 14) txt(g0, x(0) + 6, mid, bt, "start", "hs-inv").attr("dy", "0.34em");
-        else txt(g0, x(it.to) + 6, mid, bt, "start", "k").attr("dy", "0.34em");
-      } else if (list) {
-        var vd = verdict(it.r), nn = tr("with / without: ", "có / không có: ") + ntc(it.r);
-        g0.append("rect").attr("x", m.l).attr("y", y0 + 5).attr("width", 10).attr("height", 10).attr("fill", GREY);
-        txt(g0, m.l + 18, y0 + 14, it.lab, "start", "k");
-        txt(g0, m.l + 18, y0 + 31, vd + " · " + nn, "start");
-      } else {
-        txt(g0, m.l, y0 + 14, it.lab, "start", "k");
-        if (it.pass) {
-          var a = Math.min(it.from, it.to), b = Math.max(it.from, it.to);
-          g0.append("rect").attr("x", x(a)).attr("y", by).attr("width", Math.max(1, x(b) - x(a))).attr("height", bh).attr("fill", it.r.prem >= 0 ? BROWN : BROWN2);
-          ln(g0, x(it.lo), mid, x(it.hi), mid, INK);
-          [it.lo, it.hi].forEach(function (v) { ln(g0, x(v), mid - 4, x(v), mid + 4, INK); });
-          var vt = H.spct(it.r.prem, 0), vw = H.textW(vt, f), e = Math.max(x(b), x(it.hi), x(it.lo));
-          if (e + 5 + vw <= w - 4) txt(g0, e + 5, mid, vt, "start", "k").attr("dy", "0.34em");
-          else txt(g0, Math.min(x(a), x(it.lo), x(it.hi)) - 5, mid, vt, "end", "hs-halo k").attr("dy", "0.34em");
-        } else {
-          g0.append("rect").attr("x", x(it.at) - 1.5).attr("y", by).attr("width", 3).attr("height", bh).attr("fill", GREY);
-          var gt = verdict(it.r), gw = H.textW(gt, f);
-          if (x(it.at) + 9 + gw <= w - 4) txt(g0, x(it.at) + 9, mid, gt, "start").attr("dy", "0.34em");
-          else txt(g0, x(it.at) - 9, mid, gt, "end").attr("dy", "0.34em");
-        }
-      }
-      if (!list && i < its.length - 1) {
-        var lx = x(it.pass || it.base ? it.to : it.at);
-        ln(g0, lx, by + bh, lx, by + rowH, MUTED).attr("stroke-dasharray", "2 2").attr("opacity", 0.6);
-      }
-    });
-    S.clear = function () { hl.style("display", "none"); };
-    S.hit = function (px, py) {
-      var i = -1;
-      its.forEach(function (it, k) { if (py >= ry(k) && py < ry(k) + rh(k)) i = k; });
-      if (i < 0 || px < 0 || px > w) { S.clear(); return null; }
-      var it = its[i];
-      hl.attr("y", ry(i)).attr("height", rh(i)).style("display", null);
-      if (it.base) {
-        return { key: "base", node: H.card({ h: L("med") + " · " + H.type(g.group), sw: INK,
-          rows: [[L("ask"), H.bn(g.med_price_bn)], [tr("Per square metre", "Mỗi mét vuông"), H.ppm2(g.med_ppm2_mil)], [L("n"), nf(g.n)]],
-          m: [tr("Median of all listings of this type in the data" + (list ? "." : "; the starting point of the steps below."), "Trung vị của mọi tin loại này trong dữ liệu" + (list ? "." : "; điểm xuất phát của các bậc bên dưới."))] }) };
-      }
-      var r = it.r, cmp = tr("Compared with similar homes in the same former district that differ only in this feature.", "So với nhà tương tự trong cùng quận cũ, chỉ khác ở đặc điểm này.");
-      var nrow = [tr("Listings with / without", "Tin có / không có"), ntc(r)];
-      if (!it.pass) return { key: r.attr, node: H.card({ h: it.lab, sw: GREY, rows: [[tr("Result", "Kết quả"), verdict(r)], nrow], m: [cmp] }) };
-      return { key: r.attr, node: H.card({ h: it.lab, sw: r.prem >= 0 ? BROWN : BROWN2, rows: [["", pctPhrase(r)], nrow], m: [cmp] }) };
-    };
-    take(S.fig, list ? tr("No feature shows a clear difference in asking price yet.", "Chưa có đặc điểm nào cho thấy khác biệt rõ về giá rao.") : its.filter(function (i) { return i.pass; }).map(function (i) { return sentence(i.r); }).join(" "));
-  }
-
 
   // 4. stale panels
   function stale(fig) {
@@ -394,10 +261,7 @@
   }
 
   // 5. bubbles
-  function shortName(n) {
-    var q = /^Quận (\d+)(?: \((?:TP\. )?(.+)\))?$/.exec(n);
-    return q ? "Q." + q[1] + (q[2] ? " (" + q[2] + ")" : "") : n.replace(/^(Quận|Huyện|Thị xã|Thành phố) /, "");
-  }
+  function shortName(n) { return H.pn(n, true); }
 
   function segLines(segs) {
     var out = {};
@@ -458,6 +322,7 @@
     txt(g, (m.l + w - m.r) / 2, h - 8, tr("Median listing age, days (log scale)", "Tuổi trung vị của tin, ngày (thang log)"), "middle");
     svg.append("text").attr("transform", "translate(12," + ((m.t + h - m.b) / 2) + ") rotate(-90)").attr("text-anchor", "middle")
       .text(nar ? tr("Median price, million VND/m² (log)", "Giá trung vị, triệu đồng/m² (log)") : tr("Median asking price, million VND/m² (log scale)", "Giá rao trung vị, triệu đồng/m² (thang log)"));
+    if (!S.both) ds = ds.filter(function (p) { return p.c === cur; }); // one city at a time unless "Both"
     var front = function (p) { return S.both || p.c === cur ? 1 : 0; };
     ds.sort(function (a, b) { return front(a) - front(b) || b.r - a.r; });
     function op(p) { return (S.dim && S.dim !== p.q.seg) ? 0.1 : (S.both || p.c === cur ? 0.75 : 0.3); }
@@ -490,9 +355,9 @@
         cx += 16 + H.textW(H.city(c[0]), 12) + 16;
       });
     }
-    var lit = ds.filter(function (p) { return S.both || p.c === cur; }).sort(function (a, b) { return b.q.n - a.q.n; }).slice(0, nar ? 5 : 12).map(function (p) {
+    var lit = ds.filter(function (p) { return S.both || p.c === cur; }).sort(function (a, b) { return b.q.n - a.q.n; }).slice(0, nar ? 8 : 40).map(function (p) {
       var t = shortName(p.q.name);
-      return { x: x(p.x), y: y(p.y), w: H.textW(t, f - 1) + 2, h: 14, pr: p.q.n, txt: t, r: p.r };
+      return { x: x(p.x), y: y(p.y), w: H.textW(t, f - 1) + 2, h: 14, pr: p.q.n + (p.q.seg === "Prime core" ? 1000 : 0), txt: t, r: p.r };
     });
     var blocks = ds.map(function (p) { return { x: x(p.x), y: y(p.y), w: 2 * p.r, h: 2 * p.r, block: true, pr: 0 }; });
     H.place(lit.concat(blocks), { w: w, h: h }).forEach(function (p) { lab(g, p, "k"); });
@@ -511,7 +376,7 @@
       var sg = H.seg(q.seg), ms = [];
       if (lines[q.seg]) ms.push(lines[q.seg]);
       ms.push(tr("Click, or tap again, to value a home in this district.", "Bấm, hoặc chạm lần nữa, để định giá một căn trong quận này."));
-      return { key: q.key, node: H.card({ h: q.name + " · " + H.city(best.c), sw: sg.color,
+      return { key: q.key, node: H.card({ h: H.pn(q.name) + " · " + H.city(best.c), sw: sg.color,
         rows: [[tr("Market type", "Kiểu thị trường"), sg.name], [L("ask"), H.ppm2(q.ppm2_med)], [tr("Median listing age", "Tuổi trung vị của tin"), H.days(Math.round(q.age_med))],
           [L("n"), nf(q.n)], [L("on"), q.stale_rate == null ? "–" : H.pct(q.stale_rate, 0)]], m: ms }) };
     };
@@ -530,7 +395,7 @@
 
   // mount
   function mount() {
-    var jobs = { gradient: gradient, bill: bill, stale: stale, bubbles: bubbles, legalmap: function (f) { f.remove(); } };
+    var jobs = { gradient: gradient, stale: stale, bubbles: bubbles, legalmap: function (f) { f.remove(); } };
     Object.keys(jobs).forEach(function (name) {
       Array.prototype.forEach.call(document.querySelectorAll('[data-hs="' + name + '"]'), function (fig) {
         if (fig.hasAttribute("data-teaser")) return;

@@ -53,7 +53,7 @@
   };
   H.seg = function (name) { var s = SEGN[name]; return { name: s ? s[H.lang() === "vi" ? 1 : 0] : String(name), color: H.SEGC[name] || "#6b6f72" }; };
   H.RAMP = ["#efe6cf", "#d3bb8f", "#c49a62", "#ad7a45", "#8f5a32", "#6b3c26", "#45231c"];
-  H.CITYC = { hn: "#23272b", hcm: "#8f5a32" };
+  H.CITYC = { hn: "#23272b", hcm: "#d9632e" };
 
   // ------------------------------------------------------------------ number and unit formats (page language)
   var NF = {};
@@ -82,6 +82,31 @@
     var a = String(iso).split("-");
     return H.lang() === "vi" ? +a[2] + "/" + +a[1] + "/" + a[0] : +a[2] + " " + MON[a[1] - 1] + " " + a[0];
   };
+  // place names: VI as written; EN with the unit translated and the name without diacritics ("Phường Ô Chợ Dừa" -> "O Cho Dua Ward")
+  H.ascii = function (t) { return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D"); };
+  var UNIT = [[/^Phường /, " Ward"], [/^Xã /, " Commune"], [/^Đặc khu /, " Special Zone"], [/^Thị trấn /, " Town"], [/^Thị xã /, " Town"],
+    [/^Quận /, " District"], [/^Huyện /, " District"], [/^(Thành phố|TP\.) /, " City"]];
+  var CITYN = { "Hà Nội": "Hanoi", "TP. Hồ Chí Minh": "Ho Chi Minh City", "Thành phố Hồ Chí Minh": "Ho Chi Minh City" };
+  H.pn = function (name, short) { // short: without the unit word (map labels); "Quận 1" keeps its number either way
+    if (name == null || name === "") return "";
+    name = String(name);
+    var par = "", m = /^(.*?) \((.+)\)$/.exec(name);
+    if (m) { name = m[1]; par = m[2]; }
+    var en = H.lang() === "en", out = null, d = /^Quận (\d+)$/.exec(name);
+    if (d) out = en ? "District " + d[1] : (short ? "Q." + d[1] : name);
+    else if (!en) out = short ? name.replace(/^(Phường|Xã|Đặc khu|Thị trấn|Quận|Huyện|Thị xã) /, "") : name;
+    else if (CITYN[name]) out = CITYN[name];
+    else {
+      for (var i = 0; i < UNIT.length && out === null; i++) if (UNIT[i][0].test(name)) { var b = H.ascii(name.replace(UNIT[i][0], "")); out = short ? b : b + UNIT[i][1]; }
+      if (out === null) out = H.ascii(name);
+    }
+    return par ? out + " (" + H.pn(par) + ")" : out;
+  };
+  H.line = function (name) { // metro line: "Đường sắt đô thị 2A Hà Nội (Phân đoạn Cát Linh - Hà Đông)" -> "Line 2A (Cat Linh - Ha Dong)"
+    var m = /đô thị (?:số )?(\w+).*\((?:[Pp]hân đoạn )?(.+)\)/.exec(name || "");
+    if (!m) return H.lang() === "en" ? H.ascii(name || "") : (name || "");
+    return (H.lang() === "en" ? "Line " + m[1] + " (" + H.ascii(m[2]) + ")" : "Tuyến " + m[1] + " (" + m[2] + ")");
+  };
   H.city = function (c) { return H.t(c === "hcm" ? "hcm" : "hn"); };
   H.cityOf = function (name) {
     var s = String(name).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
@@ -109,7 +134,7 @@
   };
 
   // ------------------------------------------------------------------ state and URL hash: #c=hn&v=3d&l=price,wards,metro&t=house&d=<key>
-  var DEF = { c: "hn", v: "2d", l: ["price", "metro", "cbd"], t: "", d: "" };
+  var DEF = { c: "hn", v: "2d", l: ["price", "metro", "cbd", "edu", "health", "shop", "park"], t: "", d: "" };
   // the teaser on research.html shows the map only: it neither reads nor writes the hash
   H.noHash = H.noHash || !!doc.querySelector('[data-hs="map"][data-teaser]');
   // bill groups: short ASCII keys in the hash, the data keys (Vietnamese) in H.st.t

@@ -29,8 +29,8 @@
 
   H.toolMap = function (el) {
     var box = H.el("div", "hs-mapbox"); el.appendChild(box);
-    var bar = H.el("div", "hs-zbar"), zg = H.el("span", "sg-zoom"), zin = H.el("button", "se-btn sg-z", "+"), zout = H.el("button", "se-btn sg-z", "−"), note = H.el("span", "hs-zhint");
-    zin.type = zout.type = "button"; zg.appendChild(zin); zg.appendChild(zout); bar.appendChild(zg); bar.appendChild(note);
+    var bar = H.el("div", "hs-zbar"), zc = MB.zctl(el), zin = zc.zin, zout = zc.zout, note = H.el("span", "hs-zhint");
+    bar.appendChild(note);
     el.parentNode.insertBefore(bar, el.nextSibling);
     var map = null, ready = null, last = null, pts = [], hov = null;
     zin.addEventListener("click", function () { if (map) map.zoomIn(); });

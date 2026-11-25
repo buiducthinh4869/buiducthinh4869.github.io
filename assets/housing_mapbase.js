@@ -9,6 +9,11 @@
   var ML = "4.7.1", CDN = ["https://cdn.jsdelivr.net/npm/maplibre-gl@" + ML + "/dist/", "https://unpkg.com/maplibre-gl@" + ML + "/dist/"];
   M.STYLE = "https://tiles.openfreemap.org/styles/positron";
   M.coarse = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches); // touch first: keep two-finger gestures there
+  M.zctl = function (parent) { // + and − inside the map, top right (both maps)
+    var box = H.el("div", "hs-zctl"), zin = H.el("button", "se-btn sg-z", "+"), zout = H.el("button", "se-btn sg-z", "−");
+    zin.type = zout.type = "button"; box.appendChild(zin); box.appendChild(zout); parent.appendChild(box);
+    return { box: box, zin: zin, zout: zout };
+  };
   var mlP = null;
   function addTag(tag, attrs) {
     return new Promise(function (ok, bad) {

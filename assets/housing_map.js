@@ -136,10 +136,7 @@
     var zbar = null, zin, zout, zall, hint, selL, selT, selA, selK = "", selBox = null;
     if (!teaser) {
       zbar = H.el("div", "hs-zbar"); plot.parentNode.insertBefore(zbar, plot.nextSibling);
-      var zg = H.el("span", "sg-zoom"); zbar.appendChild(zg);
-      zin = H.el("button", "se-btn sg-z", "+"); zout = H.el("button", "se-btn sg-z", "−"); zall = H.el("button", "se-link");
-      [zin, zout, zall].forEach(function (b) { b.type = "button"; });
-      zg.appendChild(zin); zg.appendChild(zout); zbar.appendChild(zall);
+      var zc = MB.zctl(plot); zin = zc.zin; zout = zc.zout; zall = H.el("button", "hs-zall"); zall.type = "button"; zc.box.appendChild(zall);
       hint = H.el("span", "hs-zhint"); zbar.appendChild(hint);
       zin.addEventListener("click", function () { if (map) map.zoomIn(); });
       zout.addEventListener("click", function () { if (map) map.zoomOut(); });
@@ -178,7 +175,7 @@
       rng = document.createElement("input"); rng.type = "range"; rng.min = -180; rng.max = 180; rng.step = 5; rng.value = st.th;
       rng.addEventListener("input", function () { st.th = +rng.value; if (map) map.setBearing(st.th); });
       angle.appendChild(rng); bar.appendChild(angle);
-      gLay = H.el("span", "hs-layers");
+      gLay = H.el("div", "hs-layers"); var rows = [0, 1].map(function () { var r = H.el("div", "hs-lrow"); r.appendChild(H.el("span", "hs-lrow-t")); gLay.appendChild(r); return r; });
       LAYERS.forEach(function (k) {
         var lb = H.el("label", "hs-chk"), cb = document.createElement("input");
         cb.type = "checkbox"; cb.dataset.layer = k;
@@ -189,7 +186,7 @@
         });
         lb.appendChild(cb);
         if (POI[k]) { var dot = H.el("span", "hs-poidot"); dot.style.background = POI[k].col; lb.appendChild(dot); }
-        lb.appendChild(H.el("span", "hs-chk-t")); gLay.appendChild(lb);
+        lb.appendChild(H.el("span", "hs-chk-t")); rows[POI[k] ? 1 : 0].appendChild(lb);
       });
       bar.appendChild(gLay);
     }
@@ -204,6 +201,7 @@
         gView.querySelectorAll("button").forEach(function (b) { b.textContent = b.dataset.v.toUpperCase(); b.setAttribute("aria-pressed", String(b.dataset.v === st.v)); });
         angle.firstChild.textContent = tx("angle"); angle.hidden = st.v !== "3d";
         gLay.setAttribute("aria-label", tx("layers"));
+        gLay.querySelectorAll(".hs-lrow-t").forEach(function (t, i) { t.textContent = i ? tx("poiH") : tx("layers") + ":"; });
         gLay.querySelectorAll("label").forEach(function (lb) {
           var cb = lb.firstChild; cb.checked = on(cb.dataset.layer); lb.lastChild.textContent = tx(cb.dataset.layer);
         });

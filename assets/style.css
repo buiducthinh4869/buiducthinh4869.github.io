@@ -972,6 +972,10 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
 .hs-failed .hs-zbar, .hs-failed .hs-sel, .hs-nogl .hs-zbar { display: none; }
 @media (max-width: 599px) {
   .hs-map .hs-plot { aspect-ratio: 4 / 5; }
+  .hs-zctl { top: auto; bottom: 0.5rem; right: 0.5rem; flex-direction: row; align-items: center; gap: 0.3rem; }
+  .hs-zctl .se-btn.sg-z { width: 36px; height: 36px; min-height: 36px; font-size: 1.15rem; }
+  .hs-zall { min-height: 36px; padding: 0 0.6rem; font-size: 0.75rem; }
+  .hs-map .maplibregl-ctrl-bottom-right { bottom: 2.9rem; }
   .hs-mlegend { width: min(12rem, 62%); font-size: 0.6875rem; padding: 0.3rem 0.4rem; }
   .hs-lg-ticks span { font-size: 0.625rem; }
 }

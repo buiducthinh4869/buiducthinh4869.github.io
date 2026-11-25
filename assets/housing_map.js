@@ -228,9 +228,9 @@
       });
       legend.appendChild(ticks);
       var fw = H.el("div", "hs-lg-few"); fw.appendChild(H.el("span", "hs-lg-hatch")); fw.appendChild(H.el("span", null, tx("few"))); legend.appendChild(fw);
-      if (!teaser && st.v === "3d") legend.appendChild(H.el("div", "hs-lg-n", tx("h3d")));
+      if (!teaser && !nar && st.v === "3d") legend.appendChild(H.el("div", "hs-lg-n", tx("h3d")));
       var pk = Object.keys(POI).filter(on);
-      if (!teaser && pk.length) {
+      if (!teaser && !nar && pk.length) {
         var pr = H.el("div", "hs-lg-poi"); pr.appendChild(H.el("span", "hs-lg-n", tx("poiH")));
         pk.forEach(function (k) { var it = H.el("span", "hs-lg-pi"), d = H.el("span", "hs-poidot"); d.style.background = POI[k].col; it.appendChild(d); it.appendChild(H.el("span", null, tx(k))); pr.appendChild(it); });
         legend.appendChild(pr);
@@ -513,6 +513,7 @@
         if (teaser) { map.scrollZoom.disable(); map.dragPan.disable(); map.touchZoomRotate.disable(); map.doubleClickZoom.disable(); map.keyboard.disable(); }
         else if (!MB.coarse) map.scrollZoom.disable(); // the page scrolls; zoom with the buttons or a double-click
         map.on("load", function () {
+          var at = box.querySelector(".maplibregl-ctrl-attrib"); if (at && plot.clientWidth < 600) at.classList.remove("maplibregl-compact-show");
           try { tune(map); baseNames(map); } catch (e) { if (window.console) console.warn("housing atlas: base style", e); }
           addLayers(); recolor(); vis(); view(false); wire(); setCity(); paint();
         });

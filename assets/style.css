@@ -766,7 +766,7 @@ html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :n
   .profile .portrait { width: 13rem; }
   .profile h1 { font-size: 2.6rem; }
   .profile p { font-size: 1.0625rem; line-height: 1.65; }
-  .home-main .home-section:first-child .section-head { margin-top: 0.4rem; }
+  .home-main .home-section:first-child .section-head { margin-top: -0.2rem; } /* the cap of "Research" on the top edge of the portrait */
 
   .isobars { width: 52rem; top: -12rem; right: -16rem; }
 

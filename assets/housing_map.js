@@ -9,13 +9,13 @@
   var ML = "4.7.1", CDN = ["https://cdn.jsdelivr.net/npm/maplibre-gl@" + ML + "/dist/", "https://unpkg.com/maplibre-gl@" + ML + "/dist/"];
   var STYLE = "https://tiles.openfreemap.org/styles/positron";
   var INK = "#23272b", PAPER = "#faf9f5", MUTED = "#6b6f72";
-  var MIN_N = 5, K = 8, SHRINK = 0.55, H3D = 2200; // a ward needs 5 listings; pull toward the former district with weight 8
+  var MIN_N = 5, K = 8, SHRINK = 0.45, H3D = 1500; // a ward needs 5 listings; pull toward the former district with weight 8
   var BRK = { idx: [0.7, 0.85, 1, 1.15, 1.35, 1.7], ppm: [60, 100, 150, 200, 300, 450] };
   function sub(list) { return ["in", ["get", "subclass"], ["literal", list]]; }
   var POI = { // what a buyer looks for nearby; from the base tiles' poi layer (OpenStreetMap tags)
     edu: { col: "#2a6fc0", z: 12.5, f: ["any", ["in", ["get", "class"], ["literal", ["school", "college"]]], sub(["kindergarten", "school", "university", "college"])] },
     health: { col: "#c95f8c", z: 12.5, f: ["any", ["==", ["get", "class"], "hospital"], sub(["hospital", "clinic", "doctors", "pharmacy"])] },
-    shop: { col: "#5a4ac4", z: 12.5, f: ["any", ["==", ["get", "class"], "grocery"], sub(["mall", "department_store", "supermarket", "marketplace", "convenience"])] },
+    shop: { col: "#5a4ac4", z: 12.5, f: ["any", ["==", ["get", "class"], "grocery"], sub(["mall", "department_store", "supermarket", "marketplace"])] },
     park: { col: "#179a6c", z: 13, f: sub(["park", "garden", "playground", "sports_centre", "pitch"]) },
     bus: { col: "#6b6f72", z: 14.5, f: sub(["bus_stop", "bus_station"]) }
   };
@@ -250,7 +250,7 @@
       map.addLayer({ id: "hs-few", type: "fill", source: "hs-wards", filter: ["<", ["get", "n"], MIN_N], paint: { "fill-pattern": "hs-hatch", "fill-opacity": 0.9, "fill-opacity-transition": { duration: 300 } } }, below);
       map.addLayer({ id: "hs-hit", type: "fill", source: "hs-wards", paint: { "fill-color": "#000", "fill-opacity": 0 } }, below);
       map.addLayer({ id: "hs-fill", type: "fill", source: "hs-wards", filter: [">=", ["get", "n"], MIN_N],
-        paint: { "fill-color": colorExpr("vi", BRK.idx), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 10, 0.88, 15, 0.7] } }, below);
+        paint: { "fill-color": colorExpr("vi", BRK.idx), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 10, 0.88, 13, 0.72, 15.5, 0.5] } }, below);
       map.addLayer({ id: "hs-line", type: "line", source: "hs-wards",
         paint: { "line-color": "#ffffff", "line-opacity": 0.85, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.6, 14, 1.6] } }, roads);
       map.addLayer({ id: "hs-line2", type: "line", source: "hs-wards", layout: { visibility: "none" },
@@ -276,7 +276,7 @@
         if (!map.getSource("openmaptiles")) return;
         map.addLayer({ id: "hs-poi-" + k, type: "circle", source: "openmaptiles", "source-layer": "poi", minzoom: POI[k].z, filter: POI[k].f, layout: { visibility: "none" },
           paint: { "circle-color": POI[k].col, "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2, "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, k === "bus" ? 2 : 3, 16, k === "bus" ? 4 : 6] } });
-        map.addLayer({ id: "hs-poil-" + k, type: "symbol", source: "openmaptiles", "source-layer": "poi", minzoom: k === "bus" ? 16 : 14.5, filter: POI[k].f, layout: { visibility: "none",
+        map.addLayer({ id: "hs-poil-" + k, type: "symbol", source: "openmaptiles", "source-layer": "poi", minzoom: k === "bus" ? 16.5 : 15.6, filter: POI[k].f, layout: { visibility: "none",
           "text-field": ["coalesce", ["get", "name"], ""], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 0.9], "text-anchor": "top", "text-optional": true, "text-max-width": 9 },
           paint: { "text-color": POI[k].col, "text-halo-color": "#ffffff", "text-halo-width": 1.3 } });
       });
@@ -323,7 +323,7 @@
       var d3v = st.v === "3d";
       function set(id, v) { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v ? "visible" : "none"); }
       set("hs-fill", on("price")); set("hs-few", on("price"));
-      map.setPaintProperty("hs-fill", "fill-opacity", d3v ? 0.45 : ["interpolate", ["linear"], ["zoom"], 10, 0.88, 15, 0.7]);
+      map.setPaintProperty("hs-fill", "fill-opacity", d3v ? 0.45 : ["interpolate", ["linear"], ["zoom"], 10, 0.88, 13, 0.72, 15.5, 0.5]);
       set("hs-3d", d3v && on("price")); set("hs-bld", d3v); grow();
       map.setPaintProperty("hs-few", "fill-opacity", d3v ? 0.35 : 0.9);
       set("hs-line", on("price") || teaser); set("hs-line2", on("wards") && !teaser);

@@ -12,8 +12,9 @@
     st.layers.forEach(function (l) {
       var id = l.id, sl = l["source-layer"];
       var fs = JSON.stringify(l.filter || "");
-      if (l.source === "ne2_shaded" || sl === "boundary" || sl === "building" || /^label_country|^label_state|^label_other$/.test(id) ||
+      if (l.source === "ne2_shaded" || sl === "boundary" || sl === "building" || /^label_country|^label_state|^label_other$|^label_village$|^label_town$/.test(id) ||
         (sl === "place" && /"(country|state|province|continent)"/.test(fs))) { map.setLayoutProperty(id, "visibility", "none"); return; }
+      if (/^highway_(minor|path)$/.test(id)) map.setPaintProperty(id, "line-opacity", ["interpolate", ["linear"], ["zoom"], 10, 0.25, 12.5, 0.55, 14.5, 1]);
       if (l.type === "background") map.setPaintProperty(id, "background-color", "#f4f2ec");
       else if (sl === "water" && l.type === "fill") map.setPaintProperty(id, "fill-color", "#bcd3dc");
       else if (sl === "waterway" && l.type === "line") map.setPaintProperty(id, "line-color", "#bcd3dc");

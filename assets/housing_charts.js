@@ -194,7 +194,7 @@
     var ov = d.overall * 100, gapW = 24, T0 = side ? 296 : 560; // fixed total height per layout (CSS min-height matches)
     var svg = mk(S, w, 100, tr("Share of listings still online after 180 days", "Tỷ lệ tin còn trên mạng sau 180 ngày")), top = 2;
     var lh = legend(svg, [{ kind: "box", col: BAR, txt: tr("Share still online after 180 days", "Tỷ lệ còn trên mạng sau 180 ngày") }, { kind: "whisker", col: INK, txt: L("rng") },
-      { kind: "dash", col: MUTED, txt: tr("All listings", "Mọi tin") }], 4, top, w - 8);
+      { kind: "dash", col: MUTED, txt: tr("All listings, ", "Mọi tin, ") + H.pct(d.overall, 0) }], 4, top, w - 8);
     var y0 = top + lh + 6, ph = side ? T0 - y0 : (T0 - y0) / 2, h = T0;
     svg.attr("height", h).attr("viewBox", "0 0 " + w + " " + h);
     S.plot.style.height = h + "px";
@@ -216,12 +216,12 @@
         bars.push(rect);
       });
         ln(g, x0, y(ov), ox + pw - mr, y(ov), MUTED).attr("stroke-width", 1.5).attr("stroke-dasharray", "5 3");
-      var ot = tr("all listings ", "mọi tin ") + H.pct(d.overall, 0), ow = H.textW(ot, f), oy2 = y(ov) - 5, ox2 = ox + pw - mr - 3 - ow;
+      var ot = tr("all listings ", "mọi tin ") + H.pct(d.overall, 0), ow = H.textW(ot, f), oy2 = y(ov) - 5, ox2 = null;
       for (var sx = ox + pw - mr - ow; sx >= x0; sx -= 6) {
-        var clash = P.bins.some(function (b, i) { var bx = x0 + i * bw + bw * 0.1; return bx + bw * 0.8 > sx - 2 && bx < sx + ow + 2 && y(Math.max(b.rate, b.wh) * 100) < y(ov) - 4; });
+        var clash = P.bins.some(function (b, i) { var bx = x0 + i * bw + bw * 0.1; return bx + bw * 0.8 > sx - 6 && bx < sx + ow + 6 && y(Math.max(b.rate, b.wh) * 100) < y(ov) + 6; });
         if (!clash) { ox2 = sx; break; }
       }
-      txt(g, ox2, oy2, ot, "start", "hs-halo k");
+      if (ox2 != null) txt(g, ox2, oy2, ot, "start", "hs-halo k"); // the legend carries the value when the label has no room
       // x labels: the bins themselves when they fit; ten gap bins on a narrow screen are numbered; otherwise the bin edges
       var lab1 = P.bins.map(function (b) { return ints(nf(b.lo), nf(b.hi)); }), xt = P.xt;
       var fit = P.k === "liq" && d3.max(lab1, function (s) { return H.textW(s, f); }) + 4 <= bw;
@@ -312,8 +312,9 @@
     lg.forEach(function (it) { var iw = 18 + H.textW(it.txt, 12) + 14; if (xx && xx + iw > w - 8) { nl++; xx = 0; } xx += iw; });
     var refs = [30, 100, 300].filter(function (n) { return n <= nmax * 1.1; }), rr = function (n) { return Math.max(4, rmax * Math.sqrt(n / nmax)); }, kh = 2 * rr(refs[refs.length - 1]) + 6;
     h = T - nl * 18 - kh - (S.both ? 22 : 8);
+    if (!S.both) ds = ds.filter(function (p) { return p.c === cur; }); // one city at a time unless "Both"; axes fit the city shown
     var xe = d3.extent(ds, function (p) { return p.x; }), ye = d3.extent(ds, function (p) { return p.y; });
-    var x = d3.scaleLog().domain([xe[0] / 1.18, xe[1] * 1.18]).range([m.l, w - m.r]), y = d3.scaleLog().domain([ye[0] / 1.2, ye[1] * 1.2]).range([h - m.b, m.t]);
+    var x = d3.scaleLog().domain([xe[0] / 1.12, xe[1] * 1.12]).range([m.l, w - m.r]), y = d3.scaleLog().domain([ye[0] / 1.15, ye[1] * 1.15]).range([h - m.b, m.t]);
     var svg = mk(S, w, T, tr("Districts by listing age and price per square metre", "Các quận theo tuổi tin và giá mỗi mét vuông")), g = svg.append("g");
     var yt = thin([20, 30, 50, 70, 100, 150, 200, 300, 500].filter(function (t) { return t >= y.domain()[0] && t <= y.domain()[1]; }), y, 26);
     var xt = thin([20, 30, 45, 60, 90, 120, 180, 240, 365, 500, 730, 1000].filter(function (t) { return t >= x.domain()[0] && t <= x.domain()[1]; }), x, 40);
@@ -322,7 +323,6 @@
     txt(g, (m.l + w - m.r) / 2, h - 8, tr("Median listing age, days (log scale)", "Tuổi trung vị của tin, ngày (thang log)"), "middle");
     svg.append("text").attr("transform", "translate(12," + ((m.t + h - m.b) / 2) + ") rotate(-90)").attr("text-anchor", "middle")
       .text(nar ? tr("Median price, million VND/m² (log)", "Giá trung vị, triệu đồng/m² (log)") : tr("Median asking price, million VND/m² (log scale)", "Giá rao trung vị, triệu đồng/m² (thang log)"));
-    if (!S.both) ds = ds.filter(function (p) { return p.c === cur; }); // one city at a time unless "Both"
     var front = function (p) { return S.both || p.c === cur ? 1 : 0; };
     ds.sort(function (a, b) { return front(a) - front(b) || b.r - a.r; });
     function op(p) { return (S.dim && S.dim !== p.q.seg) ? 0.1 : (S.both || p.c === cur ? 0.75 : 0.3); }

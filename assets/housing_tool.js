@@ -49,6 +49,7 @@
       accPct: "For {t}, about {k} of model values fall within 20% of the asking price.",
       th: ["District", "Ward", "Type", "Area (m²)", "Price (billion VND)", "Posted", "Distance (km)"],
       thU: ["", "", "", " m²", " billion VND", "", " km away"],
+      tNear: "Another listing of this type nearby.",
       gLoc: "Where", gHome: "The home", gAcc: "Street access", gAsk: "Asking price", hYou: "The home you described", tKm: "Distance from the chosen place",
       tType: "Type", tArea: "Area", tPrice: "Asking price", tPpm: "Per m²", tPosted: "Posted",
       tM: "A listing near this home in size, rooms and location.",
@@ -91,6 +92,7 @@
       accPct: "Với {t}, khoảng {k} giá trị mô hình nằm trong khoảng ±20% so với giá rao.",
       th: ["Quận/huyện", "Phường/xã", "Loại", "Diện tích (m²)", "Giá (tỷ đồng)", "Đăng", "Cách (km)"],
       thU: ["", "", "", " m²", " tỷ đồng", "", " km"],
+      tNear: "Một tin cùng loại khác ở gần.",
       gLoc: "Vị trí", gHome: "Ngôi nhà", gAcc: "Đường vào", gAsk: "Giá rao", hYou: "Căn nhà bạn mô tả", tKm: "Khoảng cách tới nơi đã chọn",
       tType: "Loại", tArea: "Diện tích", tPrice: "Giá rao", tPpm: "Mỗi m²", tPosted: "Đăng",
       tM: "Một tin gần với căn này về diện tích, số phòng và vị trí.",
@@ -278,6 +280,7 @@
     out.appendChild($("p", "ht-h", "")).setAttribute("data-k", "hStale");
     S.staleEl = $("div", "ht-stale"); out.appendChild(S.staleEl);
     out.appendChild($("p", "ht-h", "")).setAttribute("data-k", "hSim");
+    if (H.toolMap) { var mw = $("div", "ht-map"); out.appendChild(mw); S.tmap = H.toolMap(mw); }
     var tw = $("div", "ht-tw"), tb = $("table", "ht-comp"), th = $("thead"), tr = $("tr");
     for (var i = 0; i < 7; i++) { var h = $("th", i === 3 || i === 4 || i === 6 ? "n" : ""); h.scope = "col"; tr.appendChild(h); }
     th.appendChild(tr); tb.appendChild(th); S.tbody = $("tbody"); tb.appendChild(S.tbody); tw.appendChild(tb);
@@ -367,6 +370,7 @@
     S.accEl.textContent = a; S.accEl.hidden = !a;
     drawStale();
     drawComps();
+    showMap();
     if (S.barHover) S.barHover.refresh();
     if (S.rowHover) S.rowHover.refresh();
   }
@@ -432,11 +436,35 @@
       tb.appendChild(tr);
     });
   }
+  function cardFor(i, n) {
+    return function () {
+      var d = rowData(i);
+      return H.card({ h: (n ? n + ". " : "") + d.w + " · " + d.d,
+        rows: [[tx("tType"), d.t], [tx("tArea"), H.nf(d.a, 1) + " m²"], [tx("tPrice"), H.nf(d.p, 2) + " " + tx("bn")],
+               [tx("tPpm"), H.nf(d.m2, 0) + " " + tx("ppm")], [tx("tPosted"), d.mo]].concat(d.km == null ? [] : [[tx("tKm"), H.km(d.km)]]),
+        m: [n ? tx("tM") : tx("tNear")] });
+    };
+  }
+  function showMap() { // the similar listings (numbered as in the table) and up to 60 listings of the type within 3 km
+    if (!S.tmap || !S.last) return;
+    var L = S.last, T = S.T, loc = L.res.loc, inp = L.inp, P = [], cand = [], i, c = Math.cos(loc.lat * Math.PI / 180);
+    L.comps.forEach(function (j, n) { if (T.lat[j] != null) P.push({ lon: T.lon[j], lat: T.lat[j], n: n + 1, card: cardFor(j, n + 1) }); });
+    for (i = 0; i < T.city.length; i++) {
+      if (T.cities[T.city[i]] !== inp.city || T.types[T.type[i]] !== inp.type || L.comps.indexOf(i) >= 0 || T.lat[i] == null) continue;
+      var dy = (T.lat[i] - loc.lat) * 110.57, dx = (T.lon[i] - loc.lon) * 111.32 * c, d = dx * dx + dy * dy;
+      if (d <= 9) cand.push([d, i]);
+    }
+    cand.sort(function (a, b) { return a[0] - b[0]; });
+    cand.slice(0, 60).forEach(function (q) { P.push({ lon: T.lon[q[1]], lat: T.lat[q[1]], n: 0, card: cardFor(q[1], 0) }); });
+    S.tmap.show({ lon: loc.lon, lat: loc.lat, zoom: L.res.level === "ward" ? 14 : 13,
+      home: (inp.ward ? H.pn(inp.ward) + ", " : "") + H.pn(inp.district), pts: P });
+  }
   function rowFind(x, y, ev) {   // x, y are relative to the tbody; ev is the pointer event
     var t = ev && ev.target, tr = t && t.closest ? t.closest("tr") : null;
     if (!tr || !S.tbody.contains(tr) || !S.last) return null;
     var n = +tr.getAttribute("data-r"), i = S.last.comps[n];
     if (i === undefined) return null;
+    if (S.tmap) S.tmap.hl(n);
     var d = rowData(i);
     return { key: "r" + n, node: H.card({
       h: d.w + " · " + d.d,

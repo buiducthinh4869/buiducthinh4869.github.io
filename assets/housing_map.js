@@ -6,8 +6,6 @@
   var H = window.Housing;
   if (!H || !H.mapBase) return;
 
-  var ML = "4.7.1", CDN = ["https://cdn.jsdelivr.net/npm/maplibre-gl@" + ML + "/dist/", "https://unpkg.com/maplibre-gl@" + ML + "/dist/"];
-  var STYLE = "https://tiles.openfreemap.org/styles/positron";
   var INK = "#23272b", PAPER = "#faf9f5", MUTED = "#6b6f72";
   var MIN_N = 5, K = 8, SHRINK = 0.45, H3D = 1500; // a ward needs 5 listings; pull toward the former district with weight 8
   var BRK = { idx: [0.7, 0.85, 1, 1.15, 1.35, 1.7], ppm: [60, 100, 150, 200, 300, 450] };
@@ -29,7 +27,7 @@
       lgIdx: "Asking price per m² of houses and land in the ward, relative to the city average (×1 = average)",
       lgPpm: "Median asking price per m², all homes in the ward (million VND)",
       lgIdxS: "Price vs city average, houses and land", lgPpmS: "Median price per m², million VND",
-      few: "Fewer than 5 listings", h3d: "In 3D, the height of each column is the same figure.", poiLg: "Zoom in to see schools, hospitals, markets, parks and bus stops.",
+      few: "Fewer than 5 listings", h3d: "In 3D, the height of each column is the same figure.",
       newWard: " (new)", oldBy: "Former {d}, as the listings name it", oldGadm: "Former {d}, by the old boundary",
       rIdx: "Price vs city average", rPpm: "Median asking price, all homes", rN: "Listings in this ward", rSeg: "Market type",
       above: "Houses and land here are asked about {p} above the city average for a similar home.",
@@ -38,10 +36,13 @@
       thin: "Only {n} listings: read this ward with care.", none: "Too few listings for a price here.",
       st: "Metro station", line: "Line", centre: "City centre", centreM: "Distances in section 2 are measured from here.",
       poiK: { edu: "School, kindergarten or university", health: "Hospital, clinic or pharmacy", shop: "Market, supermarket or shopping centre", park: "Park or sports ground", bus: "Bus stop" },
-      clickT: "Click to open the housing atlas.", clickF: "Click to value a home in this former district.",
-      tapT: "Tap again to open the housing atlas.", tapF: "Tap again to value a home in this former district.",
+      clickT: "Click to open the housing atlas.", clickF: "Click to zoom in on this ward.",
+      tapT: "Tap again to open the housing atlas.", tapF: "Tap again to zoom in on this ward.",
+      zin: "Zoom in", zout: "Zoom out", whole: "Whole city", hint: "Zoom with + and −, or double-click a place; drag to move. Click a ward to zoom to it.",
+      hintT: "Pinch or use + and − to zoom, double-tap to zoom in; move the map with two fingers. Tap a ward twice to zoom to it.",
+      sel: "{w} (new), former {d}.", go: "Value a home in this area ↓", poiH: "Facilities, shown when zoomed in:",
       load: "Loading the map…", nogl: "This map needs WebGL, which this browser does not offer.",
-      gWin: "Use Ctrl + scroll to zoom the map", gMac: "Use ⌘ + scroll to zoom the map", gMob: "Use two fingers to move the map"
+      gMob: "Use two fingers to move the map"
     },
     vi: {
       price: "Giá theo phường", wards: "Ranh giới phường", metro: "Metro", edu: "Trường học", health: "Bệnh viện, phòng khám", shop: "Chợ và mua sắm", park: "Công viên", bus: "Điểm dừng xe buýt", cbd: "Trung tâm",
@@ -50,7 +51,7 @@
       lgIdx: "Giá rao mỗi m² của nhà và đất trong phường, so với trung bình thành phố (×1 = trung bình)",
       lgPpm: "Giá rao trung vị mỗi m², mọi loại nhà trong phường (triệu đồng)",
       lgIdxS: "Giá so với trung bình TP, nhà và đất", lgPpmS: "Giá trung vị mỗi m², triệu đồng",
-      few: "Dưới 5 tin", h3d: "Ở bản 3D, chiều cao mỗi cột cũng là con số này.", poiLg: "Phóng to để thấy trường học, bệnh viện, chợ, công viên và điểm dừng xe buýt.",
+      few: "Dưới 5 tin", h3d: "Ở bản 3D, chiều cao mỗi cột cũng là con số này.",
       newWard: " (phường mới)", oldBy: "{d} cũ, theo tin rao", oldGadm: "{d} cũ, theo ranh giới cũ",
       rIdx: "Giá so với trung bình thành phố", rPpm: "Giá rao trung vị, mọi loại nhà", rN: "Số tin trong phường", rSeg: "Kiểu thị trường",
       above: "Nhà và đất ở đây được rao cao hơn trung bình thành phố khoảng {p}, với nhà tương tự.",
@@ -59,40 +60,17 @@
       thin: "Chỉ có {n} tin: nên đọc phường này thận trọng.", none: "Quá ít tin để tính giá ở đây.",
       st: "Ga metro", line: "Tuyến", centre: "Trung tâm thành phố", centreM: "Khoảng cách ở mục 2 tính từ điểm này.",
       poiK: { edu: "Trường học, mầm non hoặc đại học", health: "Bệnh viện, phòng khám hoặc nhà thuốc", shop: "Chợ, siêu thị hoặc trung tâm thương mại", park: "Công viên hoặc sân thể thao", bus: "Điểm dừng xe buýt" },
-      clickT: "Bấm để mở bản đồ nhà đất.", clickF: "Bấm để định giá một căn trong quận cũ này.",
-      tapT: "Chạm lần nữa để mở bản đồ nhà đất.", tapF: "Chạm lần nữa để định giá một căn trong quận cũ này.",
+      clickT: "Bấm để mở bản đồ nhà đất.", clickF: "Bấm để phóng to vào phường này.",
+      tapT: "Chạm lần nữa để mở bản đồ nhà đất.", tapF: "Chạm lần nữa để phóng to vào phường này.",
+      zin: "Phóng to", zout: "Thu nhỏ", whole: "Toàn thành phố", hint: "Phóng to, thu nhỏ bằng nút + và −, hoặc bấm đúp vào một chỗ; kéo để di chuyển. Bấm vào một phường để phóng tới phường đó.",
+      hintT: "Chụm hai ngón hoặc dùng + và − để phóng to, chạm đúp để phóng to; di chuyển bằng hai ngón tay. Chạm hai lần vào một phường để phóng tới.",
+      sel: "{w} (mới), {d} cũ.", go: "Định giá một căn ở khu vực này ↓", poiH: "Tiện ích, hiện khi phóng to:",
       load: "Đang tải bản đồ…", nogl: "Bản đồ này cần WebGL, trình duyệt này chưa hỗ trợ.",
-      gWin: "Giữ Ctrl và cuộn để phóng to bản đồ", gMac: "Giữ ⌘ và cuộn để phóng to bản đồ", gMob: "Dùng hai ngón tay để di chuyển bản đồ"
+      gMob: "Dùng hai ngón tay để di chuyển bản đồ"
     }
   };
   function tx(k) { return TX[H.lang()][k]; }
   function fill(s, o) { return s.replace(/\{(\w+)\}/g, function (m, k) { return o[k]; }); }
-
-  // ------------------------------------------------------------------ MapLibre, loaded once on demand
-  var mlP = null;
-  function addTag(tag, attrs) {
-    return new Promise(function (ok, bad) {
-      var e = document.createElement(tag);
-      Object.keys(attrs).forEach(function (k) { e[k] = attrs[k]; });
-      e.onload = ok; e.onerror = function () { e.remove(); bad(new Error(attrs.src || attrs.href)); };
-      document.head.appendChild(e);
-    });
-  }
-  function loadML() {
-    if (window.maplibregl) return Promise.resolve(window.maplibregl);
-    if (mlP) return mlP;
-    function from(i) {
-      if (i >= CDN.length) return Promise.reject(new Error("maplibre-gl"));
-      return Promise.all([addTag("script", { src: CDN[i] + "maplibre-gl.js" }), addTag("link", { rel: "stylesheet", href: CDN[i] + "maplibre-gl.css" })])
-        .then(function () { return window.maplibregl; }, function () { return from(i + 1); });
-    }
-    mlP = from(0);
-    mlP.catch(function () { mlP = null; });
-    return mlP;
-  }
-  function glOK() {
-    try { var c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; }
-  }
 
   // ------------------------------------------------------------------ ward figures (computed here from the exported fields)
   var cityData = {};
@@ -140,7 +118,7 @@
     return e;
   }
 
-  var MB = H.mapBase, tune = MB.tune, baseNames = MB.baseNames, firstOf = MB.firstOf, firstSymbol = MB.firstSymbol, hatch = MB.hatch;
+  var MB = H.mapBase, loadML = MB.loadML, glOK = MB.glOK, STYLE = MB.STYLE, tune = MB.tune, baseNames = MB.baseNames, firstOf = MB.firstOf, firstSymbol = MB.firstSymbol, hatch = MB.hatch;
 
   // ------------------------------------------------------------------ the map
   H.map = function (fig, opts) {
@@ -155,6 +133,30 @@
     var map = null, cur = null, D = null, M = null, CBD = null, hovId = null, hlKey = "", tapKey = null, lastEmit = "", self = false;
     var box = H.el("div", "hs-mapbox"); plot.appendChild(box);
     var legend = H.el("div", "hs-mlegend"); plot.appendChild(legend);
+    var zbar = null, zin, zout, zall, hint, selL, selT, selA, selK = "", selBox = null;
+    if (!teaser) {
+      zbar = H.el("div", "hs-zbar"); plot.parentNode.insertBefore(zbar, plot.nextSibling);
+      var zg = H.el("span", "sg-zoom"); zbar.appendChild(zg);
+      zin = H.el("button", "se-btn sg-z", "+"); zout = H.el("button", "se-btn sg-z", "−"); zall = H.el("button", "se-link");
+      [zin, zout, zall].forEach(function (b) { b.type = "button"; });
+      zg.appendChild(zin); zg.appendChild(zout); zbar.appendChild(zall);
+      hint = H.el("span", "hs-zhint"); zbar.appendChild(hint);
+      zin.addEventListener("click", function () { if (map) map.zoomIn(); });
+      zout.addEventListener("click", function () { if (map) map.zoomOut(); });
+      zall.addEventListener("click", function () { if (map && cur) { selK = ""; showSel(null); fitCity(true); } });
+      selL = H.el("p", "hs-sel"); selL.hidden = true; zbar.parentNode.insertBefore(selL, zbar.nextSibling);
+      selT = H.el("span"); selA = H.el("button", "se-link"); selA.type = "button";
+      selL.appendChild(selT); selL.appendChild(document.createTextNode(" ")); selL.appendChild(selA);
+      selA.addEventListener("click", function () { if (selK) { H.set({ d: selK }); H.emit("pick-district", { key: selK }); } });
+    }
+    function showSel(w) {
+      if (!selL) return;
+      selBox = w; selL.hidden = !w;
+      if (!w) return;
+      selK = dk(w.d_old);
+      selT.textContent = fill(tx("sel"), { w: H.pn(w.name), d: H.pn(w.d_old) });
+      selA.textContent = tx("go"); selA.hidden = !selK;
+    }
     var status = H.el("p", "hs-status"); plot.appendChild(status);
 
     // controls
@@ -206,6 +208,10 @@
           var cb = lb.firstChild; cb.checked = on(cb.dataset.layer); lb.lastChild.textContent = tx(cb.dataset.layer);
         });
       }
+      if (zbar) {
+        zin.setAttribute("aria-label", tx("zin")); zout.setAttribute("aria-label", tx("zout")); zall.textContent = tx("whole");
+        hint.textContent = tx(MB.coarse ? "hintT" : "hint"); showSel(selBox);
+      }
       box.setAttribute("aria-label", (st.m === "idx" ? tx("lgIdx") : tx("lgPpm")) + " · " + H.city(st.c));
       drawLegend();
     }
@@ -225,7 +231,12 @@
       legend.appendChild(ticks);
       var fw = H.el("div", "hs-lg-few"); fw.appendChild(H.el("span", "hs-lg-hatch")); fw.appendChild(H.el("span", null, tx("few"))); legend.appendChild(fw);
       if (!teaser && st.v === "3d") legend.appendChild(H.el("div", "hs-lg-n", tx("h3d")));
-      if (!teaser && !nar && (on("edu") || on("health") || on("shop") || on("park") || on("bus")) && map && map.getZoom() < 12.5) legend.appendChild(H.el("div", "hs-lg-n", tx("poiLg")));
+      var pk = Object.keys(POI).filter(on);
+      if (!teaser && pk.length) {
+        var pr = H.el("div", "hs-lg-poi"); pr.appendChild(H.el("span", "hs-lg-n", tx("poiH")));
+        pk.forEach(function (k) { var it = H.el("span", "hs-lg-pi"), d = H.el("span", "hs-poidot"); d.style.background = POI[k].col; it.appendChild(d); it.appendChild(H.el("span", null, tx(k))); pr.appendChild(it); });
+        legend.appendChild(pr);
+      }
     }
 
     function choose(key, v) {
@@ -275,7 +286,7 @@
       Object.keys(POI).forEach(function (k) {
         if (!map.getSource("openmaptiles")) return;
         map.addLayer({ id: "hs-poi-" + k, type: "circle", source: "openmaptiles", "source-layer": "poi", minzoom: POI[k].z, filter: POI[k].f, layout: { visibility: "none" },
-          paint: { "circle-color": POI[k].col, "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2, "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, k === "bus" ? 2 : 3, 16, k === "bus" ? 4 : 6] } });
+          paint: { "circle-color": POI[k].col, "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.6, "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, k === "bus" ? 3 : 4.5, 16, k === "bus" ? 5 : 8] } });
         map.addLayer({ id: "hs-poil-" + k, type: "symbol", source: "openmaptiles", "source-layer": "poi", minzoom: k === "bus" ? 16.5 : 15.6, filter: POI[k].f, layout: { visibility: "none",
           "text-field": ["coalesce", ["get", "name"], ""], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 0.9], "text-anchor": "top", "text-optional": true, "text-max-width": 9 },
           paint: { "text-color": POI[k].col, "text-halo-color": "#ffffff", "text-halo-width": 1.3 } });
@@ -351,12 +362,11 @@
         mt.stations.forEach(function (s) { fs.push({ type: "Feature", properties: { name: s.name, line: nearLine(mt, s) }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } }); });
         metroFC = { type: "FeatureCollection", features: fs };
         labels();
-        var pad = teaser ? 8 : 24;
         map.setMaxBounds(null); map.setMinZoom(0);
-        map.fitBounds(C.box, { padding: pad, duration: 0, pitch: st.v === "3d" ? 55 : 0, bearing: st.v === "3d" ? st.th : 0 });
+        fitCity(false);
         var b = C.box, dx = (b[1][0] - b[0][0]) * 0.6, dy = (b[1][1] - b[0][1]) * 0.6;
         map.setMaxBounds([[b[0][0] - dx, b[0][1] - dy], [b[1][0] + dx, b[1][1] + dy]]);
-        map.setMinZoom(Math.max(8, map.getZoom() - 1));
+        map.setMinZoom(Math.max(8, map.getZoom() - 1)); showSel(null);
         status.hidden = true; setHl(teaser ? "" : (H.st.d || ""));
       }).catch(function (e) { status.hidden = true; H.fail(fig, e); });
     }
@@ -379,6 +389,15 @@
       map.getSource("hs-dlbl").setData({ type: "FeatureCollection", features: (D || []).filter(function (d) { return d.city === st.c; }).map(function (d) {
         return { type: "Feature", properties: { t: H.pn(d.name, true), n: d.n || 0 }, geometry: { type: "Point", coordinates: [d.lon, d.lat] } };
       }) });
+    }
+    function fitCity(anim) {
+      map.fitBounds(cur.box, { padding: teaser ? 8 : 24, duration: anim && !H.reduced() ? 700 : 0, pitch: st.v === "3d" ? 55 : 0, bearing: st.v === "3d" ? st.th : 0 });
+    }
+    function zoomWard(id) { // the ward's own box, a little padded
+      var f = cur.wards.features[id], x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(function (pl) { pl[0].forEach(function (q) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); });
+      map.fitBounds([[x0, y0], [x1, y1]], { padding: 40, maxZoom: 15, duration: H.reduced() ? 0 : 800, pitch: st.v === "3d" ? 55 : 0, bearing: st.v === "3d" ? st.th : 0 });
+      showSel(f.properties);
     }
     function cbdData() {
       if (!map || !map.getSource("hs-cbd")) return;
@@ -454,9 +473,9 @@
     function act(h) {
       if (teaser) { location.href = (opts.href || "housing.html") + "#c=" + st.c; return; }
       if (h.kind !== "ward") return;
-      var k = dk(cur.wards.features[h.id].properties.d_old);
-      if (k) { H.tip.hide(); H.set({ d: k }); H.emit("pick-district", { key: k }); }
+      H.tip.hide(); zoomWard(h.id);
     }
+    var clickT = 0;
     function wire() {
       var cv = map.getCanvasContainer();
       cv.addEventListener("pointermove", function (ev) {
@@ -470,8 +489,11 @@
         if (!h) { tapKey = null; show(null, ev); return; }
         var key = h.kind + (h.id != null ? h.id : h.f.properties.name);
         if (touch && tapKey !== key) { tapKey = key; show(h, ev); return; } // first tap shows the card, the second acts
-        tapKey = null; act(h);
+        tapKey = null;
+        if (teaser) { act(h); return; }
+        clearTimeout(clickT); clickT = setTimeout(function () { act(h); }, 260); // a double-click zooms in instead
       });
+      map.on("dblclick", function () { clearTimeout(clickT); });
       map.on("movestart", function () { if (H.touch) return; H.tip.hide(); });
       map.on("zoomend", drawLegend);
       map.on("rotate", function () { if (rng && st.v === "3d") { st.th = Math.round(map.getBearing()); rng.value = st.th; } });
@@ -486,12 +508,12 @@
         var ml = r[0]; M = r[1][0]; D = r[1][1]; CBD = r[2] && r[2].cbd || null;
         map = new ml.Map({
           container: box, style: STYLE, attributionControl: { compact: true }, dragRotate: !teaser, pitchWithRotate: !teaser,
-          interactive: true, cooperativeGestures: !teaser, maxPitch: 65, fadeDuration: 0,
-          locale: { "CooperativeGesturesHandler.WindowsHelpText": tx("gWin"), "CooperativeGesturesHandler.MacHelpText": tx("gMac"), "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }
+          interactive: true, cooperativeGestures: !teaser && MB.coarse, maxPitch: 65, fadeDuration: 0,
+          locale: { "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }
         });
         fig.hsMap = map;
         if (teaser) { map.scrollZoom.disable(); map.dragPan.disable(); map.touchZoomRotate.disable(); map.doubleClickZoom.disable(); map.keyboard.disable(); }
-        else map.addControl(new ml.NavigationControl({ visualizePitch: true }), "top-right");
+        else if (!MB.coarse) map.scrollZoom.disable(); // the page scrolls; zoom with the buttons or a double-click
         map.on("load", function () {
           try { tune(map); baseNames(map); } catch (e) { if (window.console) console.warn("housing atlas: base style", e); }
           addLayers(); recolor(); vis(); view(false); wire(); setCity(); paint();
@@ -507,7 +529,7 @@
     });
     H.onLang(function () {
       paint(); labels(); H.tip.hide();
-      if (map) { baseNames(map); if (map._locale) { map._locale["CooperativeGesturesHandler.WindowsHelpText"] = tx("gWin"); map._locale["CooperativeGesturesHandler.MacHelpText"] = tx("gMac"); map._locale["CooperativeGesturesHandler.MobileHelpText"] = tx("gMob"); } }
+      if (map) { baseNames(map); if (map._locale) map._locale["CooperativeGesturesHandler.MobileHelpText"] = tx("gMob"); }
     });
     var lw = 0;
     if (window.ResizeObserver) new ResizeObserver(function () { var w = plot.clientWidth; if ((w < 600) !== (lw < 600)) { lw = w; drawLegend(); } lw = w; }).observe(plot);

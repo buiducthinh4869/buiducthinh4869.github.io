@@ -6,6 +6,31 @@
   var H = window.Housing;
   if (!H) return;
   var M = H.mapBase = {};
+  var ML = "4.7.1", CDN = ["https://cdn.jsdelivr.net/npm/maplibre-gl@" + ML + "/dist/", "https://unpkg.com/maplibre-gl@" + ML + "/dist/"];
+  M.STYLE = "https://tiles.openfreemap.org/styles/positron";
+  M.coarse = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches); // touch first: keep two-finger gestures there
+  var mlP = null;
+  function addTag(tag, attrs) {
+    return new Promise(function (ok, bad) {
+      var e = document.createElement(tag);
+      Object.keys(attrs).forEach(function (k) { e[k] = attrs[k]; });
+      e.onload = ok; e.onerror = function () { e.remove(); bad(new Error(attrs.src || attrs.href)); };
+      document.head.appendChild(e);
+    });
+  }
+  M.loadML = function () { // MapLibre GL, loaded once, jsDelivr then unpkg
+    if (window.maplibregl) return Promise.resolve(window.maplibregl);
+    if (mlP) return mlP;
+    function from(i) {
+      if (i >= CDN.length) return Promise.reject(new Error("maplibre-gl"));
+      return Promise.all([addTag("script", { src: CDN[i] + "maplibre-gl.js" }), addTag("link", { rel: "stylesheet", href: CDN[i] + "maplibre-gl.css" })])
+        .then(function () { return window.maplibregl; }, function () { return from(i + 1); });
+    }
+    mlP = from(0);
+    mlP.catch(function () { mlP = null; });
+    return mlP;
+  };
+  M.glOK = function () { try { var c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } };
   // ------------------------------------------------------------------ base style: the site's colours, no country borders
   M.tune = function tune(map) {
     var st = map.getStyle();

@@ -605,13 +605,14 @@ html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :n
 .at-head > :last-child { margin-bottom: 0; }
 @media (min-width: 1000px) {
   /* heading on the left in the width of the globe's list, text on the right above the figures */
-  .at-head { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); column-gap: 3rem; align-items: start; margin-bottom: 1.6rem; }
+  /* site grid: the text column is 40rem, flush with the right edge of the container, as on Home, Research, Writing and CV */
+  .at-head { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); justify-content: space-between; column-gap: 3rem; align-items: baseline; margin-bottom: 1.6rem; }
   .at-head > h1, .at-head > h2 { margin: 0; }
-  .at-top { align-items: end; margin-bottom: 3rem; }
+  .at-top { margin-bottom: 3rem; }
   .at-top .page-lede { margin: 0; }
   .at-head .at-how { margin: 0.25rem 0 0; }
   .at-head .at-region { margin-bottom: 0; }
-  .at-timeline { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); column-gap: 3rem; }
+  .at-timeline { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 40rem); justify-content: space-between; column-gap: 3rem; }
   .at-timeline > * { grid-column: 1 / -1; }
   .at-timeline > .atl-title { grid-column: 1; margin: 0; }
   .at-timeline > .at-how { grid-column: 2; margin: 0 0 1rem; }
@@ -812,7 +813,7 @@ html:not(.js) .atlas-teaser > :not(figcaption), .atlas-failed .atlas-teaser > :n
   .storm-globe, .storm-overview { width: 100%; margin: 0 0 3.5rem; transform: none; }
   .sg-live {
     display: grid;
-    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    grid-template-columns: minmax(17rem, 1fr) minmax(0, 40rem); /* the list keeps 17rem on narrow desktops */
     column-gap: 3rem;
     align-items: start;
   }
@@ -841,7 +842,11 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
 /* ---------- Housing atlas (housing.html) ---------- */
 
 .housing .at-top { margin-bottom: 1rem; }
-@media (min-width: 1000px) { .housing .at-top { margin-bottom: 1.2rem; } }
+@media (min-width: 1000px) {
+  .housing .at-top { margin-bottom: 1.2rem; }
+  /* facts and version sit in the text column, under the lede */
+  .housing .hs-meta { width: 40rem; max-width: 100%; margin-left: auto; }
+}
 .hs-meta { margin: 0 0 3rem; }
 .hs-facts, .hs-version { max-width: 40rem; margin: 0.15rem 0 0; font-family: var(--sans); font-size: 0.8125rem; line-height: 1.5; color: var(--muted); }
 .hs-take { max-width: 40rem; margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.55; }
@@ -1054,7 +1059,7 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
 /* from 1000px: the form on the left, the result on the right (it stays in view while the form scrolls) */
 @media (min-width: 1000px) {
   .housing .hs-fig[data-hs="tool"] .hs-plot { min-height: 50rem; }
-  .housing .hs-tool { display: grid; grid-template-columns: minmax(0, 25rem) minmax(0, 1fr); gap: 0 5rem; align-items: start; }
+  .housing .hs-tool { display: grid; grid-template-columns: minmax(18rem, 1fr) minmax(0, 40rem); gap: 0 5rem; align-items: start; }
   .housing .ht-form { margin: 0; max-width: none; }
   .housing .ht-out { position: sticky; top: 1.5rem; max-width: none; padding-left: 2.5rem; margin-left: -2.5rem; border-left: 1px solid var(--rule); } /* the rule sits in the middle of the gap */
   .housing .ht-tw { max-width: none; }

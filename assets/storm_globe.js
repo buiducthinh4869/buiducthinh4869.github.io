@@ -41,7 +41,7 @@
 
   function fail(err) { A.fail(err); fig.hidden = true; }
   var getJSON = A.getJSON;
-  var IX, land, LT, DEF, TL = { loaded: {}, want: {} }, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
+  var IX, land, LT, DEF, G = {}, st = { rot: [-125, -15], k: 1, sel: A.st.sel, sort: "new", act: false, view: "lines", glint: !reduce };
   var seasons = {}, fields = {};
 
   A.ready.then(function () {
@@ -70,17 +70,20 @@
   function lights(im) {
     var m = IX.meta.lights;
     LT = { cell: m.cell_deg * RAD, cols: A.ntl.colors(NB, m.scale.ink_from), bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg) };
-    TL.on = new Uint8Array(TW * 15);
-    TL.list = {};
-    ((m.tiles && m.tiles.list) || []).forEach(function (k) { TL.list[k] = 1; });
-    TL.cell = m.tiles ? m.tiles.cell_deg * RAD : 0;
-    DEF = { bins: LT.bins, tiles: true }; // lights.png with the 0.05 degree tiles
+    DEF = { bins: LT.bins, T: tileSet(m.tiles && m.tiles.list, m.tiles && m.tiles.cell_deg, D + "lights/") }; // lights.png with the 0.05 degree tiles
     NT.sync(); // takes the default layer (key text and redraw)
     fxStart();
   }
-  // load the 0.05-degree tiles in view once a 0.2-degree cell is wider than 2.5 px
+  // a layer's 0.05-degree tiles: keys "<west>_<south>" (array or comma string), cell in degrees, folder of the PNGs
+  function tileSet(keys, cellDeg, dir) {
+    var T = { list: {}, loaded: {}, want: {}, on: new Uint8Array(TW * 15), cell: cellDeg ? cellDeg * RAD : 0, deg: cellDeg, dir: dir };
+    (typeof keys === "string" ? keys.split(",") : keys || []).forEach(function (k) { if (k) T.list[k] = 1; });
+    return T;
+  }
+  // load the 0.05-degree tiles in view (of the layer on screen) once a 0.2-degree cell is wider than 2.5 px
   function tiles() {
-    if (!LT || !TL.cell || !NT.cur.tiles || G.R * st.k * LT.cell < 2.5) return;
+    var TL = NT.cur && NT.cur.T;
+    if (!LT || !TL || !TL.cell || G.R * st.k * LT.cell < 2.5) return;
     var c = [-st.rot[0], -st.rot[1]], r = 95 / st.k;
     for (var la = -60; la < 80; la += 10) for (var lo = -180; lo < 180; lo += 10) {
       var key = lo + "_" + la;
@@ -88,8 +91,8 @@
       if (d3.geoDistance([lo + 5, la + 5], c) * 180 / Math.PI > r + 8) continue;
       TL.want[key] = 1;
       (function (key, lo, la) {
-        N.decode(D + "lights/" + key + ".png").then(function (im) {
-          TL.loaded[key] = bins(im, lo, la + 10, IX.meta.lights.tiles.cell_deg);
+        N.decode(TL.dir + key + ".png").then(function (im) {
+          TL.loaded[key] = bins(im, lo, la + 10, TL.deg);
           TL.on[tid(lo + 5, la + 5)] = 1;
           draw();
         }).catch(function () { TL.loaded[key] = []; });
@@ -98,16 +101,21 @@
   }
 
   // ------------------------------------------------------------------ what ntl_layer.js and globe_cells.js need
-  function ntlDraw(cx, L, keep, Rk) { // one layer: its 0.2 degree cells, and for the default layer the 0.05 degree tiles that are loaded
-    dots(cx, L.bins, LT.cell, Rk, L.tiles, keep);
-    if (L.tiles) for (var k in TL.loaded) if (TL.loaded[k].length) dots(cx, TL.loaded[k], TL.cell, Rk, false, keep);
+  function ntlDraw(cx, L, keep, Rk) { // one layer: its 0.2 degree cells, and the 0.05 degree tiles of that layer that are loaded
+    var TL = L.T;
+    dots(cx, L.bins, LT.cell, Rk, TL ? TL.on : null, keep);
+    if (TL) for (var k in TL.loaded) if (TL.loaded[k].length) dots(cx, TL.loaded[k], TL.cell, Rk, null, keep);
   }
   var NT = A.ntlLayer({
     lead: function () { return st.dur > 0 ? st.sel.filter(function (s) { return s.pts && s.pts.length > 1; })[0] : null; },
-    build: function (im) {
+    build: function (im, y) {
       var m = IX.meta.lights;
       if (im.w !== m.width || im.h !== m.height) throw new Error("ntl image: wrong size");
-      return { bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg), tiles: false };
+      return N.load().then(function (d) { // the year's 0.05 degree tiles, if assets/ntl/index.json lists them
+        var t = d && d.tiles, ks = t && t.list && t.list[y];
+        return { bins: bins(im, m.bounds[0], m.bounds[3], m.cell_deg),
+          T: ks ? tileSet(ks, t.cell_deg, N.dir + t.dir.replace("{year}", y)) : null };
+      });
     },
     draw: ntlDraw, redraw: draw, reduce: function () { return reduce; }, changed: function () { ramp(); draw(); },
     defaultLayer: function () { return DEF ? { layer: DEF, year: IX.meta.lights.year } : null; }
@@ -211,14 +219,14 @@
   }
 
   // orthographic forward projection by hand, about 20 times faster than through d3 for this many points
-  function dots(cx, bins, cell, Rk, global, keep) {
+  function dots(cx, bins, cell, Rk, on, keep) { // on: tiles loaded for this layer (its 0.2 degree cells there are skipped), or null
     var w = G.w, h = G.h, L0 = -st.rot[0] * RAD, p0 = -st.rot[1] * RAD, sp = Math.sin(p0), cq = Math.cos(p0), X = w / 2, Y = h / 2;
-    var sz = Math.max(0.8, Rk * cell * 1.05), on = TL.on;
+    var sz = Math.max(0.8, Rk * cell * 1.05);
     for (var b = 0; b < bins.length; b++) {
       var a = bins[b];
       cx.fillStyle = LT.cols[b];
       for (var i = 0; i < a.length; i += 4) {
-        if (global && on[a[i + 3]]) continue;
+        if (on && on[a[i + 3]]) continue;
         var l = a[i] - L0, cl = Math.cos(l), cosc = sp * a[i + 1] + cq * a[i + 2] * cl;
         if (cosc <= 0.02) continue;
         var x = X + Rk * a[i + 2] * Math.sin(l), y = Y - Rk * (cq * a[i + 1] - sp * a[i + 2] * cl);

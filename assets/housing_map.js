@@ -39,7 +39,7 @@
       clickT: "Click to open the housing atlas.", clickF: "Click to zoom in on this ward.",
       tapT: "Tap again to open the housing atlas.", tapF: "Tap again to zoom in on this ward.",
       zin: "Zoom in", zout: "Zoom out", whole: "Whole city", hint: "Zoom with + and −, or double-click a place; drag to move. Click a ward to zoom to it.",
-      hintT: "Pinch or use + and − to zoom, double-tap to zoom in; move the map with two fingers. Tap a ward twice to zoom to it.",
+      hintT: "Pinch or use + and − to zoom, double-tap to zoom in; swipe to move the map. Tap a ward twice to zoom to it.",
       sel: "{w} (new), former {d}.", go: "Value a home in this area ↓", poiH: "Facilities, shown when zoomed in:",
       load: "Loading the map…", nogl: "This map needs WebGL, which this browser does not offer.",
       gMob: "Use two fingers to move the map"
@@ -63,7 +63,7 @@
       clickT: "Bấm để mở bản đồ nhà đất.", clickF: "Bấm để phóng to vào phường này.",
       tapT: "Chạm lần nữa để mở bản đồ nhà đất.", tapF: "Chạm lần nữa để phóng to vào phường này.",
       zin: "Phóng to", zout: "Thu nhỏ", whole: "Toàn thành phố", hint: "Phóng to, thu nhỏ bằng nút + và −, hoặc bấm đúp vào một chỗ; kéo để di chuyển. Bấm vào một phường để phóng tới phường đó.",
-      hintT: "Chụm hai ngón hoặc dùng + và − để phóng to, chạm đúp để phóng to; di chuyển bằng hai ngón tay. Chạm hai lần vào một phường để phóng tới.",
+      hintT: "Chụm hai ngón hoặc dùng + và − để phóng to, chạm đúp để phóng to; vuốt để di chuyển bản đồ. Chạm hai lần vào một phường để phóng tới.",
       sel: "{w} (mới), {d} cũ.", go: "Định giá một căn ở khu vực này ↓", poiH: "Tiện ích, hiện khi phóng to:",
       load: "Đang tải bản đồ…", nogl: "Bản đồ này cần WebGL, trình duyệt này chưa hỗ trợ.",
       gMob: "Dùng hai ngón tay để di chuyển bản đồ"
@@ -574,11 +574,10 @@
         var ml = r[0]; M = r[1][0]; D = r[1][1]; CBD = r[2] && r[2].cbd || null;
         map = new ml.Map({
           container: box, style: STYLE, attributionControl: { compact: true }, dragRotate: !teaser, pitchWithRotate: !teaser,
-          interactive: true, cooperativeGestures: false, // no dark overlay on phones (Thinh, 2026-11-28): one finger scrolls the page, two fingers pinch and move maxPitch: 65, fadeDuration: 0,
+          interactive: true, cooperativeGestures: false, // no dark overlay on phones (Thinh, 2026-11-28): one finger moves the map, two fingers zoom maxPitch: 65, fadeDuration: 0,
           locale: { "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }
         });
         fig.hsMap = map;
-        if (MB.coarse && !teaser) map.dragPan.disable(); // touch: the page scrolls under one finger; the two-finger gesture zooms and moves the map
         if (teaser) { map.scrollZoom.disable(); map.dragPan.disable(); map.touchZoomRotate.disable(); map.doubleClickZoom.disable(); map.keyboard.disable(); }
         else if (!MB.coarse) map.scrollZoom.disable(); // the page scrolls; zoom with the buttons or a double-click
         map.on("load", function () {

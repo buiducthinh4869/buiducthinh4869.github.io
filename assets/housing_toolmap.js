@@ -44,7 +44,6 @@
           map = new ml.Map({ container: box, style: MB.STYLE, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, fadeDuration: 0,
             cooperativeGestures: false, locale: { "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }, center: [105.85, 21.03], zoom: 12 });
           if (!MB.coarse) map.scrollZoom.disable();
-          if (MB.coarse) map.dragPan.disable(); // no cooperative overlay: one finger scrolls the page, two fingers zoom and move
           map.touchZoomRotate.disableRotation();
           map.on("load", function () {
             try { MB.tune(map); MB.baseNames(map); } catch (e) { if (window.console) console.warn("housing atlas: base style", e); }

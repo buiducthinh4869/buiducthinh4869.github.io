@@ -76,29 +76,34 @@
   var cityData = {};
   function prepCity(c) {
     if (cityData[c]) return cityData[c];
-    cityData[c] = H.load("wards_" + c).then(function (g) {
-      var F = g.features, byD = {};
-      F.forEach(function (f) {
-        var p = f.properties;
-        if (p.n >= MIN_N && p.v_med > 0) { var d = byD[p.d_old] = byD[p.d_old] || [0, 0]; d[0] += p.n * Math.log(p.v_med); d[1] += p.n; }
-      });
-      var towers = [], minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
-      F.forEach(function (f, i) {
-        var p = f.properties, ok = p.n >= MIN_N && p.v_med > 0, d = byD[p.d_old];
-        var tgt = d && d[1] > p.n ? (d[0] - p.n * Math.log(p.v_med || 1)) / (d[1] - p.n) : 0; // other wards of the same former district
-        p.vi = ok ? Math.exp((p.n * Math.log(p.v_med) + K * tgt) / (p.n + K)) : null;
-        p.pm = ok && p.ppm2_med != null ? p.ppm2_med : null;
-        p.k = i;
-        f.id = i;
-        if (p.vi != null && near(p.c, c)) eachXY(f.geometry, function (x, y) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); miny = Math.min(miny, y); maxy = Math.max(maxy, y); });
-        if (p.vi != null) towers.push({ type: "Feature", id: i, properties: p, geometry: shrink(f.geometry, p.c, SHRINK) });
-      });
-      return { wards: g, towers: { type: "FeatureCollection", features: towers }, box: [[minx, miny], [maxx, maxy]] };
-    });
+    cityData[c] = H.load("wards_" + c).then(function (g) { return derive(g, c, null); });
     cityData[c].catch(function () { delete cityData[c]; });
     return cityData[c];
   }
   var CB = { hn: [105.8522, 21.0285], hcm: [106.698, 10.7725] }, FIT_KM = 16; // the first view frames priced wards within 16 km of the centre
+  function derive(g0, c, fd) { // ward figures for the map; fd = one year's {code: [v_med, n, ppm2_med]} (Play, housing_maptime.js)
+    var g = !fd ? g0 : { type: "FeatureCollection", features: g0.features.map(function (f) {
+      var q = fd[f.properties.code] || [null, 0, null];
+      return { type: "Feature", geometry: f.geometry, properties: Object.assign({}, f.properties, { v_med: q[0], n: q[1], ppm2_med: q[2] }) };
+    }) };
+    var F = g.features, byD = {};
+    F.forEach(function (f) {
+      var p = f.properties;
+      if (p.n >= MIN_N && p.v_med > 0) { var d = byD[p.d_old] = byD[p.d_old] || [0, 0]; d[0] += p.n * Math.log(p.v_med); d[1] += p.n; }
+    });
+    var towers = [], minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
+    F.forEach(function (f, i) {
+      var p = f.properties, ok = p.n >= MIN_N && p.v_med > 0, d = byD[p.d_old];
+      var tgt = d && d[1] > p.n ? (d[0] - p.n * Math.log(p.v_med || 1)) / (d[1] - p.n) : 0; // other wards of the same former district
+      p.vi = ok ? Math.exp((p.n * Math.log(p.v_med) + K * tgt) / (p.n + K)) : null;
+      p.pm = ok && p.ppm2_med != null ? p.ppm2_med : null;
+      p.k = i;
+      f.id = i;
+      if (p.vi != null && near(p.c, c)) eachXY(f.geometry, function (x, y) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); miny = Math.min(miny, y); maxy = Math.max(maxy, y); });
+      if (p.vi != null) towers.push({ type: "Feature", id: i, properties: p, geometry: shrink(f.geometry, p.c, SHRINK) });
+    });
+    return { wards: g, towers: { type: "FeatureCollection", features: towers }, box: [[minx, miny], [maxx, maxy]] };
+  }
   function near(q, c) { var o = CB[c], dx = (q[0] - o[0]) * 111.32 * Math.cos(o[1] * Math.PI / 180), dy = (q[1] - o[1]) * 110.57; return Math.sqrt(dx * dx + dy * dy) <= FIT_KM; }
   function eachXY(geom, fn) {
     (geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates).forEach(function (poly) {
@@ -353,8 +358,7 @@
         if (my !== st.c) return;
         setHov(null); map.removeFeatureState({ source: "hs-wards" });
         cur = C;
-        map.getSource("hs-wards").setData(C.wards);
-        map.getSource("hs-towers").setData(C.towers);
+        applyFrame();
         var mt = M && M[my] ? M[my] : { lines: [], stations: [] }, fs = [];
         mt.lines.forEach(function (l) { fs.push({ type: "Feature", properties: { name: l.name }, geometry: { type: "LineString", coordinates: l.coords } }); });
         mt.stations.forEach(function (s) { fs.push({ type: "Feature", properties: { name: s.name, line: nearLine(mt, s) }, geometry: { type: "Point", coordinates: [s.lon, s.lat] } }); });
@@ -367,6 +371,14 @@
         map.setMinZoom(Math.max(8, map.getZoom() - 1)); showSel(null);
         status.hidden = true; setHl(teaser ? "" : (H.st.d || ""));
       }).catch(function (e) { status.hidden = true; H.fail(fig, e); });
+    }
+    var frameFn = null, frameMemo = {}, shownC = null;
+    function applyFrame() { // the 2024-2026 figures, or the year that housing_maptime.js asks for
+      if (!map || !cur) return;
+      var y = frameFn ? frameFn(st.c) : null, k = y ? st.c + y.key : "", C = cur;
+      if (y) { C = frameMemo[k] = frameMemo[k] || derive(cur.wards, st.c, y.w); C.lab = y.key; }
+      shownC = y ? C : null;
+      map.getSource("hs-wards").setData(C.wards); map.getSource("hs-towers").setData(C.towers);
     }
     var metroFC = { type: "FeatureCollection", features: [] };
     function nearLine(mt, st0) { // the line whose vertices pass closest to the station
@@ -435,8 +447,8 @@
       if (h.kind === "hs-metro-st") { o.h = H.pn(p.name); o.rows.push([tx("st"), H.city(st.c)]); if (p.line) o.m.push(H.line(p.line)); return H.card(o); }
       if (h.kind === "hs-cbd-pt") { o.h = tx("centre"); o.m.push(tx("centreM")); return H.card(o); }
       if (h.kind.indexOf("hs-poi-") === 0) { var k = h.kind.slice(7); o.h = p.name ? (H.lang() === "en" ? H.ascii(p["name:en"] || p["name:latin"] || p.name) : p.name) : TX[H.lang()].poiK[k]; o.sw = POI[k].col; o.m.push(TX[H.lang()].poiK[k]); return H.card(o); }
-      var w = cur.wards.features[h.id].properties;
-      o.h = H.pn(w.name) + tx("newWard");
+      var w = (shownC || cur).wards.features[h.id].properties;
+      o.h = H.pn(w.name) + tx("newWard") + (shownC && shownC.lab ? " · " + shownC.lab : "");
       if (w.d_old) o.m.push(fill(tx(w.d_old_src === "gadm" ? "oldGadm" : "oldBy"), { d: H.pn(w.d_old) }));
       if (w.vi != null) {
         o.rows.push([tx("rIdx"), "×" + H.nf(w.vi, 2)]);
@@ -534,7 +546,8 @@
     if (window.ResizeObserver) new ResizeObserver(function () { var w = plot.clientWidth; if ((w < 600) !== (lw < 600)) { lw = w; drawLegend(); } lw = w; }).observe(plot);
     paint();
     H.lazy(fig, start, "600px");
-    return { city: function (c) { choose("c", c); }, redraw: function () { if (map) map.resize(); } };
+    return (fig._hsMap = { city: function (c) { choose("c", c); }, redraw: function () { if (map) map.resize(); },
+      cityNow: function () { return st.c; }, frame: function (fn) { frameFn = fn; applyFrame(); } });
   };
 
   function mountAll() {

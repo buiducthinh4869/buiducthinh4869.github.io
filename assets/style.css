@@ -1174,3 +1174,11 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
 .housing .ao-range { flex-wrap: wrap; }
 .housing .ao-range .sg-select { width: 6.2rem; }
 .housing .hs-pill[hidden], .housing .hs-btn[hidden] { display: none; }
+/* Housing atlas 2.0, section 1 played year by year (assets/housing_maptime.js) */
+.housing .hs-tbar { margin: 0 0 0.5rem; }
+.housing .hs-tbar[hidden], .housing .hs-tcount[hidden], .housing .hs-thint[hidden], .housing .hs-tbar [hidden] { display: none; }
+.hs-tcount { margin: 0 0 0.2rem; font-family: var(--sans); font-size: 0.875rem; color: var(--muted); }
+.hs-tyear { font-family: var(--serif); font-size: 1.5rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hs-thint { max-width: 40rem; margin: 0 0 0.6rem; font-family: var(--sans); font-size: 0.75rem; line-height: 1.5; color: var(--muted); }
+.housing .hs-tbar { font-family: var(--sans); font-size: 0.8125rem; color: var(--muted); }
+.housing .hs-tbar .se-btn, .housing .hs-tbar select, .housing .hs-tbar output { font-family: var(--sans); }

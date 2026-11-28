@@ -45,7 +45,8 @@
       return fdMemo[k];
     }
     function show() {
-      api.frame(st.y == null ? null : function (c) { return MY[c] && MY[c].w ? { key: String(st.y), w: fd(c, st.y) } : null; });
+      var ms = st.timer ? Math.min(1600, rng.value * 450) : 700; // the change between two years takes 45% of a year's time, at most 1.6 s
+      api.frame(st.y == null ? null : function (c) { return MY[c] && MY[c].w ? { key: String(st.y), w: fd(c, st.y), ms: ms } : null; });
       var c = city(), n = 0;
       if (st.y == null) [2024, 2025, 2026].forEach(function (y) { n += (MY[c].n[y] || 0); }); else n = MY[c].n[st.y] || 0;
       yr.textContent = st.y == null ? tx("all") : String(st.y);

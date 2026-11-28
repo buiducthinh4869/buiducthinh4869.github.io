@@ -1,4 +1,4 @@
-/* Housing atlas, sections 7 to 9 (version 2.0): how prices changed, prices near a place, where prices rose fastest.
+/* Housing atlas, sections 7 to 9 (version 2.0; the period map of section 7 was removed 2026-11-28, section 1 plays by year): how prices changed, prices near a place, where prices rose fastest.
    Needs housing_core.js (window.Housing) and D3 7.9.0. Data: index.json, change.json, places.json, wards_<c>.json
    (written by PROJ\code\v2\web\export_web_v2.py). Each figure fails on its own (H.fail).
    Section 9 filters 7 and 8: a click on a former district emits "pick-change" {c, d}. */
@@ -7,7 +7,6 @@
   var H = window.Housing, d3 = window.d3;
   if (!H || !d3) return;
   var INK = "#23272b", MUTED = "#6b6f72", RULE = "#e4e1d8", ACC = "#1f5f7a", PAPER = "#faf9f5";
-  var CLS = [0.70, 0.85, 1.00, 1.15, 1.35, 1.70]; // the map's fixed classes, on the 7-colour price ramp
   var TX = {
     en: {
       city: "City", group: "Type of home", all: "All homes", house: "Houses (with villas)", apartment: "Apartments", land: "Land",
@@ -70,7 +69,6 @@
   function times(x) { return "×" + H.nf(x, 2); }
   var IX = null, CH = null, PL = null, sel = { c: "hn", d: null }; // section 9 pick, shared by 7 and 8
   function perLab(c, p) { if (p === "P1" && c === "hn") return "2020"; var q = (IX.periods || []).filter(function (x) { return x.p === p; })[0]; return q ? q.label : p; }
-  function cls(v) { var k = 0; for (var i = 0; i < CLS.length; i++) if (v >= CLS[i]) k = i + 1; return H.RAMP[k]; }
   function pills(g, vals, cur, lab, fn) {
     g.textContent = ""; g.setAttribute("role", "group");
     vals.forEach(function (v) {
@@ -166,103 +164,6 @@
     H.hover(plot, function (px) { return hit ? hit(px) : null; });
     H.onLang(render); H.on("pick-change", render);
     window.addEventListener("resize", function () { if (IX && plot.clientWidth !== w) render(); });
-    return render;
-  }
-
-  // ------------------------------------------------------------------ section 7: map by period with Play
-  function mapFig(fig) {
-    var bar = H.el("div", "hs-bar"), play = H.el("button", "se-btn"), rg = H.el("span", "ao-range"), f0 = H.el("select", "sg-select hs-from"), f1 = H.el("select", "sg-select hs-to");
-    var l0 = H.el("label"), l1 = H.el("label"), frame = H.el("span", "hs-frame"), gC = H.el("div", "se-seg");
-    play.type = "button"; play.setAttribute("data-act", "play");
-    f0.id = "hs-ch-from"; f1.id = "hs-ch-to"; l0.htmlFor = f0.id; l1.htmlFor = f1.id;
-    rg.appendChild(l0); rg.appendChild(f0); rg.appendChild(document.createTextNode(" ")); rg.appendChild(l1); rg.appendChild(f1);
-    [gC, play, rg, frame].forEach(function (e) { bar.appendChild(e); });
-    var plot = fig.querySelector(".hs-plot"); fig.insertBefore(bar, plot);
-    var lg = H.el("div", "hs-legend hs-chlg"); plot.parentNode.insertBefore(lg, plot.nextSibling);
-    var cv = H.el("canvas"); plot.textContent = ""; plot.appendChild(cv);
-    var st = { i: 0, a: 0, b: 3, timer: null }, W = {}, proj = null, path = null, feats = [], w = 0, h = 0, pat = null;
-    function P() { return IX.periods.map(function (x) { return x.p; }); }
-    function stop() { if (st.timer) { clearInterval(st.timer); st.timer = null; } play.textContent = tx("play"); play.setAttribute("aria-pressed", "false"); }
-    function start() {
-      if (st.i >= st.b || st.i < st.a) st.i = st.a;
-      paint(); play.textContent = tx("pause"); play.setAttribute("aria-pressed", "true");
-      st.timer = setInterval(function () { if (st.i >= st.b) { stop(); return; } st.i++; paint(); }, 1400);
-    }
-    play.addEventListener("click", function () { if (st.timer) stop(); else start(); });
-    f0.addEventListener("change", function () { st.a = +f0.value; if (st.b < st.a) { st.b = st.a; f1.value = st.b; } st.i = st.a; stop(); paint(); });
-    f1.addEventListener("change", function () { st.b = +f1.value; if (st.a > st.b) { st.a = st.b; f0.value = st.a; } st.i = st.b; stop(); paint(); });
-    function opts(s, v) { s.textContent = ""; P().forEach(function (p, i) { var o = H.el("option", null, perLab(sel.c, p)); o.value = i; s.appendChild(o); }); s.value = v; }
-    function value(f, p) {
-      var M = IX.map[sel.c], code = f.properties.code, wv = M.wards[code] && M.wards[code][p];
-      if (wv && wv[0] != null) return { v: wv[0], n: wv[1], lv: "ward" };
-      var dk = M.ward_district[code], dv = dk && M.districts[dk] && M.districts[dk].v[p];
-      if (dv && dv[0] != null) return { v: dv[0], n: dv[1], lv: "dist", d: M.districts[dk].name };
-      return { v: null, n: dv ? dv[1] : 0, lv: "none", d: dk && M.districts[dk] ? M.districts[dk].name : f.properties.d_old };
-    }
-    function hatch(ctx) {
-      var c = document.createElement("canvas"); c.width = c.height = 8;
-      var x = c.getContext("2d"); x.fillStyle = PAPER; x.fillRect(0, 0, 8, 8); x.strokeStyle = "#c8c5bc"; x.lineWidth = 1.2;
-      x.beginPath(); x.moveTo(0, 8); x.lineTo(8, 0); x.moveTo(-2, 2); x.lineTo(2, -2); x.moveTo(6, 10); x.lineTo(10, 6); x.stroke();
-      return ctx.createPattern(c, "repeat");
-    }
-    function layout() {
-      var g = W[sel.c]; if (!g) return;
-      var M = IX.map[sel.c], cb = (H.meta() && H.meta().cbd && H.meta().cbd[sel.c]) || null;
-      feats = g.features.filter(function (f) { var dk = M.ward_district[f.properties.code]; return dk && M.districts[dk]; });
-      var shown = function (f) { var dk = M.ward_district[f.properties.code], v = M.districts[dk].v; return Object.keys(v).some(function (p) { return v[p][0] != null; }); };
-      var near = feats.filter(function (f) { var c = f.properties.c; return shown(f) && (!cb || (Math.abs(c[0] - cb[0]) < 0.25 && Math.abs(c[1] - cb[1]) < 0.22)); });
-      w = plot.clientWidth || 600; h = Math.round(w * (w < 600 ? 1.0 : 0.62));
-      var dpr = window.devicePixelRatio || 1; cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px";
-      proj = d3.geoMercator().fitExtent([[8, 8], [w - 8, h - 8]], { type: "FeatureCollection", features: near.length ? near : feats });
-      var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); path = d3.geoPath(proj, ctx); pat = hatch(ctx);
-    }
-    function paint() {
-      if (!path) return;
-      var p = P()[st.i], ctx = cv.getContext("2d");
-      ctx.clearRect(0, 0, w, h);
-      feats.forEach(function (f) {
-        var v = value(f, p); ctx.beginPath(); path(f);
-        ctx.fillStyle = v.v != null ? cls(v.v) : pat; ctx.fill();
-        ctx.strokeStyle = v.v != null ? "rgba(255,255,255,0.8)" : RULE; ctx.lineWidth = 0.6; ctx.stroke();
-      });
-      frame.textContent = tx("frame") + ": " + perLab(sel.c, p);
-      fig.setAttribute("data-frame", p);
-    }
-    function legend() {
-      lg.textContent = "";
-      lg.appendChild(H.el("span", null, tx("lgMap") + ":"));
-      H.RAMP.forEach(function (c, i) {
-        var s = H.el("span", "hs-lgi"), b = H.el("span", "hs-sw hs-sq"); b.style.background = c; s.appendChild(b);
-        s.appendChild(document.createTextNode(i === 0 ? "< " + times(CLS[0]) : i === CLS.length ? "≥ " + times(CLS[CLS.length - 1]) : times(CLS[i - 1]) + "–" + H.nf(CLS[i], 2)));
-        lg.appendChild(s);
-      });
-      var s = H.el("span", "hs-lgi"), b = H.el("span", "hs-sw hs-sq hs-hatch"); s.appendChild(b); s.appendChild(document.createTextNode(tx("lgFew"))); lg.appendChild(s);
-    }
-    function render() {
-      if (!IX) return;
-      pills(gC, ["hn", "hcm"], sel.c, cityTxt, function (v) { sel.c = v; sel.d = null; H.emit("pick-change", { c: v, d: null }); });
-      gC.setAttribute("aria-label", tx("city"));
-      l0.textContent = tx("from"); l1.textContent = tx("to"); opts(f0, st.a); opts(f1, st.b);
-      if (!st.timer) play.textContent = tx("play");
-      legend(); caption(fig, tx("srcMap"), tx("noteMap"));
-      var c = sel.c;
-      (W[c] ? Promise.resolve(W[c]) : H.load("wards_" + c).then(function (g) { W[c] = g; return g; })).then(function () {
-        if (c !== sel.c) return; layout(); paint();
-      }).catch(function (e) { H.fail(fig, e); });
-    }
-    H.hover(cv, function (px, py) {
-      if (!proj) return null;
-      var ll = proj.invert([px, py]), p = P()[st.i];
-      var f = ll && feats.filter(function (q) { return d3.geoContains(q, ll); })[0];
-      if (!f) return null;
-      var v = value(f, p), rows = [];
-      if (v.v != null) rows.push([tx("idx"), times(v.v)]);
-      rows.push([tx("n"), nf(v.n)]);
-      return { node: H.card({ h: H.pn(f.properties.name) + " · " + perLab(sel.c, p), sw: v.v != null ? cls(v.v) : null, rows: rows,
-        m: [v.lv === "ward" ? tx("tWard") : v.lv === "dist" ? tx("tDist") + ": " + H.pn(v.d) : tx("tNone")] }) };
-    });
-    H.onLang(render); H.on("pick-change", function () { stop(); render(); });
-    window.addEventListener("resize", function () { if (IX && plot.clientWidth !== w) { layout(); paint(); } });
     return render;
   }
 
@@ -429,7 +330,7 @@
 
   // ------------------------------------------------------------------ mount: each figure loads its data when it comes near
   function mount() {
-    var jobs = { index: [indexFig, ["index", "change"]], indexmap: [mapFig, ["index"]], place: [placeFig, ["places"]], rise: [riseFig, ["change", "index"]] };
+    var jobs = { index: [indexFig, ["index", "change"]], place: [placeFig, ["places"]], rise: [riseFig, ["change", "index"]] };
     if (H.st && H.st.c) sel.c = H.st.c;
     Object.keys(jobs).forEach(function (name) {
       Array.prototype.forEach.call(document.querySelectorAll('[data-hs="' + name + '"]'), function (fig) {

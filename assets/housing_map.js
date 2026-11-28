@@ -117,8 +117,8 @@
     return { type: "Polygon", coordinates: big.map(f) };
   }
   function cls(v, b) { if (v == null) return -1; var i = 0; while (i < b.length && v >= b[i]) i++; return i; }
-  function colorExpr(prop, b) {
-    var e = ["step", ["coalesce", ["get", prop], -1], "rgba(0,0,0,0)", 0, H.RAMP[0]];
+  function colorExpr(prop, b, fs) {
+    var e = ["step", ["coalesce", fs ? ["feature-state", "t" + prop] : ["get", prop], -1], "rgba(0,0,0,0)", 0, H.RAMP[0]];
     b.forEach(function (t, i) { e.push(t, H.RAMP[i + 1]); });
     return e;
   }
@@ -255,13 +255,16 @@
     function addLayers() {
       var below = firstOf(map, ["water"]) , roads = firstOf(map, ["tunnel_motorway_casing", "highway_path", "highway_minor"]), top = firstSymbol(map);
       map.addSource("hs-wards", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("hs-hatchsrc", { type: "geojson", data: { type: "FeatureCollection", features: [] } }); // the hatch: a pattern layer turns black once its source carries feature states
       map.addSource("hs-towers", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("hs-metro", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("hs-cbd", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("hs-wlbl", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("hs-dlbl", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       hatch(map);
-      map.addLayer({ id: "hs-few", type: "fill", source: "hs-wards", filter: ["<", ["get", "n"], MIN_N], paint: { "fill-pattern": "hs-hatch", "fill-opacity": 0.9, "fill-opacity-transition": { duration: 300 } } }, below);
+      map.addLayer({ id: "hs-few", type: "fill", source: "hs-hatchsrc", filter: ["<", ["get", "n"], MIN_N], paint: { "fill-pattern": "hs-hatch", "fill-opacity": 0.9, "fill-opacity-transition": { duration: 300 } } }, below);
+      map.addLayer({ id: "hs-paper", type: "fill", source: "hs-wards", layout: { visibility: "none" }, // while playing: covers the hatch where a ward has a figure
+        paint: { "fill-color": PAPER, "fill-opacity": ["coalesce", ["feature-state", "ta"], 0] } }, below);
       map.addLayer({ id: "hs-hit", type: "fill", source: "hs-wards", paint: { "fill-color": "#000", "fill-opacity": 0 } }, below);
       map.addLayer({ id: "hs-fill", type: "fill", source: "hs-wards", filter: [">=", ["get", "n"], MIN_N],
         paint: { "fill-color": colorExpr("vi", BRK.idx), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 10, 0.88, 13, 0.72, 15.5, 0.5] } }, below);
@@ -313,11 +316,15 @@
     function recolor() {
       if (!map || !map.getLayer("hs-fill")) return;
       var p = st.m === "idx" ? "vi" : "pm", b = BRK[st.m];
-      map.setPaintProperty("hs-fill", "fill-color", colorExpr(p, b));
-      map.setPaintProperty("hs-3d", "fill-extrusion-color", colorExpr(p, b));
+      map.setPaintProperty("hs-fill", "fill-color", colorExpr(p, b, timeOn));
+      map.setPaintProperty("hs-3d", "fill-extrusion-color", colorExpr(p, b, timeOn));
       if (st.v === "3d") map.setPaintProperty("hs-3d", "fill-extrusion-height", hExpr());
     }
-    function hExpr() { return st.m === "idx" ? ["*", ["get", "vi"], H3D] : ["*", ["coalesce", ["get", "pm"], 0], H3D / 160]; }
+    function hExpr() {
+      if (timeOn) return ["*", ["coalesce", ["feature-state", "ta"], 0], st.m === "idx" ? ["*", ["coalesce", ["feature-state", "tvi"], 0], H3D] : ["*", ["coalesce", ["feature-state", "tpm"], 0], H3D / 160]];
+      return st.m === "idx" ? ["*", ["get", "vi"], H3D] : ["*", ["coalesce", ["get", "pm"], 0], H3D / 160];
+    }
+    function opA(v) { return timeOn ? ["*", v, ["coalesce", ["feature-state", "ta"], 0]] : v; } // fill opacity, times the ward's fade while playing
     var grown = false;
     function grow() { // columns rise from the ground each time 3D is switched on
       if (!map.getLayer("hs-3d")) return;
@@ -337,9 +344,11 @@
       var d3v = st.v === "3d";
       function set(id, v) { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v ? "visible" : "none"); }
       set("hs-fill", on("price")); set("hs-few", on("price"));
-      map.setPaintProperty("hs-fill", "fill-opacity", d3v ? 0.45 : ["interpolate", ["linear"], ["zoom"], 10, 0.88, 13, 0.72, 15.5, 0.5]);
+      map.setPaintProperty("hs-fill", "fill-opacity", d3v ? opA(0.45) : ["interpolate", ["linear"], ["zoom"], 10, opA(0.88), 13, opA(0.72), 15.5, opA(0.5)]);
       set("hs-3d", d3v && on("price")); set("hs-bld", d3v); grow();
-      map.setPaintProperty("hs-few", "fill-opacity", d3v ? 0.35 : 0.9);
+      map.setPaintProperty("hs-few", "fill-opacity", d3v ? 0.35 : 0.9); // a pattern layer cannot take a feature state
+      set("hs-paper", timeOn && on("price"));
+      if (st.v === "3d" && grown) map.setPaintProperty("hs-3d", "fill-extrusion-height", hExpr());
       set("hs-line", on("price") || teaser); set("hs-line2", on("wards") && !teaser);
       ["hs-metro-case", "hs-metro-line", "hs-metro-st", "hs-metro-lbl"].forEach(function (id) { set(id, on("metro")); });
       Object.keys(POI).forEach(function (k) { set("hs-poi-" + k, on(k)); set("hs-poil-" + k, on(k)); });
@@ -358,6 +367,8 @@
         if (my !== st.c) return;
         setHov(null); map.removeFeatureState({ source: "hs-wards" });
         cur = C;
+        timeOn = false; tw = null; shownC = null; setTime(false);
+        map.getSource("hs-wards").setData(C.wards); map.getSource("hs-hatchsrc").setData(C.wards); map.getSource("hs-towers").setData(C.towers);
         applyFrame();
         var mt = M && M[my] ? M[my] : { lines: [], stations: [] }, fs = [];
         mt.lines.forEach(function (l) { fs.push({ type: "Feature", properties: { name: l.name }, geometry: { type: "LineString", coordinates: l.coords } }); });
@@ -372,13 +383,58 @@
         status.hidden = true; setHl(teaser ? "" : (H.st.d || ""));
       }).catch(function (e) { status.hidden = true; H.fail(fig, e); });
     }
-    var frameFn = null, frameMemo = {}, shownC = null;
-    function applyFrame() { // the 2024-2026 figures, or the year that housing_maptime.js asks for
+    // years played by housing_maptime.js: the geometry stays, colours, heights and fades move through feature states
+    var frameFn = null, frameMemo = {}, shownC = null, timeOn = false, cs = [], tw = null;
+    function setTime(on) { // switch the price layers between properties (2024-2026) and feature states (a year)
+      timeOn = on;
+      map.setFilter("hs-fill", on ? null : [">=", ["get", "n"], MIN_N]);
+      map.setFilter("hs-few", on ? null : ["<", ["get", "n"], MIN_N]);
+      if (on) cur.allT = cur.allT || { type: "FeatureCollection", features: cur.wards.features.map(function (f, i) {
+        return { type: "Feature", id: i, properties: { k: i }, geometry: shrink(f.geometry, f.properties.c, SHRINK) }; }) };
+      if (on) cols(function (i) { return cs[i].a > 0; }); else map.getSource("hs-towers").setData(cur.towers);
+      recolor(); vis();
+    }
+    function cols(keep) { // columns of the wards that have a figure (a column without one would be drawn black)
+      map.getSource("hs-towers").setData({ type: "FeatureCollection", features: cur.allT.features.filter(function (f) { return keep(f.id); }) });
+    }
+    function put(i, o) { map.setFeatureState({ source: "hs-wards", id: i }, o); map.setFeatureState({ source: "hs-towers", id: i }, o); }
+    function tween(C, ms, done) {
+      var F = C.wards.features, from = cs.map(function (q) { return Object.assign({}, q); }), to = F.map(function (f, i) {
+        var p = f.properties, q = from[i], ok = p.vi != null;
+        if (ok && !q.a) { q.vi = p.vi; q.pm = p.pm; } // a ward that appears takes its colour at once and fades in
+        return { vi: ok ? p.vi : q.vi, pm: ok && p.pm != null ? p.pm : q.pm, a: ok ? 1 : 0, few: ok ? 0 : 1 };
+      });
+      var lg = function (a, b, k) { return a > 0 && b > 0 ? Math.exp(Math.log(a) + (Math.log(b) - Math.log(a)) * k) : (k < 1 ? a : b); };
+      var me = tw = {}, t0 = 0;
+      if (timeOn) cols(function (i) { return from[i].a > 0 || to[i].a > 0; }); // the leaving ones shrink, the coming ones grow
+      ms = H.reduced() ? 0 : ms;
+      (function step(ts) {
+        if (tw !== me || !map) return;
+        var now = performance.now(); t0 = t0 || now;
+        var k = ms ? Math.min(1, (now - t0) / ms) : 1, e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        to.forEach(function (b, i) {
+          var a = from[i], q = cs[i] = { vi: lg(a.vi, b.vi, e), pm: lg(a.pm, b.pm, e), a: a.a + (b.a - a.a) * e, few: a.few + (b.few - a.few) * e };
+          put(i, { tvi: q.vi, tpm: q.pm, ta: q.a, tfew: q.few });
+        });
+        if (k < 1) requestAnimationFrame(step); else { tw = null; if (timeOn) cols(function (i) { return to[i].a > 0; }); if (done) done(); }
+      })(0);
+    }
+    function applyFrame() { // the 2024-2026 figures, or the year that housing_maptime.js asks for (y: {key, w, ms})
       if (!map || !cur) return;
-      var y = frameFn ? frameFn(st.c) : null, k = y ? st.c + y.key : "", C = cur;
-      if (y) { C = frameMemo[k] = frameMemo[k] || derive(cur.wards, st.c, y.w); C.lab = y.key; }
-      shownC = y ? C : null;
-      map.getSource("hs-wards").setData(C.wards); map.getSource("hs-towers").setData(C.towers);
+      var y = frameFn ? frameFn(st.c) : null;
+      if (!y) { // back to 2024-2026: move to its figures, then hand the layers back to the properties
+        shownC = null;
+        if (timeOn) tween(cur, 700, function () { setTime(false); });
+        return;
+      }
+      var k = st.c + y.key, C = frameMemo[k] = frameMemo[k] || derive(cur.wards, st.c, y.w);
+      C.lab = y.key; shownC = C;
+      if (!timeOn) {
+        cs = cur.wards.features.map(function (f, i) { var p = f.properties, ok = p.vi != null, q = { vi: p.vi, pm: p.pm, a: ok ? 1 : 0, few: ok ? 0 : 1 };
+          put(i, { tvi: q.vi, tpm: q.pm, ta: q.a, tfew: q.few }); return q; });
+        setTime(true);
+      }
+      tween(C, y.ms == null ? 900 : y.ms);
     }
     var metroFC = { type: "FeatureCollection", features: [] };
     function nearLine(mt, st0) { // the line whose vertices pass closest to the station

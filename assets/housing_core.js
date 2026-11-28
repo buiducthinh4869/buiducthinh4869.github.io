@@ -368,11 +368,18 @@
   function renderMeta() {
     if (!meta) return;
     var vi = H.lang() === "vi", d = H.date(meta.data_date);
-    setText("p.hs-facts", vi
-      ? H.nf(meta.n) + " tin · 2 thành phố · " + H.nf(meta.n_districts) + " quận/huyện cũ · cào " + d
-      : H.nf(meta.n) + " listings · 2 cities · " + H.nf(meta.n_districts) + " former districts · scraped " + d);
-    setText("p.hs-version", vi ? "Phiên bản " + meta.version + " · dữ liệu " + d : "Version " + meta.version + " · data of " + d);
+    var yr = meta.year_from ? meta.year_from + "–" + meta.year_to : ""; // version 2: listings of several years and sources
+    setText("p.hs-facts", yr ? (vi
+      ? H.nf(meta.n) + " tin rao " + yr + " · 2 thành phố · " + H.nf(meta.n_districts) + " quận/huyện cũ · " + H.nf(meta.n_wards) + " phường, xã mới"
+      : H.nf(meta.n) + " listings " + yr + " · 2 cities · " + H.nf(meta.n_districts) + " former districts · " + H.nf(meta.n_wards) + " new wards and communes")
+      : (vi ? H.nf(meta.n) + " tin · 2 thành phố · " + H.nf(meta.n_districts) + " quận/huyện cũ · cào " + d
+      : H.nf(meta.n) + " listings · 2 cities · " + H.nf(meta.n_districts) + " former districts · scraped " + d));
+    setText("p.hs-version", yr ? (vi ? "Phiên bản " + meta.version + " · dữ liệu đến " + d : "Version " + meta.version + " · data to " + d)
+      : (vi ? "Phiên bản " + meta.version + " · dữ liệu " + d : "Version " + meta.version + " · data of " + d));
     fill("ul.hs-clean", (meta.cleaning || []).map(function (c) {
+      return (vi ? c[1] : c[0].replace(/m2\b/g, "m²").replace(/VND ([\d.,]+) m\b/g, "VND $1 million").replace("city x type", "city \u00d7 type")) + ": " + H.nf(c[2]) + (vi ? " tin còn lại" : " listings left");
+    }));
+    fill("ul.hs-clean-v1", (meta.cleaning_v1 || []).map(function (c) {
       return (vi ? c[1] : c[0].replace(/m2\b/g, "m²").replace(/VND ([\d.,]+) m\b/g, "VND $1 million").replace("city x type", "city \u00d7 type")) + ": " + H.nf(c[2]) + (vi ? " tin còn lại" : " listings left");
     }));
     fill("ul.hs-acc", (meta.accuracy || []).map(function (a) {

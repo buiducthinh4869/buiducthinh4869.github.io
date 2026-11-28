@@ -23,6 +23,7 @@
       tVal: "Model value", tPpm: "Price per m²", tRel: "vs the typical home", tHeld: "Everything else held at the typical home.",
       takeMost: "For a typical {t} in {d}, the model's value moves most with {f}: from {lo} to {hi} of the typical home's value across the range shown.",
       takeStreet: "Across all houses, street-front houses are usually asked about {p} more than similar alley houses in the same former district (roughly {a} to {b}).",
+      takeStreet2: "In listings of 2024 to 2026, street-front houses are usually asked about {p} more than similar alley houses in the same former district (roughly {a} to {b}).",
       legalN: { "Sổ đỏ/Sổ hồng": "Red or pink book", "Hợp đồng mua bán": "Sale contract", "Đang chờ sổ": "Certificate pending", "Khác/không rõ": "Other or unknown" },
       src: "Source: mogi.vn listings, 15 Oct 2026; the site's valuation model (gradient-boosted trees); author's calculations.",
       note: "These are the model's valuations, not measured effects: each panel changes one feature of the typical home and keeps the rest. Steps come from the tree model. Ranges stay inside what the listings cover. The street-front figure above is a separate comparison of listings that passed its checks.",
@@ -39,6 +40,7 @@
       tVal: "Giá mô hình", tPpm: "Giá mỗi m²", tRel: "so với căn điển hình", tHeld: "Các đặc điểm khác giữ như căn điển hình.",
       takeMost: "Với một căn {t} điển hình ở {d}, giá mô hình thay đổi nhiều nhất theo {f}: từ {lo} đến {hi} giá của căn điển hình trong khoảng đang xét.",
       takeStreet: "Xét mọi nhà riêng, nhà mặt tiền thường được rao cao hơn nhà hẻm tương tự trong cùng quận cũ khoảng {p} (khoảng {a} đến {b}).",
+      takeStreet2: "Trong tin rao 2024 đến 2026, nhà mặt tiền thường được rao cao hơn nhà hẻm tương tự trong cùng quận cũ khoảng {p} (khoảng {a} đến {b}).",
       legalN: { "Sổ đỏ/Sổ hồng": "Sổ đỏ/sổ hồng", "Hợp đồng mua bán": "Hợp đồng mua bán", "Đang chờ sổ": "Đang chờ sổ", "Khác/không rõ": "Khác/không rõ" },
       src: "Nguồn: tin rao mogi.vn, 15/10/2026; mô hình định giá của trang (cây tăng cường gradient); tác giả tính toán.",
       note: "Đây là giá do mô hình đưa ra, không phải tác động đo được: mỗi ô đổi một đặc điểm của căn điển hình và giữ nguyên phần còn lại. Các bậc thang đến từ mô hình dạng cây. Khoảng giá trị nằm trong phạm vi tin rao có. Con số nhà mặt tiền ở trên là một phép so sánh tin rao riêng, đã qua các bước kiểm tra.",
@@ -83,7 +85,7 @@
       });
       if (best && best.hi - best.lo > 0.02) out.push(fill(tx("takeMost"), { t: tname(st.t), d: H.pn(o.district), f: tx(best.k).toLowerCase(), lo: H.pct(best.lo, 0), hi: H.pct(best.hi, 0) }));
       var r = P && P.rows ? P.rows.filter(function (x) { return x.attr === "street" && x.gate === "PASS" && x.prem != null; })[0] : null;
-      if (r && st.t !== "Căn hộ chung cư" && st.t !== "Đất") out.push(fill(tx("takeStreet"), { p: H.pct(r.prem, 0), a: H.pct(r.lo, 0), b: H.pct(r.hi, 0) }));
+      if (r && st.t !== "Căn hộ chung cư" && st.t !== "Đất") out.push(fill(tx(r.src === "v2" ? "takeStreet2" : "takeStreet"), { p: H.pct(r.prem, 0), a: H.pct(r.lo, 0), b: H.pct(r.hi, 0) }));
       p.textContent = out.join(" "); p.hidden = !out.length;
     }
     function render() {

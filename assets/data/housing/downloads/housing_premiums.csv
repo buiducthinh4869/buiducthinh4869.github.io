@@ -1,17 +1,17 @@
-attr,group,n_sample,n_kept,n_treated_sample,n_control_sample,n_treated,n_control,premium,prem_lo,prem_hi,gate
-legal,Biệt thự/liền kề,583,,558,25,,,,,,INSUFFICIENT
-legal,Căn hộ chung cư,1277,568.0,1072,205,455.0,113.0,,,,FAIL
-legal,Nhà hẻm/ngõ,1499,,1472,27,,,,,,INSUFFICIENT
-legal,Nhà mặt tiền/phố,903,322.0,758,145,205.0,117.0,,,,FAIL
-legal,Đất,870,,854,16,,,,,,INSUFFICIENT
-street,house,2402,1546.0,903,1499,657.0,889.0,0.3801781103577808,0.273476905392376,0.4958195223209413,PASS
-road4,Nhà hẻm/ngõ,320,159.0,248,72,100.0,59.0,,,,FAIL
-road4,Đất,201,,185,16,,,,,,INSUFFICIENT
-corner,Biệt thự/liền kề,583,410.0,119,464,95.0,315.0,,,,FAIL
-corner,Căn hộ chung cư,1277,986.0,259,1018,216.0,770.0,,,,FAIL
-corner,Nhà hẻm/ngõ,1499,481.0,131,1368,50.0,431.0,,,,FAIL
-corner,Nhà mặt tiền/phố,903,675.0,184,719,159.0,516.0,,,,FAIL
-corner,Đất,870,439.0,129,741,76.0,363.0,,,,FAIL
-metro,Căn hộ chung cư,733,265.0,100,633,59.0,206.0,,,,FAIL
-metro,Nhà hẻm/ngõ,169,119.0,32,137,32.0,87.0,,,,FAIL
-metro,Đất,199,,10,189,,,,,,INSUFFICIENT
+attr,group,n,n_sample,nt,nc,nt_sample,nc_sample,premium,prem_lo,prem_hi,gate,data_version
+legal,Biệt thự/liền kề,,583,,,558,25,,,,INSUFFICIENT,v1
+corner,Biệt thự/liền kề,410.0,583,95.0,315.0,119,464,,,,FAIL,v1
+legal,Căn hộ chung cư,714.0,854,593.0,121.0,713,141,-0.2035,-0.3549,-0.0165,PASS,v2
+road4,Căn hộ chung cư,,17,,,15,2,,,,INSUFFICIENT,v2
+corner,Căn hộ chung cư,1141.0,1498,175.0,966.0,204,1294,,,,FAIL,v2
+legal,Nhà hẻm/ngõ,212.0,2626,208.0,4.0,2575,51,,,,INSUFFICIENT,v2
+road4,Nhà hẻm/ngõ,513.0,870,388.0,125.0,724,146,,,,FAIL,v2
+corner,Nhà hẻm/ngõ,5129.0,7321,526.0,4603.0,639,6682,0.0817,0.0431,0.1217,PASS,v2
+legal,Nhà mặt tiền/phố,523.0,1810,458.0,65.0,1705,105,,,,FAIL,v2
+road4,Nhà mặt tiền/phố,,268,,,264,4,,,,INSUFFICIENT,v2
+corner,Nhà mặt tiền/phố,1831.0,2140,346.0,1485.0,376,1764,0.1088,0.0457,0.1758,PASS,v2
+legal,Đất,,870,,,854,16,,,,INSUFFICIENT,v1
+road4,Đất,,201,,,185,16,,,,INSUFFICIENT,v1
+corner,Đất,439.0,870,76.0,363.0,129,741,,,,FAIL,v1
+metro,Đất,,199,,,10,189,,,,INSUFFICIENT,v1
+street,house,5254.0,9461,1918.0,3336.0,2140,7321,0.4706,0.3837,0.5629,PASS,v2

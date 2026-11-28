@@ -1138,3 +1138,39 @@ html:not(.js) .housing-teaser > :not(figcaption), .housing-failed .housing-tease
 .profile p:not(.role):not(.contact), .page-lede, .at-how, .hs-take, .prose p {
   text-align: justify; hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 7 3 3; text-wrap: pretty;
 }
+
+/* ---------- Housing atlas 2.0, sections 7 to 9 (assets/housing_change.js) and labels of the version 1 sections ---------- */
+.hs-v1 { max-width: 40rem; margin: -0.4rem 0 0.8rem; font-family: var(--sans); font-size: 0.75rem; line-height: 1.5; color: var(--muted); }
+.housing .hs-frame { font-family: var(--sans); font-size: 0.8125rem; color: var(--ink); min-width: 7rem; }
+.housing .hs-chmap .hs-plot canvas { display: block; max-width: 100%; }
+.hs-chlg { margin: 0.4rem 0 0; }
+.hs-lgi { display: inline-flex; align-items: center; gap: 0.3rem; }
+.hs-sq { border-radius: 2px; }
+.hs-hatch { background: repeating-linear-gradient(135deg, #faf9f5 0 2px, #c8c5bc 2px 3px); border: 1px solid #e4e1d8; }
+.hs-nums { margin: 0.4rem 0 0; font-family: var(--sans); font-size: 0.75rem; color: var(--muted); }
+.hs-nums summary { cursor: pointer; }
+.hs-ntab { border-collapse: collapse; margin: 0.4rem 0; font-variant-numeric: tabular-nums; }
+.hs-ntab th, .hs-ntab td { padding: 0.15rem 0.6rem 0.15rem 0; text-align: left; border-bottom: 1px solid var(--rule); }
+.hs-search { position: relative; max-width: 28rem; }
+.hs-search input { width: 100%; box-sizing: border-box; font: inherit; font-family: var(--sans); font-size: 0.9rem; padding: 0.5rem 0.7rem;
+  border: 1px solid var(--rule); border-radius: 4px; background: #fff; color: var(--ink); min-height: 44px; }
+.hs-sugg { position: absolute; z-index: 5; left: 0; right: 0; margin: 2px 0 0; padding: 0; list-style: none; background: #fff;
+  border: 1px solid var(--rule); border-radius: 4px; max-height: 20rem; overflow-y: auto; }
+.hs-sugg[hidden] { display: none; }
+.hs-sugg li { padding: 0.4rem 0.7rem; cursor: pointer; display: flex; flex-direction: column; font-family: var(--sans); }
+.hs-sugg li:hover, .hs-sugg li[aria-selected="true"] { background: #f1efe8; }
+.hs-sg-t { font-size: 0.875rem; color: var(--ink); }
+.hs-sg-s { font-size: 0.75rem; color: var(--muted); }
+.hs-place-out { margin: 1rem 0 0; max-width: 40rem; }
+.hs-hint { font-family: var(--sans); font-size: 0.8125rem; color: var(--muted); }
+.hs-place-h { margin: 0; font-size: 1.25rem; font-weight: 500; }
+.hs-place-s, .hs-place-n, .hs-place-c { margin: 0.1rem 0; font-family: var(--sans); font-size: 0.8125rem; color: var(--muted); }
+.hs-place-v { margin: 0.6rem 0 0.1rem; font-size: 1.35rem; }
+.hs-place-few { font-size: 1rem; color: var(--muted); }
+.hs-trend { margin: 0.8rem 0 0; }
+.hs-trend-h { margin: 0 0 0.2rem; font-family: var(--sans); font-size: 0.8125rem; color: var(--ink); }
+.hs-trend svg, .housing [data-hs="rise"] svg, .housing [data-hs="index"] svg { display: block; max-width: 100%; }
+.housing .hs-next { margin: 0; padding-left: 1.1rem; max-width: 40rem; line-height: 1.6; }
+.housing .ao-range { flex-wrap: wrap; }
+.housing .ao-range .sg-select { width: 6.2rem; }
+.housing .hs-pill[hidden], .housing .hs-btn[hidden] { display: none; }

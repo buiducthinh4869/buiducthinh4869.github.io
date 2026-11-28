@@ -1,59 +1,35 @@
-city,sample,ring_km,n,rel,rel_lo,rel_hi,districts
-hn,all,0,22,1.99215,1.62042,2.44916,Quận Hoàn Kiếm:22
-hn,all,1,88,1.4131,1.17246,1.70314,Quận Đống Đa:34;Quận Hai Bà Trưng:27;Quận Ba Đình:14;Quận Hoàn Kiếm:13
-hn,all,2,276,1.22121,1.13445,1.3146,Quận Hai Bà Trưng:84;Quận Đống Đa:73;Quận Long Biên:62;Quận Ba Đình:57
-hn,all,3,336,1.25861,1.11894,1.41571,Quận Hai Bà Trưng:162;Quận Đống Đa:68;Quận Long Biên:57;Quận Ba Đình:33
-hn,all,4,208,1.17527,1.08645,1.27134,Quận Ba Đình:52;Quận Hoàng Mai:38;Quận Thanh Xuân:37;Quận Đống Đa:31
-hn,all,5,235,1.06198,0.94504,1.1934,Quận Cầu Giấy:82;Quận Long Biên:57;Quận Hoàng Mai:54;Quận Thanh Xuân:40
-hn,all,6,203,1.02333,0.90914,1.15186,Quận Long Biên:74;Quận Cầu Giấy:43;Quận Tây Hồ:36;Quận Hoàng Mai:29
-hn,all,7,117,1.00663,0.86005,1.17819,Quận Hoàng Mai:40;Quận Long Biên:24;Quận Cầu Giấy:17;Quận Tây Hồ:13
-hn,all,8,154,1.03271,0.92928,1.14765,Quận Nam Từ Liêm:51;Quận Hà Đông:28;Quận Bắc Từ Liêm:26;Quận Cầu Giấy:19
-hn,all,9,98,0.87561,0.77752,0.98607,Huyện Gia Lâm:32;Quận Bắc Từ Liêm:21;Huyện Thanh Trì:17;Quận Hà Đông:14
-hn,all,10,38,0.84839,0.64119,1.12254,Quận Hà Đông:19;Huyện Thanh Trì:7;Quận Nam Từ Liêm:5;Huyện Gia Lâm:4
-hn,all,11,27,0.64549,0.4669,0.89238,Huyện Gia Lâm:8;Quận Hà Đông:8;Quận Nam Từ Liêm:8;Quận Bắc Từ Liêm:2
-hn,all,12,23,0.85674,0.65009,1.12907,Quận Hà Đông:13;Huyện Đông Anh:4;Huyện Thanh Trì:3;Huyện Hoài Đức:2
-hn,all,13,20,0.72557,0.60112,0.87579,Huyện Hoài Đức:7;Huyện Đông Anh:6;Quận Hà Đông:4;Quận Bắc Từ Liêm:2
-hn,all,14,15,0.48136,0.30069,0.7706,Huyện Hoài Đức:7;Huyện Gia Lâm:5;Quận Hà Đông:2;Huyện Thường Tín:1
-hn,all,15,16,0.61673,0.39377,0.96595,Huyện Hoài Đức:7;Huyện Đan Phượng:4;Huyện Đông Anh:2;Quận Hà Đông:2
-hn,all,16,15,0.41041,0.30975,0.54378,Huyện Gia Lâm:9;Huyện Hoài Đức:4;Huyện Đông Anh:2
-hn,all,17,13,0.42232,0.24932,0.71537,Huyện Quốc Oai:4;Huyện Hoài Đức:3;Huyện Đan Phượng:3;Huyện Đông Anh:2
-hn,point,0,11,2.83992,2.22773,3.62034,Quận Hoàn Kiếm:11
-hn,point,2,37,1.55904,1.31799,1.84419,Quận Ba Đình:23;Quận Đống Đa:14
-hn,point,3,12,1.80092,1.48248,2.18777,Quận Đống Đa:7;Quận Ba Đình:2;Quận Hai Bà Trưng:2;Quận Long Biên:1
-hn,point,5,24,1.13445,0.84445,1.52404,Quận Hoàng Mai:15;Quận Long Biên:5;Quận Cầu Giấy:1;Quận Thanh Xuân:1
-hn,point,6,34,1.53039,1.21241,1.93177,Quận Long Biên:11;Quận Tây Hồ:9;Quận Hoàng Mai:8;Quận Thanh Xuân:3
-hn,point,7,18,1.33528,1.11971,1.59237,Quận Hoàng Mai:8;Quận Long Biên:5;Quận Bắc Từ Liêm:2;Huyện Thanh Trì:1
-hn,point,8,26,1.34339,1.12077,1.61023,Quận Nam Từ Liêm:9;Huyện Thanh Trì:4;Quận Bắc Từ Liêm:4;Quận Hoàng Mai:3
-hn,point,9,23,1.21612,1.03233,1.43264,Huyện Thanh Trì:7;Huyện Gia Lâm:4;Huyện Đông Anh:4;Quận Hà Đông:4
-hn,point,10,23,1.05951,0.80346,1.39717,Huyện Thanh Trì:7;Quận Nam Từ Liêm:5;Huyện Gia Lâm:4;Quận Hà Đông:4
-hn,point,11,17,0.80925,0.56872,1.15149,Huyện Gia Lâm:8;Quận Hà Đông:4;Quận Bắc Từ Liêm:2;Quận Nam Từ Liêm:2
-hn,point,13,17,1.00727,0.82129,1.23536,Huyện Hoài Đức:7;Quận Hà Đông:4;Huyện Đông Anh:3;Quận Bắc Từ Liêm:2
-hn,point,14,10,0.585,0.36166,0.94625,Huyện Gia Lâm:5;Huyện Hoài Đức:2;Quận Hà Đông:2;Huyện Thường Tín:1
-hn,point,15,14,0.869,0.5508,1.37104,Huyện Hoài Đức:5;Huyện Đan Phượng:4;Huyện Đông Anh:2;Quận Hà Đông:2
-hn,point,16,15,0.56609,0.42724,0.75006,Huyện Gia Lâm:9;Huyện Hoài Đức:4;Huyện Đông Anh:2
-hcm,all,0,10,3.09911,2.28319,4.2066,Quận 1:10
-hcm,all,1,110,2.14473,1.74026,2.6432,Quận 3:52;Quận 1:48;Quận 4:9;Quận 2 (TP. Thủ Đức):1
-hcm,all,2,152,1.47934,1.0684,2.04834,Quận 7:44;Quận 1:33;Quận 10:23;Quận 3:19
-hcm,all,3,162,1.22381,1.04652,1.43113,Quận Phú Nhuận:53;Quận 7:50;Quận Bình Thạnh:25;Quận 10:21
-hcm,all,4,151,1.18448,1.02389,1.37027,Quận 7:47;Quận Bình Thạnh:40;Quận 2 (TP. Thủ Đức):27;Quận Tân Bình:16
-hcm,all,5,159,1.586,1.33441,1.88504,Quận 2 (TP. Thủ Đức):117;Quận Tân Bình:25;Quận Gò Vấp:11;Quận 11:4
-hcm,all,6,90,1.0925,0.90107,1.3246,Quận 2 (TP. Thủ Đức):24;Quận Tân Bình:19;Quận 7:16;Quận Bình Thạnh:14
-hcm,all,7,244,1.15877,0.90161,1.48929,Quận 2 (TP. Thủ Đức):108;Quận Tân Bình:41;Quận 7:34;Quận Gò Vấp:22
-hcm,all,8,105,0.91879,0.82641,1.02151,Quận Gò Vấp:33;Quận 7:25;Quận 2 (TP. Thủ Đức):17;Quận 6:10
-hcm,all,9,133,0.80883,0.74211,0.88154,Quận Gò Vấp:44;Huyện Nhà Bè:42;Quận 9 (TP. Thủ Đức):11;Quận 2 (TP. Thủ Đức):10
-hcm,all,10,169,0.82067,0.70969,0.949,Quận 9 (TP. Thủ Đức):51;Quận Bình Tân:43;Quận 12:35;Quận Gò Vấp:28
-hcm,all,11,146,0.6813,0.63105,0.73556,Quận 12:62;Quận 9 (TP. Thủ Đức):40;Quận Bình Tân:23;Huyện Nhà Bè:17
-hcm,all,12,78,0.58574,0.46782,0.73338,Quận 12:70;Quận 9 (TP. Thủ Đức):4;Quận Bình Tân:3;Huyện Bình Chánh:1
-hcm,all,13,65,0.636,0.47581,0.85011,Quận 9 (TP. Thủ Đức):52;Quận 12:8;Huyện Hóc Môn:3;Huyện Nhà Bè:1
-hcm,all,14,25,0.49248,0.38983,0.62217,Quận 9 (TP. Thủ Đức):16;Quận Thủ Đức (TP. Thủ Đức):4;Huyện Bình Chánh:2;Quận 12:2
-hcm,all,15,18,0.30625,0.12638,0.74212,Quận 9 (TP. Thủ Đức):13;Huyện Hóc Môn:5
-hcm,point,1,14,1.6997,1.00898,2.86327,Quận 4:6;Quận 3:4;Quận 1:3;Quận 2 (TP. Thủ Đức):1
-hcm,point,2,37,1.98151,1.62833,2.41129,Quận Bình Thạnh:13;Quận 3:11;Quận 10:5;Quận 5:5
-hcm,point,3,39,1.5157,1.24707,1.84219,Quận Bình Thạnh:13;Quận 10:9;Quận Phú Nhuận:7;Quận 3:4
-hcm,point,4,21,1.32565,1.00641,1.74615,Quận Bình Thạnh:7;Quận Tân Bình:5;Quận 11:3;Quận 5:3
-hcm,point,5,19,1.90634,1.49455,2.4316,Quận 2 (TP. Thủ Đức):9;Quận 11:4;Quận Tân Bình:4;Quận 7:1
-hcm,point,6,21,1.54777,1.14349,2.09498,Quận 2 (TP. Thủ Đức):13;Quận 11:3;Quận 6:3;Huyện Bình Chánh:1
-hcm,point,7,11,1.14007,0.91438,1.42147,Quận 6:5;Quận Tân Phú:3;Huyện Bình Chánh:1;Huyện Nhà Bè:1
-hcm,point,9,12,1.04242,0.73498,1.47845,Quận 2 (TP. Thủ Đức):5;Quận Gò Vấp:3;Quận Thủ Đức (TP. Thủ Đức):2;Huyện Bình Chánh:1
-hcm,point,10,14,1.12918,0.79635,1.60112,Quận 9 (TP. Thủ Đức):4;Quận Gò Vấp:4;Quận Tân Phú:3;Quận 8:2
-hcm,point,14,14,0.51996,0.41618,0.64962,Quận 9 (TP. Thủ Đức):5;Quận Thủ Đức (TP. Thủ Đức):4;Huyện Bình Chánh:2;Quận 12:2
+city,ring_km,n,n_wards,rel,rel_lo,rel_hi,districts
+hn,0,85,2,1.71322,1.30207,2.25419,Quận Hoàn Kiếm:85
+hn,1,280,2,1.15261,0.96088,1.38259,Quận Đống Đa:174;Quận Hai Bà Trưng:106
+hn,2,897,4,1.1036,1.00881,1.20729,Quận Hai Bà Trưng:428;Quận Đống Đa:212;Quận Ba Đình:144;Quận Tây Hồ:87
+hn,3,759,5,1.03469,0.8853,1.20929,Quận Long Biên:377;Quận Ba Đình:231;Quận Đống Đa:69;Quận Hai Bà Trưng:50
+hn,4,817,5,1.09734,0.9134,1.31833,Quận Đống Đa:269;Quận Long Biên:202;Quận Hoàng Mai:160;Quận Thanh Xuân:102
+hn,5,418,4,1.09855,1.0208,1.18223,Quận Thanh Xuân:291;Quận Tây Hồ:99;Quận Hoàng Mai:24;Quận Cầu Giấy:4
+hn,6,889,7,0.96432,0.80997,1.14808,Quận Hoàng Mai:361;Quận Long Biên:266;Quận Cầu Giấy:262
+hn,7,225,3,0.88164,0.73448,1.05828,Quận Hoàng Mai:164;Quận Bắc Từ Liêm:61
+hn,8,236,6,0.91221,0.81875,1.01633,Quận Nam Từ Liêm:150;Huyện Thanh Trì:34;Quận Tây Hồ:28;Huyện Gia Lâm:11
+hn,9,485,6,0.98238,0.88472,1.09082,Quận Hà Đông:390;Quận Bắc Từ Liêm:63;Huyện Thanh Trì:19;Huyện Đông Anh:9
+hn,10,59,4,0.631,0.58523,0.68034,Huyện Gia Lâm:24;Huyện Thanh Trì:19;Quận Nam Từ Liêm:16
+hn,11,30,2,0.89017,0.78737,1.00638,Quận Hà Đông:23;Quận Nam Từ Liêm:7
+hn,12,56,5,0.7769,0.7098,0.85033,Quận Hà Đông:27;Quận Bắc Từ Liêm:19;Huyện Thanh Trì:10
+hn,13,49,3,0.44413,0.20792,0.94867,Quận Hà Đông:27;Huyện Gia Lâm:20;Huyện Đông Anh:2
+hn,15,74,5,0.56697,0.52497,0.61233,Huyện Hoài Đức:38;Quận Hà Đông:29;Huyện Đông Anh:7
+hcm,0,137,2,3.67407,2.6582,5.07815,Quận 1:137
+hcm,1,212,5,2.23888,1.82009,2.75403,Quận 3:135;Quận 1:62;Quận 4:15
+hcm,2,338,6,1.89644,1.50252,2.39364,Quận 10:144;Quận 1:86;Quận 3:77;Quận 5:21
+hcm,3,307,6,1.35531,1.20157,1.52871,Quận Bình Thạnh:140;Quận Phú Nhuận:96;Quận 10:55;Quận 5:16
+hcm,4,494,11,1.30282,1.13422,1.49647,Quận Tân Bình:105;Quận 7:104;Quận 2:78;Quận Bình Thạnh:68
+hcm,5,352,5,1.20372,1.12006,1.29363,Quận Tân Bình:125;Quận Bình Thạnh:122;Quận Gò Vấp:84;Quận 11:21
+hcm,6,179,4,1.16062,0.90579,1.48714,Quận Tân Bình:113;Quận 6:31;Quận Tân Phú:22;Quận 11:13
+hcm,7,476,11,1.05692,1.00357,1.1131,Quận Tân Phú:134;Quận 2:88;Quận Gò Vấp:86;Quận 6:72
+hcm,8,363,7,0.87793,0.6837,1.12736,Quận 6:119;Huyện Nhà Bè:72;Thủ Đức:69;Quận 2:47
+hcm,9,317,7,0.88333,0.79736,0.97858,Quận Gò Vấp:111;Quận Bình Tân:72;Quận 9:52;Thủ Đức:35
+hcm,10,274,4,0.86387,0.76994,0.96927,Quận Bình Tân:181;Quận Gò Vấp:55;Quận 12:38
+hcm,11,97,3,0.64817,0.59984,0.7004,Quận 12:47;Quận Bình Tân:28;Thủ Đức:22
+hcm,12,389,5,0.68585,0.60888,0.77255,Quận 9:260;Quận 12:129
+hcm,13,40,3,0.63774,0.56436,0.72066,Thủ Đức:24;Quận Bình Tân:15;Huyện Bình Chánh:1
+hcm,15,54,3,0.17702,0.08035,0.38996,Huyện Bình Chánh:30;Huyện Hóc Môn:24
+hcm,16,75,3,0.37993,0.36194,0.39882,Huyện Hóc Môn:63;Huyện Nhà Bè:11;Huyện Bình Chánh:1
+hcm,17,132,3,0.56418,0.42515,0.74867,Quận 9:115;Huyện Hóc Môn:17
+hcm,20,55,2,0.28455,0.21316,0.37985,Huyện Hóc Môn:49;Huyện Bình Chánh:6
+hcm,24,14,1,0.11885,,,Huyện Củ Chi:14

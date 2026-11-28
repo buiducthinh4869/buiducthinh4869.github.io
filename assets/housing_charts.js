@@ -14,7 +14,7 @@
   function ints(a, b) { return a + "–" + b; }
   function fs(S) { return S.w < 600 ? 11 : 12; }
 
-  function make(fig, load, draw, note) {
+  function make(fig, load, draw, note, src) { // src: [en, vi] source line (default: version 1 data, mogi.vn 15 Oct 2026)
     var S = { fig: fig, plot: fig.querySelector(".hs-plot"), d: null, hit: null, hv: null, w: 0, clear: null };
     if (!S.plot) { S.plot = H.el("div", "hs-plot"); fig.insertBefore(S.plot, fig.firstChild); }
     S.render = function () {
@@ -22,7 +22,7 @@
       try { S.hit = null; S.clear = null; S.w = S.plot.clientWidth; draw(S); if (S.hv && S.hv.refresh) S.hv.refresh(); }
       catch (e) { H.fail(fig, e); }
     };
-    var fc = function () { caption(fig, tr("mogi.vn listings, 15 Oct 2026; author's calculations.", "tin rao mogi.vn, 15/10/2026; tác giả tính toán."), tr(note[0], note[1])); };
+    var fc = function () { caption(fig, src ? tr(src[0], src[1]) : tr("mogi.vn listings, 15 Oct 2026; author's calculations.", "tin rao mogi.vn, 15/10/2026; tác giả tính toán."), tr(note[0], note[1])); };
     fc(); H.onLang(fc);
     S.plot.addEventListener("mouseleave", function () { if (S.clear) S.clear(); });
     H.lazy(fig, function () {
@@ -105,7 +105,8 @@
   };
 
   function gradient(fig) {
-    var S = make(fig, function () { return H.load("gradient"); }, drawGradient, ["Rings with fewer than 25 listings are left out. Listings placed at a ward centre count half.", "Bỏ các vòng có dưới 25 tin. Tin chỉ có tọa độ tâm phường được tính một nửa."]);
+    var S = make(fig, function () { return H.load("gradient"); }, drawGradient, ["Houses and land listed 2024 to 2026. Distance is measured from the city centre to the centre of the listing's ward, because few listings give their own location; each ward falls in one ring. Rings with fewer than 25 listings are left out.", "Nhà và đất rao bán 2024 đến 2026. Khoảng cách đo từ trung tâm thành phố đến tâm phường của tin, vì rất ít tin ghi vị trí riêng; mỗi phường rơi vào một vòng. Bỏ các vòng có dưới 25 tin."],
+      ["listings on mogi.vn and alonhadat.com.vn, 2024 to 2026; author's calculations.", "tin rao trên mogi.vn và alonhadat.com.vn, 2024 đến 2026; tác giả tính toán."]);
     H.on("state", function () { if (S.d && S.cur !== H.st.c) S.render(); });
   }
 

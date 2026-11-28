@@ -574,10 +574,11 @@
         var ml = r[0]; M = r[1][0]; D = r[1][1]; CBD = r[2] && r[2].cbd || null;
         map = new ml.Map({
           container: box, style: STYLE, attributionControl: { compact: true }, dragRotate: !teaser, pitchWithRotate: !teaser,
-          interactive: true, cooperativeGestures: !teaser && MB.coarse, maxPitch: 65, fadeDuration: 0,
+          interactive: true, cooperativeGestures: false, // no dark overlay on phones (Thinh, 2026-11-28): one finger scrolls the page, two fingers pinch and move maxPitch: 65, fadeDuration: 0,
           locale: { "CooperativeGesturesHandler.MobileHelpText": tx("gMob") }
         });
         fig.hsMap = map;
+        if (MB.coarse && !teaser) map.dragPan.disable(); // touch: the page scrolls under one finger; the two-finger gesture zooms and moves the map
         if (teaser) { map.scrollZoom.disable(); map.dragPan.disable(); map.touchZoomRotate.disable(); map.doubleClickZoom.disable(); map.keyboard.disable(); }
         else if (!MB.coarse) map.scrollZoom.disable(); // the page scrolls; zoom with the buttons or a double-click
         map.on("load", function () {
